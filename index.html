@@ -1317,6 +1317,8 @@ $('filtros').onclick = ev => {
   $('filtros').querySelectorAll('button').forEach(x => x.classList.remove('on'));
   b.classList.add('on');
   filtro = b.dataset.f;
+  idSenalado = null;          /* al cambiar de filtro, quito el resalte *
+                               (si no, quedaria un punto marcado sin sentido) */
   pintaIncidentes();
 };
 
