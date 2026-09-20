@@ -85,6 +85,24 @@
     margin-top:10px;border-left:4px solid var(--mar2)}
   .cajaOtro.on{display:block}
 
+  /* ===== EL ARCHIVO DEL VUELO (IGC) =====
+     Opcional. Si lo sube, saco la hora exacta y los datos del vuelo. No se
+     guarda el archivo ni el recorrido: solo numeros. */
+  .igcBox{background:#f7fafb;border-radius:11px;padding:12px;
+    border:1.5px dashed #c5d8e0}
+  .btnIGC{width:100%;border:1.5px solid var(--mar);background:#fff;color:var(--mar);
+    border-radius:10px;padding:13px;font-family:inherit;font-size:13.5px;
+    font-weight:800;cursor:pointer;letter-spacing:-.1px}
+  .btnIGC.on{border-color:#2c8f5a;color:#1d6b42;background:#f0faf4}
+  .igcInfo{font-size:12.5px;color:#2b4750;margin-top:10px;line-height:1.6;display:none}
+  .igcInfo.on{display:block}
+
+  /* el selector de fecha: que se vea como los demas campos */
+  input[type=date]{width:100%;font-family:inherit;font-size:15px;font-weight:700;
+    padding:13px 14px;border:2px solid var(--linea);border-radius:11px;
+    background:#fbfdfd;color:var(--tinta);-webkit-appearance:none;appearance:none}
+  input[type=date]:focus{outline:none;border-color:var(--mar2)}
+
   /* ===== CONTROL DESLIZANTE (estilo iOS) =====
      Pam dijo que los botones sueltos del aire parecian "de niño". Esto es lo
      que usan las apps serias: un solo control, la opcion activa se ve como una
@@ -204,29 +222,26 @@
       Toca el sitio aproximado. No hace falta que sea exacto: solo queremos saber la zona.
     </div>
 
-    <label>5 · ¿Cuándo? (mes y año)</label>
-    <div class="selects">
-      <select id="selMes">
-        <option value="">Mes…</option>
-      </select>
-      <select id="selAnio"></select>
-    </div>
+    <label>5 · ¿Qué día fue? (opcional, pero sirve mucho)</label>
+    <input type="date" id="fecha">
     <div class="ayuda" style="margin:7px 0 0">
-      Solo mes y año, <b>sin día</b>. Así nadie puede deducir quién eres por la fecha.
+      Con el día saco <b>el viento real que hacía</b> ese día en ese sitio, de los datos
+      meteorológicos. Así no tienes que adivinarlo tú.
+      <br><b>El día no se guarda</b>: solo el mes y el año. Así nadie te identifica por la fecha.
     </div>
 
-    <label>6 · Franja del día</label>
+    <label>6 · ¿A qué hora más o menos?</label>
     <div class="opciones" id="opFranja"></div>
 
-    <label>7 · ¿Cómo estaba el aire?</label>
-    <div class="seg" id="segAire">
-      <button data-id="calmo">Calmo</button>
-      <button data-id="flojo">Flojo</button>
-      <button data-id="normal">Normal</button>
-      <button data-id="fuerte">Fuerte</button>
-    </div>
-    <div class="chips" id="chipsAire">
-      <button class="chip" data-id="racheado">Racheado o cambiante</button>
+    <label>7 · ¿Tienes el archivo del vuelo? (IGC, opcional)</label>
+    <div class="igcBox" id="igcBox">
+      <button class="btnIGC" id="bIGC">📁 Subir mi archivo IGC</button>
+      <input type="file" id="ficheroIGC" accept=".igc,text/plain" style="display:none">
+      <div class="igcInfo" id="igcInfo"></div>
+      <div class="ayuda" style="margin:8px 0 0">
+        Si lo subes, saco la hora exacta y los datos del vuelo. <b>No se guarda el
+        archivo ni tu recorrido</b>: solo unos números.
+      </div>
     </div>
 
     <label>8 · Cuéntalo (opcional, pero ayuda mucho)</label>
@@ -413,7 +428,7 @@ function pintaIncidentes(){
         · ${i.mes ? nombreMes(i.mes) : 'sin fecha'}
         · ${(FRANJAS.find(f => f.id === i.franja) || {}).n || ''}
         · ${(FASES.find(f => f.id === i.fase) || {}).n || ''}
-        ${i.viento ? '· aire ' + ((VIENTOS.find(v => v.id === i.viento) || {}).n || i.viento).toLowerCase() : ''}${i.racheado ? ' y racheado' : ''}
+        ${(i.viento && i.viento.kmh != null) ? '· viento ' + i.viento.kmh + ' km/h' + (i.viento.racha && i.viento.racha > i.viento.kmh + 12 ? ' (rachas ' + i.viento.racha + ')' : '') : ''}
       </div>
       ${i.relato ? '<div class="relato">' + escapa(i.relato) + '</div>' : ''}
     </div>`;
@@ -560,9 +575,9 @@ async function envia(){
   if (!sel.gravedad) falta.push('cómo acabó');
   if (!sel.fase) falta.push('la fase del vuelo');
   if (sel.lat == null) falta.push('el sitio en el mapa');
-  if (!sel.mes) falta.push('el mes y el año');
   const otro = $('otroTexto').value.trim();
   if (sel.tipo === 'otro' && !otro) falta.push('qué tipo era (el «otro» hay que decir cuál)');
+  const dia = diaElegido();
   if (falta.length){
     aviso('Falta algo', 'Necesito ' + falta.join(', ') + '.<br><br>'
       + 'Son 40 segundos y con eso ya sirve.', 5000);
@@ -573,16 +588,30 @@ async function envia(){
   /* red de seguridad por si alguien escribe un nombre: lo aviso antes de enviar */
   const sospecha = /\b(se llama|el piloto|la piloto|tal persona)\b/i.test(relato);
 
+  /* el mes y el año salen del dia; el DIA no se guarda (privacidad) */
+  const mes = dia ? dia.slice(0, 7) : null;
+
+  /* el viento: lo saco del clima real, no lo pregunto */
+  $('bEnviar').disabled = true;
+  let viento = null;
+  if (dia){
+    $('txtEstado').textContent = 'Mirando el viento que hacía ese día…';
+    const hora = igc ? igc.horaInicio : horaDeFranja(sel.franja);
+    viento = await vientoReal(sel.lat, sel.lon, dia, hora);
+  }
+
   const dato = {
     tipo: sel.tipo, gravedad: sel.gravedad, fase: sel.fase,
-    lat: sel.lat, lon: sel.lon, mes: sel.mes, franja: sel.franja,
-    viento: sel.viento, racheado: !!sel.racheado, relato: relato.slice(0, 900),
+    lat: sel.lat, lon: sel.lon, mes: mes, franja: sel.franja,
+    viento: viento,                       /* {kmh, racha, dir} del clima real */
+    igcMin: igc ? igc.minutos : null,     /* solo numeros del vuelo */
+    igcAltMax: igc ? igc.altMax : null,
+    relato: relato.slice(0, 900),
     otro: (sel.tipo === 'otro') ? otro : null,
     creado: Date.now(),
-    v: 1
+    v: 2
   };
 
-  $('bEnviar').disabled = true;
   $('txtEstado').textContent = 'Enviando…';
   try{
     await firebase.database().ref('nearmiss/incidentes').push(dato);
@@ -599,10 +628,12 @@ async function envia(){
     ['opTipos','opGrav','opFase','opFranja'].forEach(id => {
       $(id).querySelectorAll('button').forEach(b => b.classList.remove('on'));
     });
-    $('segAire').querySelectorAll('button').forEach(b => b.classList.remove('on'));
-    $('chipsAire').querySelectorAll('button').forEach(b => b.classList.remove('on'));
-    $('selMes').value = '';
-    $('selMes').classList.add('vacio');
+    $('fecha').value = '';
+    $('ficheroIGC').value = '';
+    igc = null;
+    $('bIGC').classList.remove('on');
+    $('bIGC').textContent = '📁 Subir mi archivo IGC';
+    $('igcInfo').classList.remove('on');
     $('otroTexto').value = '';
     $('cajaOtro').classList.remove('on');
     $('txtSitio').textContent = 'Toca el sitio aproximado. No hace falta que sea exacto: solo queremos saber la zona.';
@@ -632,72 +663,122 @@ $('tPatrones').onclick = () => ponPestana('tPatrones');
 /* ---------- ARRANQUE ---------- */
 firebase.initializeApp({ databaseURL: FIRE + '/' });
 
-/* ===== EL SELECTOR DE MES Y AÑO =====
-   Dos desplegables nativos: en el movil se abren como la rueda del calendario
-   (lo que pidio Pam). Mas limpio y mas rapido que 18 botones apilados. */
-function mesElegido(){
-  const m = $('selMes').value, a = $('selAnio').value;
-  return (m && a) ? (a + '-' + m) : null;
-}
-
-(function(){
-  const hoy = new Date();
-  const sm = $('selMes'), sa = $('selAnio');
-
-  /* los meses, del mas nuevo al mas viejo, sin repetir */
-  const vistos = {};
-  for (let k = 0; k < 18; k++){
-    const d = new Date(hoy.getFullYear(), hoy.getMonth() - k, 1);
-    const num = String(d.getMonth() + 1).padStart(2, '0');
-    if (vistos[num]) continue;
-    vistos[num] = 1;
-    const o = document.createElement('option');
-    o.value = num;
-    o.textContent = MESES[d.getMonth()].charAt(0).toUpperCase() + MESES[d.getMonth()].slice(1);
-    sm.appendChild(o);
-  }
-
-  /* los años: este y los 4 anteriores */
-  for (let k = 0; k < 5; k++){
-    const a = hoy.getFullYear() - k;
-    const o = document.createElement('option');
-    o.value = a;
-    o.textContent = a;
-    if (k === 0) o.selected = true;      /* el año actual ya puesto */
-    sa.appendChild(o);
-  }
-
-  const actualiza = () => {
-    sel.mes = mesElegido();
-    sm.classList.toggle('vacio', !sm.value);
-  };
-  sm.onchange = actualiza;
-  sa.onchange = actualiza;
-  sm.classList.add('vacio');
-})();
 
 pintaOpciones('opTipos', TIPOS, 'tipo');
 pintaOpciones('opGrav', GRAV, 'gravedad');
 pintaOpciones('opFase', FASES, 'fase');
 pintaOpciones('opFranja', FRANJAS, 'franja');
-/* ===== EL AIRE: control deslizante + etiqueta de racheado ===== */
-(function(){
-  const seg = $('segAire');
-  seg.onclick = ev => {
-    const b = ev.target.closest('button');
-    if (!b) return;
-    seg.querySelectorAll('button').forEach(x => x.classList.remove('on'));
-    b.classList.add('on');
-    sel.viento = b.dataset.id;
+/* ==========================================================================
+   EL VIENTO NO SE PREGUNTA: SE DEDUCE (idea de Pam)
+   --------------------------------------------------------------------------
+   Antes le pediamos al piloto que dijera si el aire estaba flojo o fuerte.
+   Eso es preguntar lo que ya sabemos: con el dia que puso, los datos del
+   clima nos dicen el viento REAL que hacia a esa hora en ese sitio.
+   Y es mejor dato: no es lo que uno recuerda, es lo que habia.
+   Si ademas sube su IGC, la hora es exacta y el dato mejora todavia.
+   ========================================================================== */
+
+/* el dia que eligio, en formato AAAA-MM-DD (o null) */
+function diaElegido(){
+  const v = $('fecha').value;
+  return v || null;
+}
+
+/* la hora aproximada, segun la franja */
+function horaDeFranja(f){
+  if (f === 'manana') return 9;
+  if (f === 'mediodia') return 13;
+  if (f === 'tarde') return 16;
+  return 13;
+}
+
+/* le pido el viento a Open-Meteo: gratis, sin llave, y con datos desde 1940 */
+async function vientoReal(lat, lon, dia, hora){
+  try{
+    const u = 'https://archive-api.open-meteo.com/v1/archive'
+      + '?latitude=' + lat.toFixed(3) + '&longitude=' + lon.toFixed(3)
+      + '&start_date=' + dia + '&end_date=' + dia
+      + '&hourly=wind_speed_10m,wind_gusts_10m,wind_direction_10m&timezone=auto';
+    const r = await fetch(u);
+    if (!r.ok) throw new Error('http ' + r.status);
+    const d = await r.json();
+    if (!d.hourly || !d.hourly.time) return null;
+    const i = Math.min(23, Math.max(0, Math.round(hora)));
+    const v = d.hourly.wind_speed_10m ? d.hourly.wind_speed_10m[i] : null;
+    const g = d.hourly.wind_gusts_10m ? d.hourly.wind_gusts_10m[i] : null;
+    const dir = d.hourly.wind_direction_10m ? d.hourly.wind_direction_10m[i] : null;
+    if (v == null) return null;
+    return { kmh: Math.round(v), racha: g != null ? Math.round(g) : null,
+             dir: dir != null ? Math.round(dir) : null };
+  }catch(e){ return null; }
+}
+
+/* ===== EL ARCHIVO IGC =====
+   Es el registro estandar que graba el vario. De aqui saco la hora exacta,
+   la duracion y la altura maxima. NO guardo el archivo ni el recorrido. */
+function leeIGC(texto){
+  const lineas = texto.split(/\r?\n/);
+  const puntos = [];
+  let dia = null;
+  lineas.forEach(l => {
+    if (l.indexOf('HFDTE') === 0){
+      const m = l.match(/HFDTE(?:DATE:)?(\d{2})(\d{2})(\d{2})/);
+      if (m) dia = '20' + m[3] + '-' + m[2] + '-' + m[1];
+    }
+    if (l.charAt(0) === 'B' && l.length > 34){
+      const hh = parseInt(l.substr(1,2), 10);
+      const mi = parseInt(l.substr(3,2), 10);
+      const la = parseInt(l.substr(7,2), 10) + parseFloat(l.substr(9,5)) / 1000 / 60;
+      const lo = parseInt(l.substr(15,3), 10) + parseFloat(l.substr(18,5)) / 1000 / 60;
+      const alt = parseInt(l.substr(30,5), 10);
+      if (!isNaN(hh) && !isNaN(la) && !isNaN(lo))
+        puntos.push({ h: hh + mi / 60, lat: la, lon: lo, alt: isNaN(alt) ? null : alt });
+    }
+  });
+  if (!puntos.length) return null;
+  let altMax = null, t0 = puntos[0].h, t1 = puntos[0].h;
+  puntos.forEach(p => {
+    if (p.alt != null && (altMax == null || p.alt > altMax)) altMax = p.alt;
+    if (p.h < t0) t0 = p.h;
+    if (p.h > t1) t1 = p.h;
+  });
+  return { dia: dia, horaInicio: t0, horaFin: t1,
+           minutos: Math.round((t1 - t0) * 60),
+           altMax: altMax, puntos: puntos.length,
+           lat: puntos[Math.floor(puntos.length / 2)].lat,
+           lon: puntos[Math.floor(puntos.length / 2)].lon };
+}
+
+let igc = null;
+$('bIGC').onclick = () => $('ficheroIGC').click();
+$('ficheroIGC').onchange = ev => {
+  const f = ev.target.files && ev.target.files[0];
+  if (!f) return;
+  const lector = new FileReader();
+  lector.onload = () => {
+    const d = leeIGC(String(lector.result));
+    if (!d){
+      $('igcInfo').innerHTML = '⚠️ No he podido leer el archivo. ¿Seguro que es un IGC?';
+      $('igcInfo').classList.add('on');
+      return;
+    }
+    igc = d;
+    $('bIGC').classList.add('on');
+    $('bIGC').textContent = '✅ ' + f.name;
+    const h = Math.floor(d.horaInicio) + ':' + String(Math.round((d.horaInicio % 1) * 60)).padStart(2,'0');
+    $('igcInfo').innerHTML = '🛫 Volaste <b>' + d.minutos + ' minutos</b>, '
+      + 'despegando sobre las <b>' + h + '</b>'
+      + (d.altMax ? ', hasta <b>' + d.altMax + ' m</b>' : '') + '.'
+      + '<br>Con esto el viento sale de la hora exacta, no de una estimación.';
+    $('igcInfo').classList.add('on');
+    /* si el IGC trae el dia y el piloto no lo puso, lo relleno */
+    if (d.dia && !$('fecha').value) $('fecha').value = d.dia;
   };
-  const chips = $('chipsAire');
-  chips.onclick = ev => {
-    const b = ev.target.closest('button');
-    if (!b) return;
-    b.classList.toggle('on');
-    sel.racheado = b.classList.contains('on');
-  };
-})();
+  lector.readAsText(f);
+};
+
+/* ===== EL BOTON DE ENVIAR: calcula el viento y guarda ===== */
+$('bEnviar').onclick = envia;
 $('bEnviar').onclick = envia;
 
 /* los filtros del mapa */
