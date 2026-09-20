@@ -85,6 +85,18 @@
     margin-top:10px;border-left:4px solid var(--mar2)}
   .cajaOtro.on{display:block}
 
+  /* ===== SELECTOR DE MES Y AÑO =====
+     Dos desplegables nativos: en iPhone se abren como la rueda del calendario,
+     que es lo que pidio Pam. Mucho mejor que 18 botones apilados. */
+  .selects{display:flex;gap:9px}
+  .selects select{flex:1;-webkit-appearance:none;appearance:none;
+    font-family:inherit;font-size:15px;font-weight:700;color:var(--tinta);
+    padding:14px 34px 14px 14px;border:2px solid var(--linea);border-radius:11px;
+    background:#fbfdfd url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'><path d='M1 1l5 5 5-5' fill='none' stroke='%236b7f88' stroke-width='2.2' stroke-linecap='round'/></svg>") no-repeat right 13px center;
+    cursor:pointer}
+  .selects select:focus{outline:none;border-color:var(--mar2)}
+  .selects select.vacio{color:var(--gris);font-weight:600}
+
   /* el mapa pequeño para marcar el sitio */
   #mapaMarca{height:210px;border-radius:11px;margin-top:6px;overflow:hidden}
 
@@ -173,8 +185,16 @@
       Toca el sitio aproximado. No hace falta que sea exacto: solo queremos saber la zona.
     </div>
 
-    <label>5 · ¿Cuándo? (mes y año, sin día)</label>
-    <div class="opciones" id="opMes"></div>
+    <label>5 · ¿Cuándo? (mes y año)</label>
+    <div class="selects">
+      <select id="selMes">
+        <option value="">Mes…</option>
+      </select>
+      <select id="selAnio"></select>
+    </div>
+    <div class="ayuda" style="margin:7px 0 0">
+      Solo mes y año, <b>sin día</b>. Así nadie puede deducir quién eres por la fecha.
+    </div>
 
     <label>6 · Franja del día</label>
     <div class="opciones" id="opFranja"></div>
@@ -512,7 +532,7 @@ async function envia(){
   if (!sel.gravedad) falta.push('cómo acabó');
   if (!sel.fase) falta.push('la fase del vuelo');
   if (sel.lat == null) falta.push('el sitio en el mapa');
-  if (!sel.mes) falta.push('el mes');
+  if (!sel.mes) falta.push('el mes y el año');
   const otro = $('otroTexto').value.trim();
   if (sel.tipo === 'otro' && !otro) falta.push('qué tipo era (el «otro» hay que decir cuál)');
   if (falta.length){
@@ -548,9 +568,11 @@ async function envia(){
     sel = { tipo:null, gravedad:null, fase:null, mes:null, franja:null, viento:null, lat:null, lon:null };
     $('relato').value = '';
     $('txtEstado').textContent = '';
-    ['opTipos','opGrav','opFase','opMes','opFranja','opViento'].forEach(id => {
+    ['opTipos','opGrav','opFase','opFranja','opViento'].forEach(id => {
       $(id).querySelectorAll('button').forEach(b => b.classList.remove('on'));
     });
+    $('selMes').value = '';
+    $('selMes').classList.add('vacio');
     $('otroTexto').value = '';
     $('cajaOtro').classList.remove('on');
     $('txtSitio').textContent = 'Toca el sitio aproximado. No hace falta que sea exacto: solo queremos saber la zona.';
@@ -580,16 +602,48 @@ $('tPatrones').onclick = () => ponPestana('tPatrones');
 /* ---------- ARRANQUE ---------- */
 firebase.initializeApp({ databaseURL: FIRE + '/' });
 
-/* los meses: los ultimos 18, del mas nuevo al mas viejo */
+/* ===== EL SELECTOR DE MES Y AÑO =====
+   Dos desplegables nativos: en el movil se abren como la rueda del calendario
+   (lo que pidio Pam). Mas limpio y mas rapido que 18 botones apilados. */
+function mesElegido(){
+  const m = $('selMes').value, a = $('selAnio').value;
+  return (m && a) ? (a + '-' + m) : null;
+}
+
 (function(){
   const hoy = new Date();
-  const meses = [];
+  const sm = $('selMes'), sa = $('selAnio');
+
+  /* los meses, del mas nuevo al mas viejo, sin repetir */
+  const vistos = {};
   for (let k = 0; k < 18; k++){
     const d = new Date(hoy.getFullYear(), hoy.getMonth() - k, 1);
-    meses.push({ id: d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'),
-                 n: MESES[d.getMonth()] + ' ' + d.getFullYear() });
+    const num = String(d.getMonth() + 1).padStart(2, '0');
+    if (vistos[num]) continue;
+    vistos[num] = 1;
+    const o = document.createElement('option');
+    o.value = num;
+    o.textContent = MESES[d.getMonth()].charAt(0).toUpperCase() + MESES[d.getMonth()].slice(1);
+    sm.appendChild(o);
   }
-  pintaOpciones('opMes', meses, 'mes');
+
+  /* los años: este y los 4 anteriores */
+  for (let k = 0; k < 5; k++){
+    const a = hoy.getFullYear() - k;
+    const o = document.createElement('option');
+    o.value = a;
+    o.textContent = a;
+    if (k === 0) o.selected = true;      /* el año actual ya puesto */
+    sa.appendChild(o);
+  }
+
+  const actualiza = () => {
+    sel.mes = mesElegido();
+    sm.classList.toggle('vacio', !sm.value);
+  };
+  sm.onchange = actualiza;
+  sa.onchange = actualiza;
+  sm.classList.add('vacio');
 })();
 
 pintaOpciones('opTipos', TIPOS, 'tipo');
