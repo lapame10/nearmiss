@@ -729,7 +729,7 @@ const TXT = {
     enviar: 'Enviar evento anónimo',
     /* los contadores y la columna derecha */
     evEventos: 'eventos', evEvento: 'evento',
-    evSitios: 'sitios', evPatrones: 'patrones', evPatron: 'patrón',
+    evSitios: 'sitios', evSitio: 'sitio', evPatrones: 'patrones', evPatron: 'patrón',
     principios: 'Principios',
     p1: 'Seguridad antes que todo', p1s: 'Aprendemos de la experiencia real.',
     p2: 'Sin juicios, sin culpables', p2s: 'Esto no trata de señalar, sino de mejorar.',
@@ -845,7 +845,7 @@ const TXT = {
               + 'read for the flight conditions and is not kept.',
     enviar: 'Send anonymous event',
     evEventos: 'events', evEvento: 'event',
-    evSitios: 'sites', evPatrones: 'patterns', evPatron: 'pattern',
+    evSitios: 'sites', evSitio: 'site', evPatrones: 'patterns', evPatron: 'pattern',
     principios: 'Principles',
     p1: 'Safety above all', p1s: 'We learn from real experience.',
     p2: 'No judgement, no blame', p2s: 'This is not about pointing fingers, it is about improving.',
@@ -1502,20 +1502,20 @@ function escucha(){
     /* singular o plural, que '1 patrones' se ve muy mal */
     const uno = n => n === 1;
     $('nReportes').textContent = incidentes.length;
-    $('tReportes').textContent = uno(incidentes.length) ? 'evento' : 'eventos';
+    $('tReportes').textContent = uno(incidentes.length) ? t('evEvento') : t('evEventos');
 
     /* sitios distintos (por zona de ~1 km) */
     const sitios = new Set();
     incidentes.forEach(i => { if (i.lat != null) sitios.add(i.lat.toFixed(2) + ',' + i.lon.toFixed(2)); });
     $('nSitios').textContent = sitios.size;
-    $('tSitios').textContent = uno(sitios.size) ? 'sitio' : 'sitios';
+    $('tSitios').textContent = uno(sitios.size) ? t('evSitio') : t('evSitios');
 
     /* patrones recurrentes: tipos que aparecen 3 veces o más */
     const cuenta = {};
     incidentes.forEach(i => { if (i.sit) cuenta[i.sit] = (cuenta[i.sit] || 0) + 1; });
     const nPat = Object.values(cuenta).filter(n => n >= 3).length;
     $('nPatrones').textContent = nPat;
-    $('tPatronesTxt').textContent = uno(nPat) ? 'patrón' : 'patrones';
+    $('tPatronesTxt').textContent = uno(nPat) ? t('evPatron') : t('evPatrones');
 
     /* el ranking de zonas de la derecha */
     const zonas = {};
