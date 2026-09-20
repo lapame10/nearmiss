@@ -2491,6 +2491,7 @@ function entraAdmin(clave, callar){
   yoAdmin = Object.assign({ clave: clave }, a);
   try { localStorage.setItem('sr_admin', clave); } catch(e){}
   if ($('tAdmin')) $('tAdmin').style.display = '';
+  ponPestana('tAdmin');          /* y hay que IR a la vista, no solo pintarla */
   pintaAdmin();
   return true;
 }
@@ -2690,6 +2691,9 @@ function pintaLog(){
 
 /* ---------- enganchar ---------- */
 $('tAdmin').onclick = () => { ponPestana('tAdmin'); pintaAdmin(); };
+/* si no eres admin pero escribes la direccion con ?admin=, la clave se prueba
+   cuando llegue la lista de admins (arriba). Y si la clave no vale, el boton
+   del nav no aparece: nadie sospecha que existe esa pagina. */
 $('adSalir').onclick = salirAdmin;
 $('adCrear').onclick = admCrear;
 $('adBusca').oninput = pintaTodos;
@@ -2709,7 +2713,7 @@ firebase.database().ref('skyreport/admins').on('value', s2 => {
     let k = null;
     try { k = new URLSearchParams(location.search).get('admin'); } catch(e){}
     if (!k){ try { k = localStorage.getItem('sr_admin'); } catch(e){} }
-    if (k) entraAdmin(k, true);
+    if (k && entraAdmin(k, true)) ponPestana('tAdmin');
   }
 });
 firebase.database().ref('skyreport/log').limitToLast(80).on('value', s2 => {
