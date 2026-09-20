@@ -3,291 +3,504 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#1f4d5c">
-<title>NearMiss — incidentes de parapente</title>
+<meta name="theme-color" content="#16323b">
+<title>NearMiss — reportes anónimos de incidentes de parapente</title>
 <link rel="manifest" href="manifest.json">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&display=swap">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
   :root{
-    --mar:#1f4d5c; --mar2:#2d6b80; --fondo:#f4f7f6; --papel:#fff;
-    --tinta:#16323b; --gris:#6b7f88; --linea:#dde8ec;
-    --casi:#7fb3c8; --leve:#d9a441; --grave:#b5544a;
+    --marino:#16323b; --marino2:#1f4756; --mar:#2d6b80; --marClaro:#e8f1f5;
+    --naranja:#d9782f; --naranjaOsc:#b85f1c;
+    --fondo:#eef1f3; --papel:#fff; --tinta:#18313a; --gris:#63757d;
+    --linea:#dde4e8; --borde:#c9d6dc;
+    --ok:#2f7d4f; --okBg:#e9f6ee;
+    --casi:#c98a24; --casiBg:#fdf5e6;
+    --grave:#b5544a; --graveBg:#fbeeec;
   }
   *{box-sizing:border-box}
-  html,body{margin:0;height:100%}
-  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
-    background:var(--fondo);color:var(--tinta);
-    padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+  html,body{margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,Roboto,sans-serif;
+    background:var(--fondo);color:var(--tinta);font-size:15px;line-height:1.5}
+  .mso{font-family:'Material Symbols Outlined';font-weight:normal;font-style:normal;
+    font-size:21px;line-height:1;letter-spacing:normal;text-transform:none;
+    display:inline-block;white-space:nowrap;word-wrap:normal;direction:ltr;
+    -webkit-font-feature-settings:'liga';-webkit-font-smoothing:antialiased;
+    font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;vertical-align:middle}
 
-  /* ===== CABECERA ===== */
-  .cab{background:var(--mar);color:#fff;padding:12px 14px}
-  .cab h1{margin:0;font-size:20px;letter-spacing:-.3px}
-  .cab .sub{font-size:11.5px;opacity:.85;letter-spacing:.3px;margin-top:2px}
-  .cab .cuantos{float:right;text-align:right;font-size:11px;opacity:.9;line-height:1.4}
+  /* ===================== CABECERA ===================== */
+  .cab{background:var(--marino);color:#fff;padding:0 24px;
+    display:flex;align-items:center;gap:26px;height:60px;position:sticky;top:0;z-index:1500}
+  .marca{display:flex;align-items:center;gap:9px;font-weight:900;font-size:20px;
+    letter-spacing:-.5px;flex-shrink:0}
+  .marca .pico{width:24px;height:24px;background:#fff;border-radius:6px;
+    display:flex;align-items:center;justify-content:center;color:var(--marino)}
+  .marca .pico svg{width:16px;height:16px}
+  .marcaTxt{font-size:11.5px;opacity:.72;font-weight:500;margin-left:6px;
+    border-left:1px solid rgba(255,255,255,.25);padding-left:16px;
+    display:none}
+  .nav{display:flex;gap:4px;margin-left:auto}
+  .nav button{background:none;border:none;color:#fff;opacity:.75;font-family:inherit;
+    font-size:13.5px;font-weight:700;padding:9px 15px;border-radius:9px;cursor:pointer;
+    display:flex;align-items:center;gap:7px}
+  .nav button .mso{font-size:19px}
+  .nav button.on{opacity:1;background:rgba(255,255,255,.13)}
+  .cabDer{font-size:11px;opacity:.7;text-align:right;line-height:1.35;
+    border-left:1px solid rgba(255,255,255,.2);padding-left:18px;display:none}
 
-  /* ===== PESTAÑAS ===== */
-  .tabs{display:flex;background:var(--mar2);position:sticky;top:0;z-index:1400}
-  .tabs button{flex:1;border:none;background:none;color:#fff;opacity:.62;
-    padding:13px 3px;font-size:12px;font-weight:800;font-family:inherit;
-    cursor:pointer;border-bottom:3px solid transparent;white-space:nowrap}
-  .tabs button.on{opacity:1;border-bottom-color:#fff;background:rgba(255,255,255,.08)}
+  /* ===================== PORTADA (hero) ===================== */
+  .hero{background:linear-gradient(180deg,#dbe7ec 0%,#eef1f3 100%);
+    padding:26px 24px 24px;position:relative;overflow:hidden;
+    border-bottom:1px solid var(--linea)}
+  .hero .vela{position:absolute;right:8%;top:14px;opacity:.5}
+  .hero .vela svg{width:150px;height:78px}
+  .hero h1{margin:0 0 8px;font-size:31px;letter-spacing:-1px;font-weight:900;color:#12313d}
+  .hero p{margin:0;font-size:15px;color:#3b5560;max-width:620px;line-height:1.6}
+  .hero .cita{position:absolute;right:24px;top:32px;max-width:250px;
+    font-size:14.5px;font-style:italic;color:#33525f;line-height:1.55;
+    border-left:3px solid #b9cdd6;padding-left:16px;display:none}
+  .hero .cita b{font-style:normal;display:block;margin-bottom:5px}
 
-  .vista{display:none;padding-bottom:80px}
-  .vista.on{display:block}
+  /* ===================== LAYOUT ===================== */
+  .cuerpo{display:grid;grid-template-columns:1fr;gap:18px;padding:18px 24px 40px;
+    max-width:1500px;margin:0 auto}
+  @media(min-width:1000px){
+    .cuerpo{grid-template-columns:1fr 370px}
+    .hero .cita{display:block}
+    .marcaTxt{display:inline}
+    .cabDer{display:block}
+  }
 
-  /* ===== MAPA ===== */
-  #mapa{height:52vh;min-height:290px;width:100%}
-  .leaflet-container{background:#dfeae4}
+  /* ===================== TARJETAS ===================== */
+  .tarj{background:var(--papel);border-radius:13px;
+    box-shadow:0 1px 3px rgba(22,50,59,.08),0 1px 2px rgba(22,50,59,.05);
+    padding:20px;margin-bottom:15px}
+  .tarj h2{margin:0 0 2px;font-size:20px;letter-spacing:-.4px}
+  .tarj .avisoTop{font-size:12.5px;color:var(--gris)}
 
-  /* ===== FILTROS ===== */
-  .filtros{padding:11px 11px 0;display:flex;gap:7px;flex-wrap:wrap}
-  .filtros button{border:2px solid var(--linea);background:#fff;color:var(--tinta);
-    border-radius:20px;padding:7px 13px;font-size:12px;font-weight:700;
-    font-family:inherit;cursor:pointer}
-  .filtros button.on{background:var(--mar);border-color:var(--mar);color:#fff}
+  /* ===================== CAMPOS ===================== */
+  .rejilla{display:grid;grid-template-columns:1fr;gap:16px}
+  @media(min-width:760px){.rejilla.dos{grid-template-columns:1fr 1fr}}
+  .campo{position:relative}
+  .campoTit{display:flex;align-items:center;gap:10px;margin-bottom:3px}
+  .num{width:23px;height:23px;border-radius:50%;border:1.5px solid var(--borde);
+    background:#fff;color:var(--gris);font-size:12px;font-weight:800;
+    display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .campoTit h3{margin:0;font-size:15.5px;font-weight:800;letter-spacing:-.2px}
+  .etq{font-size:10.5px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;
+    padding:3px 8px;border-radius:20px;background:#eef2f4;color:var(--gris)}
+  .etq.req{background:#e8f1f5;color:var(--mar)}
+  .etq.opc{background:#f2f4f5;color:#8a99a0}
+  .campoAyuda{font-size:12.5px;color:var(--gris);margin:0 0 10px 33px;line-height:1.5}
 
-  /* ===== TARJETAS DE INCIDENTE ===== */
-  .lista{padding:11px}
-  .inc{background:var(--papel);border-radius:13px;padding:12px 14px;margin-bottom:9px;
-    box-shadow:0 1px 5px rgba(22,50,59,.08);border-left:5px solid var(--casi)}
-  .inc.leve{border-left-color:var(--leve)}
-  .inc.grave{border-left-color:var(--grave)}
-  .inc .tit{font-weight:800;font-size:14.5px;display:flex;align-items:center;gap:7px}
-  .inc .meta{font-size:11.5px;color:var(--gris);margin-top:4px;line-height:1.5}
-  .inc .relato{font-size:13px;margin-top:8px;line-height:1.55;color:#2b4750;
-    border-left:3px solid var(--linea);padding-left:10px}
-  .inc .sitio{font-weight:700;color:var(--mar)}
-  /* los datos del viento y del vuelo, en su linea */
-  .inc .datoViento,.inc .datoVuelo{font-size:12px;color:#2b4750;margin-top:7px;
-    padding:7px 10px;background:#f6fafb;border-radius:8px;font-weight:600;
-    line-height:1.5}
-  .inc .datoViento b,.inc .datoVuelo b{font-weight:800}
-  .marcoRacha{background:#fdf1e0;color:#8a4d00;font-size:10.5px;font-weight:800;
-    padding:2px 7px;border-radius:20px;margin-left:4px;letter-spacing:.2px}
+  /* los botones de opcion, con icono de linea */
+  .ops{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-left:0}
+  @media(min-width:620px){.ops{grid-template-columns:repeat(3,1fr)}}
+  .ops button{display:flex;align-items:center;gap:9px;text-align:left;
+    border:1.5px solid var(--borde);background:#fff;color:var(--tinta);
+    border-radius:10px;padding:12px 12px;font-family:inherit;font-size:13.5px;
+    font-weight:700;cursor:pointer;line-height:1.25;transition:all .13s}
+  .ops button .mso{font-size:20px;color:var(--gris);flex-shrink:0}
+  .ops button:hover{border-color:var(--mar);background:#fafcfd}
+  .ops button.on{border-color:var(--mar);background:#eef6f9;
+    box-shadow:0 0 0 1px var(--mar) inset}
+  .ops button.on .mso{color:var(--mar)}
+  .ops.ancho button{grid-column:span 1}
+  @media(min-width:620px){.ops.ancho button{grid-column:span 1}}
+  .ops.unaCol{grid-template-columns:1fr}
+  @media(min-width:620px){.ops.unaCol{grid-template-columns:1fr 1fr}}
 
-  /* ===== FORMULARIO ===== */
-  .caja{background:var(--papel);border-radius:14px;padding:16px;margin:11px;
-    box-shadow:0 1px 6px rgba(22,50,59,.08)}
-  .caja h2{margin:0 0 4px;font-size:16px}
-  .caja .ayuda{font-size:12px;color:var(--gris);line-height:1.55;margin-bottom:12px}
-  label{display:block;font-size:11.5px;font-weight:800;color:var(--gris);
-    text-transform:uppercase;letter-spacing:.7px;margin:14px 0 6px}
-  label:first-of-type{margin-top:0}
-  .opciones{display:flex;gap:7px;flex-wrap:wrap}
-  .opciones button{border:2px solid var(--linea);background:#fff;color:var(--tinta);
-    border-radius:11px;padding:10px 12px;font-size:12.5px;font-weight:700;
-    font-family:inherit;cursor:pointer;line-height:1.3;text-align:left}
-  .opciones button.on{background:#eaf4f7;border-color:var(--mar);color:var(--mar)}
-  .opciones.grav button.on{background:#f7f2e8;border-color:var(--leve);color:#8a6420}
-  textarea,input[type=text]{width:100%;font-family:inherit;font-size:14px;
-    padding:12px;border:2px solid var(--linea);border-radius:11px;background:#fbfdfd;
-    color:var(--tinta);line-height:1.5}
-  textarea{min-height:88px;resize:vertical}
-  textarea:focus,input:focus{outline:none;border-color:var(--mar2)}
-  .avisoPii{background:#fdf6e8;border-left:4px solid var(--leve);border-radius:8px;
-    padding:10px 12px;font-size:12px;line-height:1.55;margin-top:12px;color:#6b5220}
+  /* los que acaban bien / mal: color propio */
+  .ops.gravedad button.on[data-id=sin]{border-color:var(--ok);background:var(--okBg);
+    box-shadow:0 0 0 1px var(--ok) inset}
+  .ops.gravedad button.on[data-id=sin] .mso{color:var(--ok)}
+  .ops.gravedad button.on[data-id=leves]{border-color:var(--casi);background:var(--casiBg);
+    box-shadow:0 0 0 1px var(--casi) inset}
+  .ops.gravedad button.on[data-id=leves] .mso{color:var(--casi)}
+  .ops.gravedad button.on[data-id=danos]{border-color:var(--casi);background:var(--casiBg);
+    box-shadow:0 0 0 1px var(--casi) inset}
+  .ops.gravedad button.on[data-id=danos] .mso{color:var(--casi)}
+  .ops.gravedad button.on[data-id=graves]{border-color:var(--grave);background:var(--graveBg);
+    box-shadow:0 0 0 1px var(--grave) inset}
+  .ops.gravedad button.on[data-id=graves] .mso{color:var(--grave)}
 
-  /* cuando eliges "otro", te pido que digas cual: si no, no hay dato */
-  .cajaOtro{display:none;background:#f1f8fa;border-radius:11px;padding:12px;
-    margin-top:10px;border-left:4px solid var(--mar2)}
+  select,input[type=date],input[type=text],textarea{
+    width:100%;font-family:inherit;font-size:14.5px;color:var(--tinta);
+    padding:13px 14px;border:1.5px solid var(--borde);border-radius:10px;
+    background:#fff;-webkit-appearance:none;appearance:none}
+  select{background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'><path d='M1 1l5 5 5-5' fill='none' stroke='%2363757d' stroke-width='2.2' stroke-linecap='round'/></svg>");
+    background-repeat:no-repeat;background-position:right 14px center;padding-right:38px}
+  textarea{min-height:110px;resize:vertical;line-height:1.6}
+  select:focus,input:focus,textarea:focus{outline:none;border-color:var(--mar);
+    box-shadow:0 0 0 3px rgba(45,107,128,.13)}
+
+  .mapaMarcar{height:230px;border-radius:10px;overflow:hidden;
+    border:1.5px solid var(--borde)}
+
+  /* la caja del "otro" */
+  .cajaOtro{display:none;margin-top:10px;background:#f5f9fb;border-radius:10px;
+    padding:13px;border-left:3px solid var(--mar)}
   .cajaOtro.on{display:block}
+  .cajaOtro label{font-size:12px;font-weight:800;color:var(--gris);text-transform:uppercase;
+    letter-spacing:.4px;display:block;margin-bottom:7px}
 
-  /* ===== EL ARCHIVO DEL VUELO (IGC) =====
-     Opcional. Si lo sube, saco la hora exacta y los datos del vuelo. No se
-     guarda el archivo ni el recorrido: solo numeros. */
-  .igcBox{background:#f7fafb;border-radius:11px;padding:12px;
-    border:1.5px dashed #c5d8e0}
-  .btnIGC{width:100%;border:1.5px solid var(--mar);background:#fff;color:var(--mar);
-    border-radius:10px;padding:13px;font-family:inherit;font-size:13.5px;
-    font-weight:800;cursor:pointer;letter-spacing:-.1px}
-  .btnIGC.on{border-color:#2c8f5a;color:#1d6b42;background:#f0faf4}
-  .igcInfo{font-size:12.5px;color:#2b4750;margin-top:10px;line-height:1.6;display:none}
+  /* el IGC */
+  .igcBox{background:#f7fafb;border:1.5px dashed var(--borde);border-radius:10px;padding:13px}
+  .btnIgc{width:100%;border:1.5px solid var(--mar);background:#fff;color:var(--mar);
+    border-radius:10px;padding:13px;font-family:inherit;font-size:13.5px;font-weight:800;
+    cursor:pointer;display:flex;align-items:center;justify-content:center;gap:9px}
+  .btnIgc.on{border-color:var(--ok);color:var(--ok);background:var(--okBg)}
+  .igcInfo{display:none;font-size:12.5px;color:#2b4750;margin-top:10px;line-height:1.6}
   .igcInfo.on{display:block}
 
-  /* el selector de fecha: que se vea como los demas campos */
-  input[type=date]{width:100%;font-family:inherit;font-size:15px;font-weight:700;
-    padding:13px 14px;border:2px solid var(--linea);border-radius:11px;
-    background:#fbfdfd;color:var(--tinta);-webkit-appearance:none;appearance:none}
-  input[type=date]:focus{outline:none;border-color:var(--mar2)}
+  .privacidad{display:flex;align-items:flex-start;gap:11px;background:#f2f7f4;
+    border-radius:10px;padding:13px 14px;margin-top:16px;border:1px solid #d8e8dd}
+  .privacidad .mso{color:var(--ok);font-size:20px}
+  .privacidad div{font-size:12.5px;line-height:1.55;color:#33574a}
 
-  /* ===== CONTROL DESLIZANTE (estilo iOS) =====
-     Pam dijo que los botones sueltos del aire parecian "de niño". Esto es lo
-     que usan las apps serias: un solo control, la opcion activa se ve como una
-     pastilla blanca. Sobrio y compacto. */
-  .seg{display:flex;background:#eaeff2;border-radius:11px;padding:3px;gap:2px}
-  .seg button{flex:1;border:none;background:none;font-family:inherit;
-    font-size:12.5px;font-weight:700;color:var(--gris);
-    padding:11px 3px;border-radius:9px;cursor:pointer;transition:all .16s;
-    letter-spacing:-.1px}
-  .seg button.on{background:#fff;color:var(--mar);
-    box-shadow:0 1px 4px rgba(22,50,59,.16)}
+  .enviarFila{display:flex;justify-content:flex-end;margin-top:16px}
+  .btnEnviar{background:var(--naranja);color:#fff;border:none;border-radius:10px;
+    padding:15px 26px;font-family:inherit;font-size:15px;font-weight:800;
+    cursor:pointer;display:flex;align-items:center;gap:10px;
+    box-shadow:0 2px 6px rgba(185,95,28,.3);letter-spacing:.2px}
+  .btnEnviar:hover{background:var(--naranjaOsc)}
+  .btnEnviar:disabled{opacity:.6;cursor:default}
+  .contador{text-align:right;font-size:11.5px;color:var(--gris);margin-top:6px}
 
-  /* las etiquetas sueltas (racheado) */
-  .chips{display:flex;gap:7px;flex-wrap:wrap;margin-top:9px}
-  .chip{border:1.5px solid var(--linea);background:#fff;border-radius:20px;
-    padding:9px 15px;font-size:12.5px;font-weight:700;color:var(--gris);
-    font-family:inherit;cursor:pointer;transition:all .15s}
-  .chip.on{border-color:var(--mar);color:var(--mar);background:#eaf4f7}
+  /* ===================== COLUMNA DERECHA ===================== */
+  .lateral{display:flex;flex-direction:column;gap:15px}
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  .stat{background:var(--papel);border-radius:12px;padding:14px 12px;text-align:center;
+    box-shadow:0 1px 3px rgba(22,50,59,.08)}
+  .stat .mso{font-size:22px;color:var(--mar);display:block;margin:0 auto 5px}
+  .stat .n{font-size:22px;font-weight:900;letter-spacing:-.6px;line-height:1}
+  .stat .t{font-size:10.5px;color:var(--gris);margin-top:4px;line-height:1.3;
+    font-weight:600}
+  .miniTarj{background:var(--papel);border-radius:12px;padding:16px;
+    box-shadow:0 1px 3px rgba(22,50,59,.08)}
+  .miniTarj h3{margin:0 0 12px;font-size:14.5px;display:flex;align-items:center;gap:8px}
+  .miniTarj h3 .mso{font-size:19px;color:var(--mar)}
+  .princ{display:flex;gap:11px;margin-bottom:13px;align-items:flex-start}
+  .princ:last-child{margin-bottom:0}
+  .princ .mso{font-size:19px;color:var(--mar);flex-shrink:0;margin-top:1px}
+  .princ b{display:block;font-size:13px;margin-bottom:2px}
+  .princ span{font-size:12px;color:var(--gris);line-height:1.5}
+  .enlace{color:var(--mar);font-weight:800;font-size:12.5px;text-decoration:none;
+    display:inline-flex;align-items:center;gap:4px;margin-top:9px}
 
-  /* ===== SELECTOR DE MES Y AÑO =====
-     Dos desplegables nativos: en iPhone se abren como la rueda del calendario,
-     que es lo que pidio Pam. Mucho mejor que 18 botones apilados. */
-  .selects{display:flex;gap:9px}
-  .selects select{flex:1;-webkit-appearance:none;appearance:none;
-    font-family:inherit;font-size:15px;font-weight:700;color:var(--tinta);
-    padding:14px 34px 14px 14px;border:2px solid var(--linea);border-radius:11px;
-    background:#fbfdfd url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'><path d='M1 1l5 5 5-5' fill='none' stroke='%236b7f88' stroke-width='2.2' stroke-linecap='round'/></svg>") no-repeat right 13px center;
-    cursor:pointer}
-  .selects select:focus{outline:none;border-color:var(--mar2)}
-  .selects select.vacio{color:var(--gris);font-weight:600}
+  #mapaCalor{height:150px;border-radius:9px;overflow:hidden;margin-bottom:12px}
+  .zonas{font-size:12.5px}
+  .zonas .zf{display:flex;justify-content:space-between;padding:5px 0;
+    border-bottom:1px solid #f0f3f5}
+  .zonas .zf:last-child{border:none}
+  .zonas .zf b{font-weight:800;color:var(--mar)}
 
-  /* el mapa pequeño para marcar el sitio */
-  #mapaMarca{height:210px;border-radius:11px;margin-top:6px;overflow:hidden}
+  .alertaEmerg{background:#fdf6e8;border:1px solid #f0dfba;border-radius:11px;
+    padding:14px;display:flex;gap:11px;align-items:flex-start}
+  .alertaEmerg .mso{color:var(--naranja);font-size:20px}
+  .alertaEmerg div{font-size:12.5px;line-height:1.55;color:#6b5220}
 
-  .btn{width:100%;border:none;border-radius:12px;padding:17px;font-size:16px;
-    font-weight:800;cursor:pointer;margin-top:16px;background:var(--mar);color:#fff;
-    font-family:inherit;box-shadow:0 3px 0 #12333d}
-  .btn:active{transform:translateY(2px);box-shadow:0 1px 0 #12333d}
-  .btn.suave{background:#fff;color:var(--mar);border:2px solid var(--mar);box-shadow:none}
+  /* ===================== EL MAPA Y LA LISTA ===================== */
+  #mapa{height:56vh;min-height:320px;border-radius:12px;overflow:hidden;
+    box-shadow:0 1px 3px rgba(22,50,59,.08)}
+  .filtros{display:flex;gap:7px;flex-wrap:wrap;margin:14px 0 4px}
+  .filtros button{border:1.5px solid var(--borde);background:#fff;color:var(--tinta);
+    border-radius:20px;padding:8px 14px;font-size:12.5px;font-weight:700;
+    font-family:inherit;cursor:pointer;display:flex;align-items:center;gap:6px}
+  .filtros button .mso{font-size:17px;color:var(--gris)}
+  .filtros button.on{background:var(--marino);border-color:var(--marino);color:#fff}
+  .filtros button.on .mso{color:#fff}
 
-  /* ===== PATRONES ===== */
-  .patron{background:var(--papel);border-radius:13px;padding:14px;margin-bottom:10px;
-    box-shadow:0 1px 5px rgba(22,50,59,.08)}
-  .patron h3{margin:0 0 3px;font-size:15px;color:var(--mar)}
-  .patron .cuantos{font-size:11.5px;color:var(--gris);margin-bottom:10px}
-  .barra{display:flex;align-items:center;gap:9px;margin-bottom:7px;font-size:12.5px}
-  .barra .nom{flex:0 0 44%;font-weight:600}
-  .barra .pista{flex:1;height:16px;background:#eef3f5;border-radius:8px;overflow:hidden}
-  .barra .pista i{display:block;height:100%;background:var(--mar2);border-radius:8px}
-  .barra .n{flex:0 0 34px;text-align:right;font-weight:800;color:var(--gris)}
+  .lista{display:grid;grid-template-columns:1fr;gap:12px;margin-top:14px}
+  @media(min-width:760px){.lista{grid-template-columns:1fr 1fr}}
+  .inc{background:var(--papel);border-radius:12px;padding:16px;
+    box-shadow:0 1px 3px rgba(22,50,59,.08);border-left:4px solid var(--casi)}
+  .inc.sin{border-left-color:var(--ok)}
+  .inc.leves{border-left-color:var(--casi)}
+  .inc.danos{border-left-color:var(--casi)}
+  .inc.graves{border-left-color:var(--grave)}
+  .inc .tipo{display:flex;align-items:center;gap:9px;font-weight:800;font-size:15px}
+  .inc .tipo .mso{font-size:21px;color:var(--mar)}
+  .inc .meta{font-size:12px;color:var(--gris);margin-top:5px;line-height:1.55}
+  .inc .dato{font-size:12px;margin-top:8px;padding:8px 11px;border-radius:8px;
+    background:#f5f9fb;font-weight:600;line-height:1.5}
+  .inc .relato{font-size:13px;margin-top:9px;line-height:1.6;color:#2b4750;
+    border-left:3px solid var(--linea);padding-left:11px}
+  .marcaRacha{background:var(--casiBg);color:#8a5a10;font-size:10px;font-weight:800;
+    padding:2px 7px;border-radius:20px;margin-left:5px}
 
-  .pie{text-align:center;font-size:11px;color:var(--gris);padding:16px 20px 30px;line-height:1.7}
+  /* ===================== PATRONES ===================== */
+  .patrones{display:grid;grid-template-columns:1fr;gap:14px}
+  @media(min-width:760px){.patrones{grid-template-columns:1fr 1fr}}
+  .patron{background:var(--papel);border-radius:12px;padding:17px;
+    box-shadow:0 1px 3px rgba(22,50,59,.08)}
+  .patron.destaca{background:#eef6f9;border:1px solid #cfe3ec;
+    grid-column:1/-1}
+  .patron h3{margin:0 0 3px;font-size:15px;display:flex;align-items:center;gap:8px}
+  .patron h3 .mso{font-size:20px;color:var(--mar)}
+  .patron .cuantos{font-size:11.5px;color:var(--gris);margin-bottom:13px}
+  .fila{display:flex;align-items:center;gap:10px;margin-bottom:8px;font-size:13px}
+  .fila .nom{flex:0 0 40%;font-weight:600;line-height:1.3}
+  .fila .pista{flex:1;height:15px;background:#eef2f4;border-radius:8px;overflow:hidden}
+  .fila .pista i{display:block;height:100%;background:var(--mar);border-radius:8px}
+  .fila .n{flex:0 0 32px;text-align:right;font-weight:800;color:var(--gris);font-size:12.5px}
+  .vacio{text-align:center;color:var(--gris);padding:34px 20px;line-height:1.65;
+    font-size:13.5px}
 
-  /* ===== AVISO ===== */
-  .aviso{position:fixed;inset:0;background:rgba(22,50,59,.72);display:none;
-    align-items:center;justify-content:center;z-index:3000;padding:24px}
+  /* ===================== PIE ===================== */
+  .pie{background:var(--marino);color:#fff;padding:16px 24px;font-size:11.5px;
+    display:flex;justify-content:space-between;align-items:center;gap:20px;
+    flex-wrap:wrap;opacity:.96}
+  .pie .lema{font-weight:800;letter-spacing:.4px;font-size:12.5px}
+
+  /* ===================== AVISO ===================== */
+  .aviso{position:fixed;inset:0;background:rgba(22,50,59,.7);display:none;
+    align-items:center;justify-content:center;z-index:3000;padding:22px}
   .aviso.on{display:flex}
-  .aviso .caja2{background:#fff;border-radius:16px;padding:22px 18px;max-width:330px;
-    width:100%;text-align:center;box-shadow:0 12px 40px rgba(0,0,0,.35)}
-  .aviso .t{font-size:18px;font-weight:900;color:var(--mar);margin-bottom:6px}
-  .aviso .d{font-size:14px;line-height:1.6;text-align:left}
+  .aviso .caja{background:#fff;border-radius:15px;padding:24px;max-width:400px;
+    width:100%;box-shadow:0 14px 44px rgba(0,0,0,.32)}
+  .aviso h3{margin:0 0 8px;font-size:19px;color:var(--marino)}
+  .aviso .cuerpo{font-size:14px;line-height:1.65;margin-bottom:18px}
+  .aviso .btn{width:100%;background:var(--marino);color:#fff;border:none;
+    border-radius:10px;padding:14px;font-family:inherit;font-size:14.5px;
+    font-weight:800;cursor:pointer}
 
-  .pie .legal{opacity:.85}
+  .vista{display:none}
+  .vista.on{display:block}
+  .cabSeccion{display:flex;align-items:baseline;gap:12px;margin-bottom:2px}
+  .cabSeccion h2{margin:0;font-size:21px;letter-spacing:-.5px}
+  .cabSeccion .sub{font-size:12.5px;color:var(--gris)}
 </style>
 </head>
 <body>
 
+<!-- ===================== CABECERA ===================== -->
 <header class="cab">
-  <div class="cuantos" id="cuantos"></div>
-  <h1>NearMiss</h1>
-  <div class="sub">incidentes y casi-accidentes de parapente · anónimo</div>
+  <div class="marca">
+    <span class="pico"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C7 2 3 5 3 8c0 4 6 8 8.4 9.7L12 22l.6-4.3C15 16 21 12 21 8c0-3-4-6-9-6z"/></svg></span>
+    NearMiss
+    <span class="marcaTxt">Reportes anónimos de incidentes y casi accidentes de parapente</span>
+  </div>
+  <nav class="nav">
+    <button id="tMapa"><span class="mso">map</span>Mapa</button>
+    <button id="tReportar" class="on"><span class="mso">edit_note</span>Reportar</button>
+    <button id="tPatrones"><span class="mso">bar_chart</span>Patrones</button>
+  </nav>
+  <div class="cabDer">Una comunidad<br>por vuelos más seguros</div>
 </header>
 
-<nav class="tabs">
-  <button id="tMapa" class="on">🗺️ MAPA</button>
-  <button id="tReportar">✍️ REPORTAR</button>
-  <button id="tPatrones">📊 PATRONES</button>
-</nav>
-
-<!-- ===== MAPA ===== -->
-<div class="vista on" id="vMapa">
-  <div id="mapa"></div>
-  <div class="filtros" id="filtros"></div>
-  <div class="lista" id="listaInc"></div>
-</div>
-
-<!-- ===== REPORTAR ===== -->
-<div class="vista" id="vReportar">
-  <div class="caja">
-    <h2>¿Qué pasó?</h2>
-    <div class="ayuda">
-      Cuenta lo que <b>te pasó a ti o viste</b>, sin nombres. Esto no es para señalar
-      a nadie: es para que todos sepamos dónde y cuándo pasan las cosas.
-      <b>Tarda 40 segundos.</b>
+<!-- ===================== PORTADA ===================== -->
+<div class="vista on" id="vReportar">
+  <div class="hero">
+    <div class="vela">
+      <svg viewBox="0 0 150 78" fill="none">
+        <path d="M6 30 Q75 -6 144 30 Q110 22 75 22 Q40 22 6 30 Z" fill="#7ba3b5"/>
+        <path d="M20 28 L70 56 M130 28 L80 56 M75 22 L75 56" stroke="#8fb4c4" stroke-width="1.4"/>
+        <circle cx="75" cy="60" r="6" fill="#5f8b9f"/>
+      </svg>
     </div>
+    <div class="cita">
+      <b>“Cada experiencia cuenta.</b>
+      Un vuelo más seguro empieza con compartir lo que ocurrió.”
+    </div>
+    <h1>Seguridad compartida. Aprendizaje colectivo.</h1>
+    <p>Aquí puedes reportar de forma anónima incidentes y casi accidentes de parapente.<br>
+    No buscamos culpables, buscamos aprender para que todos volvamos a volar.</p>
+  </div>
 
-    <label>1 · Qué tipo de incidente</label>
-    <div class="opciones" id="opTipos"></div>
-    <div id="cajaOtro" class="cajaOtro">
-      <label style="margin-top:10px">¿Cuál? Cuéntalo en una línea</label>
-      <input type="text" id="otroTexto" maxlength="70"
-        placeholder="Ej: enganche con el arnés al despegar · objetivo en el aire · nudo en el freno">
-      <div class="ayuda" style="margin:6px 0 0">
-        Los «otro» son los que más enseñan: lo raro es lo que nadie conoce todavía.
+  <div class="cuerpo">
+    <!-- ===== FORMULARIO ===== -->
+    <div>
+      <div class="tarj">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap">
+          <h2>Reportar un incidente o casi accidente</h2>
+          <span class="avisoTop">Todos los campos son anónimos y opcionales, excepto los indicados.</span>
+        </div>
+
+        <div class="rejilla dos" style="margin-top:20px">
+
+          <div class="campo">
+            <div class="campoTit"><span class="num">1</span><h3>Qué tipo de incidente</h3>
+              <span class="etq req">obligatorio</span></div>
+            <p class="campoAyuda">Selecciona la opción que mejor describa lo ocurrido.</p>
+            <div class="ops" id="opTipos"></div>
+            <div class="cajaOtro" id="cajaOtro">
+              <label>¿Cuál? Cuéntalo en una línea</label>
+              <input type="text" id="otroTexto" maxlength="70"
+                placeholder="Ej: enganche con el arnés · objetivo en el aire · nudo en el freno">
+            </div>
+          </div>
+
+          <div class="campo">
+            <div class="campoTit"><span class="num">2</span><h3>Cómo acabó</h3>
+              <span class="etq req">obligatorio</span></div>
+            <p class="campoAyuda">Selecciona el resultado del incidente.</p>
+            <div class="ops gravedad" id="opGrav"></div>
+          </div>
+
+          <div class="campo">
+            <div class="campoTit"><span class="num">3</span><h3>Fase del vuelo</h3>
+              <span class="etq req">obligatorio</span></div>
+            <p class="campoAyuda">¿En qué fase del vuelo ocurrió?</p>
+            <select id="selFase"><option value="">Selecciona una fase…</option></select>
+          </div>
+
+          <div class="campo">
+            <div class="campoTit"><span class="num">4</span><h3>Dónde</h3>
+              <span class="etq opc">opcional</span></div>
+            <p class="campoAyuda">Marca el lugar aproximado en el mapa (no es necesario ser exacto).</p>
+            <div class="mapaMarcar" id="mapaMarca"></div>
+          </div>
+
+          <div class="campo">
+            <div class="campoTit"><span class="num">5</span><h3>Cuándo</h3>
+              <span class="etq opc">opcional</span></div>
+            <p class="campoAyuda">Con el día saco el viento real que hacía ese día ahí.</p>
+            <input type="date" id="fecha">
+          </div>
+
+          <div class="campo">
+            <div class="campoTit"><span class="num">6</span><h3>Franja del día</h3>
+              <span class="etq req">obligatorio</span></div>
+            <p class="campoAyuda">¿En qué franja del día ocurrió?</p>
+            <div class="ops" id="opFranja" style="grid-template-columns:repeat(2,1fr)"></div>
+          </div>
+
+          <div class="campo">
+            <div class="campoTit"><span class="num">7</span><h3>Cómo estaba el aire</h3>
+              <span class="etq opc">opcional</span></div>
+            <p class="campoAyuda">Lo que tú sentiste. El dato real del viento lo saco yo.</p>
+            <div class="ops" id="opAire"></div>
+          </div>
+
+          <div class="campo">
+            <div class="campoTit"><span class="num">8</span><h3>Tu archivo de vuelo</h3>
+              <span class="etq opc">opcional</span></div>
+            <p class="campoAyuda">Si subes el IGC del vario, saco la hora exacta del vuelo.</p>
+            <div class="igcBox">
+              <button class="btnIgc" id="bIGC"><span class="mso">upload_file</span> Subir mi archivo IGC</button>
+              <input type="file" id="ficheroIGC" accept=".igc,text/plain" style="display:none">
+              <div class="igcInfo" id="igcInfo"></div>
+            </div>
+          </div>
+
+        </div>
+
+        <div style="margin-top:20px">
+          <div class="campoTit"><span class="num">9</span><h3>Cuéntalo</h3>
+            <span class="etq opc">opcional</span></div>
+          <p class="campoAyuda">Describe brevemente qué pasó. Cualquier detalle puede ser útil para la comunidad.</p>
+          <textarea id="relato" maxlength="1000"
+            placeholder="Escribe aquí tu relato (opcional)..."></textarea>
+          <div class="contador"><span id="cuentaTxt">0</span> / 1000</div>
+        </div>
+
+        <div class="privacidad">
+          <span class="mso">lock</span>
+          <div><b>Tu privacidad está protegida.</b> Este reporte se envía de forma
+          completamente anónima. No pedimos tu nombre ni nada que te identifique,
+          y la ubicación se redondea a ~100 m.</div>
+        </div>
+
+        <div class="enviarFila">
+          <button class="btnEnviar" id="bEnviar">
+            <span class="mso">send</span> Enviar reporte anónimo
+          </button>
+        </div>
+        <div style="text-align:right;font-size:12px;color:var(--gris);margin-top:9px" id="txtEstado"></div>
       </div>
     </div>
 
-    <label>2 · ¿Cómo acabó?</label>
-    <div class="opciones grav" id="opGrav"></div>
-
-    <label>3 · Fase del vuelo</label>
-    <div class="opciones" id="opFase"></div>
-
-    <label>4 · ¿Dónde? (toca el mapa)</label>
-    <div id="mapaMarca"></div>
-    <div style="font-size:11.5px;color:var(--gris);margin-top:6px" id="txtSitio">
-      Toca el sitio aproximado. No hace falta que sea exacto: solo queremos saber la zona.
-    </div>
-
-    <label>5 · ¿Qué día fue? (opcional, pero sirve mucho)</label>
-    <input type="date" id="fecha">
-    <div class="ayuda" style="margin:7px 0 0">
-      Con el día saco <b>el viento real que hacía</b> ese día en ese sitio, de los datos
-      meteorológicos. Así no tienes que adivinarlo tú.
-      <br><b>El día no se guarda</b>: solo el mes y el año. Así nadie te identifica por la fecha.
-    </div>
-
-    <label>6 · ¿A qué hora más o menos?</label>
-    <div class="opciones" id="opFranja"></div>
-
-    <label>7 · ¿Tienes el archivo del vuelo? (IGC, opcional)</label>
-    <div class="igcBox" id="igcBox">
-      <button class="btnIGC" id="bIGC">📁 Subir mi archivo IGC</button>
-      <input type="file" id="ficheroIGC" accept=".igc,text/plain" style="display:none">
-      <div class="igcInfo" id="igcInfo"></div>
-      <div class="ayuda" style="margin:8px 0 0">
-        Si lo subes, saco la hora exacta y los datos del vuelo. <b>No se guarda el
-        archivo ni tu recorrido</b>: solo unos números.
+    <!-- ===== COLUMNA DERECHA ===== -->
+    <aside class="lateral">
+      <div class="stats">
+        <div class="stat"><span class="mso">description</span>
+          <div class="n" id="nReportes">0</div><div class="t">reportes<br>de la comunidad</div></div>
+        <div class="stat"><span class="mso">place</span>
+          <div class="n" id="nSitios">0</div><div class="t">sitios<br>en el mapa</div></div>
+        <div class="stat"><span class="mso">insights</span>
+          <div class="n" id="nPatrones">0</div><div class="t">patrones<br>recurrentes</div></div>
       </div>
-    </div>
 
-    <label>8 · Cuéntalo (opcional, pero ayuda mucho)</label>
-    <textarea id="relato" maxlength="900"
-      placeholder="Ej: entré a una térmica fuerte con la vela muy cargada, se me cerró el lado derecho y me costó 3 giros recuperar. No pasó nada, pero me asustó."></textarea>
+      <div class="miniTarj">
+        <h3><span class="mso">verified_user</span> Principios</h3>
+        <div class="princ"><span class="mso">health_and_safety</span>
+          <div><b>Seguridad antes que todo</b><span>Aprendemos de la experiencia real.</span></div></div>
+        <div class="princ"><span class="mso">balance</span>
+          <div><b>Sin juicios, sin culpables</b><span>Esto no trata de señalar, sino de mejorar.</span></div></div>
+        <div class="princ"><span class="mso">public</span>
+          <div><b>Comunidad global</b><span>El conocimiento compartido hace nuestros vuelos más seguros.</span></div></div>
+      </div>
 
-    <div class="avisoPii">
-      ⚠️ <b>No escribas nombres, ni matrículas, ni marcas de equipo.</b>
-      Si aparece algo así, se quita. El anonimato es lo único que hace que esto sirva.
-    </div>
+      <div class="miniTarj">
+        <h3><span class="mso">lock</span> Anónimo por diseño</h3>
+        <div style="font-size:12.5px;color:var(--gris);line-height:1.6">
+          No pedimos tu nombre, ni datos personales, ni información que pueda
+          identificarte. La ubicación es aproximada y los detalles se tratan con cuidado.
+        </div>
+        <a class="enlace" href="#" id="masPrivacidad">Saber más sobre tu privacidad →</a>
+      </div>
 
-    <button class="btn" id="bEnviar">ENVIAR (anónimo)</button>
-    <div style="text-align:center;font-size:12px;color:var(--gris);margin-top:10px"
-         id="txtEstado"></div>
+      <div class="miniTarj">
+        <h3><span class="mso">school</span> Qué aprendemos</h3>
+        <div style="font-size:12.5px;color:var(--gris);line-height:1.6">
+          Los reportes nos permiten identificar patrones, zonas de riesgo y
+          situaciones recurrentes para compartir aprendizajes con toda la comunidad.
+        </div>
+        <a class="enlace" href="#" id="verPatrones">Ver patrones y análisis →</a>
+      </div>
+
+      <div class="miniTarj">
+        <h3><span class="mso">map</span> Actividad reciente en el mapa</h3>
+        <div id="mapaCalor"></div>
+        <div class="zonas" id="zonasTop"></div>
+        <a class="enlace" href="#" id="verMapa">Ver mapa completo →</a>
+      </div>
+
+      <div class="alertaEmerg">
+        <span class="mso">warning</span>
+        <div><b>Importante</b><br>NearMiss no es un canal de emergencia. Si necesitas
+        ayuda inmediata, contacta con los servicios de rescate locales.</div>
+      </div>
+    </aside>
   </div>
 </div>
 
-<!-- ===== PATRONES ===== -->
+<!-- ===================== MAPA ===================== -->
+<div class="vista" id="vMapa">
+  <div class="cuerpo" style="grid-template-columns:1fr">
+    <div>
+      <div class="cabSeccion"><h2>Mapa de reportes</h2>
+        <span class="sub">Cada punto es un reporte. El calor muestra dónde se acumulan.</span></div>
+      <div id="mapa" style="margin-top:14px"></div>
+      <div class="filtros" id="filtros"></div>
+      <div class="lista" id="listaInc"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== PATRONES ===================== -->
 <div class="vista" id="vPatrones">
-  <div style="padding:12px 13px 0;font-size:13px;color:var(--gris);line-height:1.6">
-    Lo que sale cuando mucha gente reporta. <b>Aquí está el valor de verdad.</b>
+  <div class="cuerpo" style="grid-template-columns:1fr">
+    <div>
+      <div class="cabSeccion"><h2>Patrones y análisis</h2>
+        <span class="sub">Lo que sale cuando muchos pilotos reportan.</span></div>
+      <div class="patrones" id="patrones" style="margin-top:16px"></div>
+    </div>
   </div>
-  <div id="patrones" style="padding:11px"></div>
 </div>
 
-<div class="pie">
-  <div class="legal">
-    Esto <b>no es un canal de emergencia</b>. Si tienes un accidente, 112 o el
-    servicio de rescate de tu zona.<br>
-    Los datos son anónimos y se guardan redondeados (±100 m) para no identificar
-    a nadie.
-  </div>
-</div>
+<footer class="pie">
+  <div><b>NearMiss</b></div>
+  <div>Reportes anónimos de incidentes y casi accidentes de parapente</div>
+  <div class="lema">Volar. Aprender. Volver.</div>
+</footer>
 
 <div class="aviso" id="aviso">
-  <div class="caja2">
-    <div class="t" id="avT"></div>
-    <div class="d" id="avD"></div>
-    <button class="btn" id="avX">ENTENDIDO</button>
+  <div class="caja">
+    <h3 id="avT"></h3>
+    <div class="cuerpo" id="avD"></div>
+    <button class="btn" id="avX">Entendido</button>
   </div>
 </div>
 
@@ -298,88 +511,109 @@
 <script>
 /* ==========================================================================
    NEARMISS — incidentes y casi-accidentes de parapente
-   --------------------------------------------------------------------------
-   Idea de Pam: aprender de los sustos, no señalar culpables.
-   La aviacion comercial lleva 50 años haciendolo (ASRS, CHIRP) y funciona:
-   la mayoria de mejoras de seguridad salen de los reportes, no de los
-   accidentes. El parapente no lo tiene, y deberia.
+   Diseño: Pam.  Código: Whale.
+   No es para señalar pilotos, es para aprender.
    ========================================================================== */
 
 const FIRE = 'https://plan-gym-8aff7-default-rtdb.firebaseio.com';
 const $ = id => document.getElementById(id);
 
+/* ---------- las opciones ---------- */
 const TIPOS = [
-  { id:'plegada',    e:'🪂', n:'Plegada o cierre' },
-  { id:'colision',   e:'⚠️', n:'Colisión evitada' },
-  { id:'cable',      e:'⚡', n:'Cable o tendido' },
-  { id:'arbol',      e:'🌳', n:'Árbol o zona arbolada' },
-  { id:'rotor',      e:'🌪️', n:'Rotor o turbulencia' },
-  { id:'bajo',       e:'📉', n:'Quedarse bajo / no llegar' },
-  { id:'despegue',   e:'🚀', n:'Incidente en despegue' },
-  { id:'aterrizaje', e:'🛬', n:'Incidente al aterrizar' },
-  { id:'otro',       e:'❓', n:'Otro' },
+  { id:'casi',     e:'warning',            n:'Casi accidente' },
+  { id:'perdida',  e:'airwave',            n:'Pérdida de control' },
+  { id:'colision', e:'collision',          n:'Colisión' },
+  { id:'equipo',   e:'handyman',           n:'Problema de equipo' },
+  { id:'meteo',    e:'cloud',              n:'Condiciones meteorológicas' },
+  { id:'otro',     e:'more_horiz',         n:'Otro' },
 ];
 const GRAV = [
-  { id:'casi',  n:'Solo el susto' },
-  { id:'leve',  n:'Consecuencias leves' },
-  { id:'grave', n:'Grave (lesión o daño)' },
+  { id:'sin',    e:'check_circle',    n:'Sin lesiones' },
+  { id:'leves',  e:'healing',         n:'Lesiones leves' },
+  { id:'danos',  e:'car_crash',       n:'Daños materiales' },
+  { id:'graves', e:'personal_injury', n:'Lesiones graves' },
 ];
 const FASES = [
-  { id:'despegue', n:'Despegue' },
-  { id:'termica',  n:'Térmica / ascenso' },
-  { id:'transito', n:'Tránsito' },
+  { id:'despegue',     n:'Despegue' },
+  { id:'termica',      n:'Térmica / ascenso' },
+  { id:'transito',     n:'Tránsito' },
   { id:'aproximacion', n:'Aproximación' },
   { id:'aterrizaje',   n:'Aterrizaje' },
 ];
 const FRANJAS = [
-  { id:'manana',   n:'Mañana' },
-  { id:'mediodia', n:'Mediodía' },
-  { id:'tarde',    n:'Tarde' },
+  { id:'manana',   e:'wb_twilight',   n:'Mañana' },
+  { id:'mediodia', e:'light_mode',    n:'Mediodía' },
+  { id:'tarde',    e:'wb_sunny',      n:'Tarde' },
+  { id:'noche',    e:'dark_mode',     n:'Noche' },
 ];
-/* la intensidad del aire, de menos a mas. El "racheado" va aparte porque no
-   es intensidad: puedes tener aire flojo y racheado a la vez. */
-const VIENTOS = [
-  { id:'calmo',  n:'Calmo' },
-  { id:'flojo',  n:'Flojo' },
-  { id:'normal', n:'Normal' },
-  { id:'fuerte', n:'Fuerte' },
+const AIRES = [
+  { id:'tranquilo',  e:'air',              n:'Tranquilo' },
+  { id:'turbulento', e:'waves',            n:'Turbulento' },
+  { id:'termico',    e:'local_fire_department', n:'Térmico' },
+  { id:'fuerte',     e:'storm',            n:'Con viento fuerte' },
+  { id:'variable',   e:'swap_horiz',       n:'Variable' },
+  { id:'nose',       e:'help',             n:'No lo sé' },
 ];
 const MESES = ['enero','febrero','marzo','abril','mayo','junio',
                'julio','agosto','septiembre','octubre','noviembre','diciembre'];
 
 let incidentes = [];
-let mapaPrincipal = null, mapaMarca = null, marcaMia = null, capaPuntos = null, capaCalor = null;
+let mapaPrincipal = null, mapaMarca = null, mapaCalorMini = null;
+let marcaMia = null, capaPuntos = null, capaCalor = null, capaCalorMini = null;
 let filtro = 'todos';
-let sel = { tipo:null, gravedad:null, fase:null, mes:null, franja:null, viento:null, lat:null, lon:null };
+let sel = { tipo:null, gravedad:null, franja:null, aire:null, lat:null, lon:null };
+let igc = null;
 
 /* ---------- utilidades ---------- */
 function aviso(t, d){
-  $('avT').textContent = t;
-  $('avD').innerHTML = d;
+  $('avT').textContent = t; $('avD').innerHTML = d;
   $('aviso').classList.add('on');
 }
 $('avX').onclick = () => $('aviso').classList.remove('on');
 
+function escapa(s){
+  return String(s).replace(/[&<>"']/g, c =>
+    ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
 function tipoDe(id){ return TIPOS.find(t => t.id === id) || TIPOS[TIPOS.length - 1]; }
 function nombreMes(m){
   const p = String(m).split('-');
   return MESES[parseInt(p[1], 10) - 1] + ' ' + p[0];
 }
-/* redondeo a 3 decimales (~100 m): asi no se identifica a nadie */
 function redondea(v){ return Math.round(v * 1000) / 1000; }
 
-/* ---------- pintar las opciones de los botones ---------- */
-function pintaOpciones(idDiv, lista, campo){
+/* ---------- el viento: datos, no etiquetas ---------- */
+const CARDINALES = ['Norte','Noreste','Este','Sureste','Sur','Suroeste','Oeste','Noroeste'];
+function deDonde(g){
+  if (g == null) return '';
+  const i = Math.round((((g % 360) + 360) % 360) / 45) % 8;
+  return 'del ' + CARDINALES[i];
+}
+function textoViento(v){
+  if (!v || v.kmh == null) return '';
+  let t = v.kmh + ' km/h';
+  if (v.racha != null && v.racha > v.kmh + 8) t += ' · rachas ' + v.racha + ' km/h';
+  if (v.dir != null) t += ' · ' + deDonde(v.dir) + ' (' + v.dir + '°)';
+  return t;
+}
+function eraRacheado(v){
+  return !!(v && v.kmh != null && v.racha != null && v.racha > v.kmh + 12);
+}
+
+/* ---------- pintar botones de opcion ---------- */
+function pintaOps(idDiv, lista, campo, unacol){
   const div = $(idDiv);
   div.innerHTML = lista.map(o =>
-    `<button data-id="${o.id}">${o.e ? o.e + ' ' : ''}${o.n}</button>`).join('');
+    '<button data-id="' + o.id + '">' +
+    (o.e ? '<span class="mso">' + o.e + '</span>' : '') +
+    '<span>' + o.n + '</span></button>').join('');
+  if (unacol) div.classList.add('unaCol');
   div.onclick = ev => {
     const b = ev.target.closest('button');
     if (!b) return;
     div.querySelectorAll('button').forEach(x => x.classList.remove('on'));
     b.classList.add('on');
     sel[campo] = b.dataset.id;
-    /* si elige "otro", le pido que diga cual: si no, ese reporte no enseña nada */
     if (campo === 'tipo'){
       $('cajaOtro').classList.toggle('on', sel.tipo === 'otro');
       if (sel.tipo === 'otro') setTimeout(() => $('otroTexto').focus(), 120);
@@ -387,10 +621,10 @@ function pintaOpciones(idDiv, lista, campo){
   };
 }
 
-/* ---------- EL MAPA DE LOS DATOS ---------- */
+/* ---------- los mapas ---------- */
 function creaMapaPrincipal(){
   if (mapaPrincipal) return;
-  mapaPrincipal = L.map('mapa', { zoomControl:true, attributionControl:false })
+  mapaPrincipal = L.map('mapa', { zoomControl:true })
     .setView([19.06, -100.09], 11);
   L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', { maxZoom:16 })
     .addTo(mapaPrincipal);
@@ -402,136 +636,138 @@ function creaMapaPrincipal(){
 function creaMapaMarca(){
   if (mapaMarca) return;
   mapaMarca = L.map('mapaMarca', { zoomControl:true, attributionControl:false })
-    .setView([19.06, -100.09], 11);
+    .setView([19.06, -100.09], 10);
   L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', { maxZoom:16 })
     .addTo(mapaMarca);
   mapaMarca.on('click', e => {
-    sel.lat = redondea(e.latlng.lat);
-    sel.lon = redondea(e.latlng.lng);
+    sel.lat = redondea(e.latlng.lat); sel.lon = redondea(e.latlng.lng);
     if (marcaMia) mapaMarca.removeLayer(marcaMia);
     marcaMia = L.circleMarker([sel.lat, sel.lon],
       { radius:9, color:'#fff', weight:3, fillColor:'#2d6b80', fillOpacity:1 })
       .addTo(mapaMarca);
-    $('txtSitio').innerHTML = '📍 Marcado: <b>' + sel.lat.toFixed(3) + ', ' + sel.lon.toFixed(3) +
-      '</b> (redondeado a ~100 m, no se sabrá quién eres)';
   });
   setTimeout(() => mapaMarca.invalidateSize(), 300);
 }
-
-/* ==========================================================================
-   EL VIENTO, EN DATOS (idea de Pam)
-   Nada de "estaba moderado": eso cada uno lo entiende a su manera.
-   Mejor los numeros: 14 km/h con rachas de 35 del Oeste. Eso no se discute
-   y sirve para que quien lo lea sepa exactamente que habia ese dia.
-   ========================================================================== */
-const CARDINALES = ['Norte','Noreste','Este','Sureste','Sur','Suroeste','Oeste','Noroeste'];
-
-/* la direccion del viento: de donde VIENE (como se dice en meteorologia) */
-function deDonde(grados){
-  if (grados == null) return '';
-  const i = Math.round(((grados % 360) + 360) % 360 / 45) % 8;
-  return 'del ' + CARDINALES[i];
+function creaMapaCalor(){
+  if (mapaCalorMini) return;
+  mapaCalorMini = L.map('mapaCalor', { zoomControl:false, attributionControl:false,
+    dragging:false, scrollWheelZoom:false, doubleClickZoom:false })
+    .setView([19.06, -100.09], 9);
+  L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', { maxZoom:16 })
+    .addTo(mapaCalorMini);
+  capaCalorMini = L.layerGroup().addTo(mapaCalorMini);
+  setTimeout(() => mapaCalorMini.invalidateSize(), 400);
+}
+function pintaCalorMini(){
+  if (!mapaCalorMini) return;
+  capaCalorMini.clearLayers();
+  const pts = [];
+  incidentes.forEach(i => {
+    if (i.lat == null) return;
+    pts.push([i.lat, i.lon]);
+    const col = i.gravedad === 'graves' ? '#b5544a'
+              : (i.gravedad === 'sin' ? '#2f7d4f' : '#c98a24');
+    L.circleMarker([i.lat, i.lon], { radius:6, color:'#fff', weight:2,
+      fillColor:col, fillOpacity:.92 }).addTo(capaCalorMini);
+  });
+  if (pts.length >= 2 && L.heatLayer){
+    L.heatLayer(pts.map(p => [p[0], p[1], 1]), {
+      radius: 26, blur: 20, maxZoom: 11,
+      gradient: { 0.2:'#7fb3c8', 0.55:'#d9a441', 0.85:'#b5544a' }
+    }).addTo(mapaCalorMini);
+  }
+  if (pts.length) mapaCalorMini.fitBounds(pts, { padding:[22,22], maxZoom:11 });
 }
 
-/* cuanto soplaba, en numeros. Y aviso cuando las rachas son muy superiores */
-function textoViento(v){
-  if (!v || v.kmh == null) return '';
-  let t = v.kmh + ' km/h';
-  if (v.racha != null && v.racha > v.kmh + 8)
-    t += ' · rachas ' + v.racha + ' km/h';
-  if (v.dir != null) t += ' · ' + deDonde(v.dir) + ' (' + v.dir + '°)';
-  return t;
-}
-
-/* si las rachas pasan mucho del viento medio, es que estaba racheado */
-function eraRacheado(v){
-  return !!(v && v.kmh != null && v.racha != null && v.racha > v.kmh + 12);
-}
-
-/* ---------- PINTAR LOS INCIDENTES ---------- */
+/* ---------- la lista ---------- */
 function pintaIncidentes(){
   const vis = incidentes.filter(i => filtro === 'todos' || i.tipo === filtro);
   vis.sort((a, b) => (b.mes || '').localeCompare(a.mes || ''));
 
   $('listaInc').innerHTML = vis.length ? vis.map(i => {
     const t = tipoDe(i.tipo);
-    const titulo = (i.tipo === 'otro' && i.otro)
-      ? t.e + ' ' + escapa(i.otro)
-      : t.e + ' ' + t.n;
-    return `<div class="inc ${i.gravedad || ''}">
-      <div class="tit">${titulo}</div>
-      <div class="meta">
-        <span class="sitio">${i.lat != null && i.lon != null ? i.lat.toFixed(2) + ', ' + i.lon.toFixed(2) : 'zona no marcada'}</span>
-        · ${i.mes ? nombreMes(i.mes) : 'sin fecha'}
-        · ${(FRANJAS.find(f => f.id === i.franja) || {}).n || ''}
-        · ${(FASES.find(f => f.id === i.fase) || {}).n || ''}
-      </div>
-      ${textoViento(i.viento) ? '<div class="datoViento">💨 <b>' + textoViento(i.viento) + '</b>'
-        + (eraRacheado(i.viento) ? ' <span class="marcoRacha">racheado</span>' : '') + '</div>' : ''}
-      ${i.igcMin ? '<div class="datoVuelo">🛫 Vuelo de <b>' + i.igcMin + ' min</b>'
-        + (i.igcAltMax ? ' · techo <b>' + i.igcAltMax + ' m</b>' : '') + '</div>' : ''}
-      ${i.relato ? '<div class="relato">' + escapa(i.relato) + '</div>' : ''}
-    </div>`;
-  }).join('') : '<div style="text-align:center;color:var(--gris);padding:28px 20px;line-height:1.6">Todavía no hay reportes.<br>Sé el primero en contar uno.</div>';
+    const titulo = (i.tipo === 'otro' && i.otro) ? escapa(i.otro) : t.n;
+    return '<div class="inc ' + (i.gravedad || '') + '">'
+      + '<div class="tipo"><span class="mso">' + t.e + '</span>' + titulo + '</div>'
+      + '<div class="meta">'
+      + (i.lat != null ? i.lat.toFixed(2) + ', ' + i.lon.toFixed(2) + ' · ' : '')
+      + (i.mes ? nombreMes(i.mes) : 'sin fecha')
+      + (i.franja ? ' · ' + ((FRANJAS.find(f => f.id === i.franja) || {}).n || '') : '')
+      + (i.aire ? ' · aire ' + ((AIRES.find(a => a.id === i.aire) || {}).n || '').toLowerCase() : '')
+      + '</div>'
+      + (textoViento(i.viento) ? '<div class="dato">💨 <b>' + textoViento(i.viento) + '</b>'
+          + (eraRacheado(i.viento) ? '<span class="marcaRacha">racheado</span>' : '') + '</div>' : '')
+      + (i.igcMin ? '<div class="dato">🛫 Vuelo de <b>' + i.igcMin + ' min</b>'
+          + (i.igcAltMax ? ' · techo <b>' + i.igcAltMax + ' m</b>' : '') + '</div>' : '')
+      + (i.relato ? '<div class="relato">' + escapa(i.relato) + '</div>' : '')
+      + '</div>';
+  }).join('') : '<div class="vacio">Todavía no hay reportes.<br>Sé el primero en contar uno.</div>';
 
-  /* el mapa */
-  if (!mapaPrincipal) return;
-  capaPuntos.clearLayers();
-  if (capaCalor){ mapaPrincipal.removeLayer(capaCalor); capaCalor = null; }
-  const pts = [];
-  vis.forEach(i => {
-    if (i.lat == null || i.lon == null) return;
-    pts.push([i.lat, i.lon]);
-    const t = tipoDe(i.tipo);
-    const col = i.gravedad === 'grave' ? '#b5544a' : i.gravedad === 'leve' ? '#d9a441' : '#4a8ba6';
-    L.circleMarker([i.lat, i.lon], { radius:8, color:'#fff', weight:2.5,
-      fillColor:col, fillOpacity:.9 })
-      .bindPopup('<b>' + t.e + ' ' + t.n + '</b><br>' +
-        (i.mes ? nombreMes(i.mes) : '') + ' · ' +
-        ((FASES.find(f => f.id === i.fase) || {}).n || '') +
-        (textoViento(i.viento) ? '<br><b>💨 ' + textoViento(i.viento) + '</b>' : '') +
-        (i.igcMin ? '<br>🛫 ' + i.igcMin + ' min de vuelo' + (i.igcAltMax ? ', techo ' + i.igcAltMax + ' m' : '') : '') +
-        (i.relato ? '<br><span style="font-size:12px">' + escapa(i.relato).slice(0, 180) + '</span>' : ''))
-      .addTo(capaPuntos);
-  });
-  /* el mapa de calor: donde se acumulan */
-  if (pts.length >= 3 && window.L && L.heatLayer){
-    capaCalor = L.heatLayer(pts.map(p => [p[0], p[1], 1]), {
-      radius: 32, blur: 26, maxZoom: 13,
-      gradient: { 0.2:'#7fb3c8', 0.5:'#d9a441', 0.8:'#b5544a' }
-    }).addTo(mapaPrincipal);
-    capaCalor.bringToBack();
+  /* el mapa principal */
+  if (mapaPrincipal){
+    capaPuntos.clearLayers();
+    if (capaCalor){ mapaPrincipal.removeLayer(capaCalor); capaCalor = null; }
+    const pts = [];
+    vis.forEach(i => {
+      if (i.lat == null) return;
+      pts.push([i.lat, i.lon]);
+      const t = tipoDe(i.tipo);
+      const col = i.gravedad === 'graves' ? '#b5544a'
+                : (i.gravedad === 'sin' ? '#2f7d4f' : '#c98a24');
+      L.circleMarker([i.lat, i.lon], { radius:8, color:'#fff', weight:2.5,
+        fillColor:col, fillOpacity:.92 })
+        .bindPopup('<b>' + t.n + '</b><br>'
+          + (i.mes ? nombreMes(i.mes) : '') + ' · '
+          + ((FASES.find(f => f.id === i.fase) || {}).n || '')
+          + (textoViento(i.viento) ? '<br><b>💨 ' + textoViento(i.viento) + '</b>' : '')
+          + (i.igcMin ? '<br>🛫 ' + i.igcMin + ' min de vuelo'
+              + (i.igcAltMax ? ', techo ' + i.igcAltMax + ' m' : '') : '')
+          + (i.relato ? '<br><span style="font-size:12px">'
+              + escapa(i.relato).slice(0, 170) + '</span>' : ''))
+        .addTo(capaPuntos);
+    });
+    if (pts.length >= 3 && L.heatLayer){
+      capaCalor = L.heatLayer(pts.map(p => [p[0], p[1], 1]), {
+        radius: 34, blur: 28, maxZoom: 13,
+        gradient: { 0.2:'#7fb3c8', 0.55:'#d9a441', 0.85:'#b5544a' }
+      }).addTo(mapaPrincipal);
+      capaCalor.bringToBack();
+    }
   }
 }
 
-function escapa(s){
-  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+/* ---------- los patrones ---------- */
+function bloque(titulo, icono, sub, filas){
+  const max = Math.max.apply(null, filas.map(f => f[1])) || 1;
+  return '<div class="patron"><h3><span class="mso">' + icono + '</span>' + titulo + '</h3>'
+    + '<div class="cuantos">' + sub + '</div>'
+    + filas.map(f => '<div class="fila"><span class="nom">' + f[0] + '</span>'
+      + '<span class="pista"><i style="width:' + (f[1] / max * 100).toFixed(0) + '%"></i></span>'
+      + '<span class="n">' + f[1] + '</span></div>').join('')
+    + '</div>';
 }
 
-/* ---------- LOS PATRONES (aqui esta el oro) ---------- */
 function pintaPatrones(){
   const caja = $('patrones');
   if (incidentes.length < 3){
-    caja.innerHTML = '<div class="caja"><h2>Todavía no hay suficientes datos</h2>'
-      + '<div class="ayuda">Los patrones salen cuando hay <b>al menos 3 reportes</b>. '
-      + 'Ahora mismo hay ' + incidentes.length + '. Por eso lo importante ahora es que la '
-      + 'gente reporte: cada susto cuenta.</div></div>';
+    caja.innerHTML = '<div class="patron" style="grid-column:1/-1">'
+      + '<h3><span class="mso">hourglass_empty</span>Todavía no hay suficientes datos</h3>'
+      + '<div class="cuantos">Los patrones salen cuando hay al menos 3 reportes. '
+      + 'Ahora hay ' + incidentes.length + '.</div>'
+      + '<div style="font-size:13px;line-height:1.65;color:var(--gris)">'
+      + 'Por eso lo importante ahora es que la gente reporte: <b>cada susto cuenta</b>. '
+      + 'Con 20 reportes esto ya dice cosas útiles.</div></div>';
     return;
   }
 
-  /* 1) por tipo */
   const porTipo = {};
   incidentes.forEach(i => {
-    /* los "otro" no se juntan todos en una bolsa: se agrupan por lo que
-       escribio la gente, para que un tipo raro repetido salga a la luz */
     const clave = (i.tipo === 'otro' && i.otro)
-      ? 'otro::' + i.otro.trim().toLowerCase()
-      : i.tipo;
+      ? 'otro::' + i.otro.trim().toLowerCase() : i.tipo;
     porTipo[clave] = (porTipo[clave] || 0) + 1;
   });
   const tipos = Object.entries(porTipo).sort((a, b) => b[1] - a[1]);
 
-  /* 2) por sitio (cuadricula de ~2 km, para no señalar un punto exacto) */
   const porZona = {};
   incidentes.forEach(i => {
     if (i.lat == null) return;
@@ -542,70 +778,46 @@ function pintaPatrones(){
   });
   const zonas = Object.entries(porZona).sort((a, b) => b[1].n - a[1].n).slice(0, 8);
 
-  /* 3) por mes */
   const porMes = {};
   incidentes.forEach(i => { if (i.mes) porMes[i.mes] = (porMes[i.mes] || 0) + 1; });
-  const meses = Object.entries(porMes).sort((a, b) => a[0].localeCompare(b[0]));
-
-  /* 4) por franja y fase */
-  const porFranja = {};
-  incidentes.forEach(i => { if (i.franja) porFranja[i.franja] = (porFranja[i.franja] || 0) + 1; });
   const porFase = {};
   incidentes.forEach(i => { if (i.fase) porFase[i.fase] = (porFase[i.fase] || 0) + 1; });
-
-  function bloque(titulo, sub, filas, color){
-    const max = Math.max.apply(null, filas.map(f => f[1])) || 1;
-    return '<div class="patron"><h3>' + titulo + '</h3>'
-      + '<div class="cuantos">' + sub + '</div>'
-      + filas.map(f => '<div class="barra"><span class="nom">' + f[0] + '</span>'
-        + '<span class="pista"><i style="width:' + (f[1] / max * 100).toFixed(0) + '%'
-        + (color ? ';background:' + color : '') + '"></i></span>'
-        + '<span class="n">' + f[1] + '</span></div>').join('')
-      + '</div>';
-  }
+  const porFranja = {};
+  incidentes.forEach(i => { if (i.franja) porFranja[i.franja] = (porFranja[i.franja] || 0) + 1; });
 
   const total = incidentes.length;
   let html = '';
 
-  /* la frase que resume el hallazgo mas gordo */
   const zTop = zonas[0];
   if (zTop && zTop[1].n >= 3){
     const tTop = Object.entries(zTop[1].tipos).sort((a, b) => b[1] - a[1])[0];
-    html += '<div class="patron" style="background:#eaf4f7">'
-      + '<h3>💡 El patrón más claro hasta ahora</h3>'
-      + '<div style="font-size:14px;line-height:1.65">En la zona de <b>' + zTop[0] + '</b> hay '
-      + '<b>' + zTop[1].n + ' reportes</b>, y de ellos <b>' + tTop[1] + '</b> son de tipo '
-      + '<b>' + tipoDe(tTop[0]).n.toLowerCase() + '</b>.</div>'
-      + '<div class="cuantos" style="margin-top:9px;margin-bottom:0">Con más datos esto dirá '
-      + 'cosas como «aquí, en esta época, pasa esto». Ese es el objetivo.</div></div>';
+    html += '<div class="patron destaca">'
+      + '<h3><span class="mso">lightbulb</span>El patrón más claro hasta ahora</h3>'
+      + '<div style="font-size:14.5px;line-height:1.7">En la zona de <b>' + zTop[0]
+      + '</b> hay <b>' + zTop[1].n + ' reportes</b>, y de ellos <b>' + tTop[1]
+      + '</b> son de tipo <b>' + tipoDe(tTop[0]).n.toLowerCase() + '</b>.</div>'
+      + '<div class="cuantos" style="margin:10px 0 0">Con más datos esto dirá cosas como '
+      + '«aquí, en esta época, pasa esto». Ese es el objetivo.</div></div>';
   }
 
-  if (tipos.length) html += bloque('Qué pasa más', total + ' reportes en total',
-    tipos.map(t => {
-      if (t[0].indexOf('otro::') === 0) return ['❓ ' + t[0].slice(6), t[1]];
-      return [tipoDe(t[0]).e + ' ' + tipoDe(t[0]).n, t[1]];
-    }));
-  if (meses.length > 1) html += bloque('En qué meses',
-    'cuándo se acumulan los sustos', meses.map(m => [nombreMes(m[0]), m[1]]));
-  if (Object.keys(porFase).length) html += bloque('En qué fase del vuelo',
+  if (tipos.length) html += bloque('Qué pasa más', 'pie_chart', total + ' reportes en total',
+    tipos.map(t => t[0].indexOf('otro::') === 0
+      ? ['Otro: ' + t[0].slice(6), t[1]]
+      : [tipoDe(t[0]).n, t[1]]));
+
+  if (Object.keys(porFase).length) html += bloque('En qué fase del vuelo', 'flight',
     'dónde se complica', Object.entries(porFase).sort((a, b) => b[1] - a[1])
       .map(f => [(FASES.find(x => x.id === f[0]) || {}).n || f[0], f[1]]));
-  if (Object.keys(porFranja).length) html += bloque('A qué hora del día',
-    'franja del día', Object.entries(porFranja).sort((a, b) => b[1] - a[1])
-      .map(f => [(FRANJAS.find(x => x.id === f[0]) || {}).n || f[0], f[1]]));
-  if (zonas.length) html += bloque('Dónde (por zona de ~2 km)',
-    'sin señalar puntos exactos', zonas.map(z => [z[0], z[1].n]));
 
-  /* el viento: aqui estan los numeros, que es lo que pidio Pam */
+  /* el viento: aqui estan los numeros */
   const conViento = incidentes.filter(i => i.viento && i.viento.kmh != null);
   if (conViento.length >= 3){
     const med = Math.round(conViento.reduce((a, i) => a + i.viento.kmh, 0) / conViento.length);
     const rach = conViento.filter(i => i.viento.racha != null);
-    const medRach = rach.length ? Math.round(rach.reduce((a, i) => a + i.viento.racha, 0) / rach.length) : null;
+    const medRach = rach.length
+      ? Math.round(rach.reduce((a, i) => a + i.viento.racha, 0) / rach.length) : null;
     const nRach = conViento.filter(i => eraRacheado(i.viento)).length;
     const fuertes = conViento.filter(i => i.viento.kmh >= 25).length;
-
-    /* reparto por direccion */
     const dirs = {};
     conViento.forEach(i => {
       if (i.viento.dir == null) return;
@@ -614,168 +826,45 @@ function pintaPatrones(){
     });
     const listaDirs = Object.entries(dirs).sort((a, b) => b[1] - a[1]);
 
-    let t = '<div class="patron"><h3>💨 El viento de esos días (datos reales)</h3>'
+    let t = '<div class="patron"><h3><span class="mso">air</span>El viento de esos días</h3>'
       + '<div class="cuantos">' + conViento.length + ' de ' + total
-      + ' reportes traen el viento del clima de ese día</div>'
-      + '<div style="font-size:13.5px;line-height:1.75">'
+      + ' reportes traen el viento real del clima de ese día</div>'
+      + '<div style="font-size:13.5px;line-height:1.8">'
       + 'Viento medio: <b>' + med + ' km/h</b>'
       + (medRach != null ? ' · rachas medias: <b>' + medRach + ' km/h</b>' : '')
-      + '<br>' + nRach + ' de ' + conViento.length + ' tenían <b>rachas muy por encima del viento medio</b>'
-      + (nRach > conViento.length / 2 ? ' — o sea, la mayoría fueron con aire <b>racheado</b>' : '')
-      + '<br>' + fuertes + ' fueron con viento sostenido de <b>25 km/h o más</b>'
-      + '</div>';
-
+      + '<br>' + nRach + ' de ' + conViento.length
+      + ' tenían <b>rachas muy por encima del viento medio</b>'
+      + (nRach > conViento.length / 2 ? ' — la mayoría fueron con aire <b>racheado</b>' : '')
+      + '<br>' + fuertes + ' fueron con viento sostenido de <b>25 km/h o más</b></div>';
     if (listaDirs.length){
       const maxD = listaDirs[0][1];
-      t += '<div style="margin-top:12px">'
-        + listaDirs.map(d => '<div class="barra"><span class="nom">del ' + d[0] + '</span>'
+      t += '<div style="margin-top:13px">'
+        + listaDirs.map(d => '<div class="fila"><span class="nom">del ' + d[0] + '</span>'
           + '<span class="pista"><i style="width:' + (d[1] / maxD * 100).toFixed(0) + '%"></i></span>'
-          + '<span class="n">' + d[1] + '</span></div>').join('')
-        + '</div>';
+          + '<span class="n">' + d[1] + '</span></div>').join('') + '</div>';
     }
-    t += '</div>';
-    html += t;
+    html += t + '</div>';
   }
+
+  if (Object.keys(porFranja).length) html += bloque('A qué hora del día', 'schedule',
+    'franja del día', Object.entries(porFranja).sort((a, b) => b[1] - a[1])
+      .map(f => [(FRANJAS.find(x => x.id === f[0]) || {}).n || f[0], f[1]]));
+
+  if (zonas.length) html += bloque('Dónde (por zona de ~2 km)', 'place',
+    'sin señalar puntos exactos', zonas.map(z => [z[0], z[1].n]));
 
   caja.innerHTML = html;
 }
 
-/* ---------- ESCUCHAR LOS DATOS ---------- */
-function escucha(){
-  firebase.database().ref('nearmiss/incidentes').on('value', snap => {
-    const d = snap.val() || {};
-    incidentes = Object.entries(d).map(([id, v]) => Object.assign({ id:id }, v));
-    $('cuantos').innerHTML = '<b>' + incidentes.length + '</b><br>reportes';
-    pintaIncidentes();
-    pintaPatrones();
-  });
-}
-
-/* ---------- ENVIAR ---------- */
-async function envia(){
-  const falta = [];
-  if (!sel.tipo) falta.push('el tipo');
-  if (!sel.gravedad) falta.push('cómo acabó');
-  if (!sel.fase) falta.push('la fase del vuelo');
-  if (sel.lat == null) falta.push('el sitio en el mapa');
-  const otro = $('otroTexto').value.trim();
-  if (sel.tipo === 'otro' && !otro) falta.push('qué tipo era (el «otro» hay que decir cuál)');
-  const dia = diaElegido();
-  if (falta.length){
-    aviso('Falta algo', 'Necesito ' + falta.join(', ') + '.<br><br>'
-      + 'Son 40 segundos y con eso ya sirve.', 5000);
-    return;
-  }
-
-  const relato = $('relato').value.trim();
-  /* red de seguridad por si alguien escribe un nombre: lo aviso antes de enviar */
-  const sospecha = /\b(se llama|el piloto|la piloto|tal persona)\b/i.test(relato);
-
-  /* el mes y el año salen del dia; el DIA no se guarda (privacidad) */
-  const mes = dia ? dia.slice(0, 7) : null;
-
-  /* el viento: lo saco del clima real, no lo pregunto */
-  $('bEnviar').disabled = true;
-  let viento = null;
-  if (dia){
-    $('txtEstado').textContent = 'Mirando el viento que hacía ese día…';
-    const hora = igc ? igc.horaInicio : horaDeFranja(sel.franja);
-    viento = await vientoReal(sel.lat, sel.lon, dia, hora);
-  }
-
-  const dato = {
-    tipo: sel.tipo, gravedad: sel.gravedad, fase: sel.fase,
-    lat: sel.lat, lon: sel.lon, mes: mes, franja: sel.franja,
-    viento: viento,                       /* {kmh, racha, dir} del clima real */
-    igcMin: igc ? igc.minutos : null,     /* solo numeros del vuelo */
-    igcAltMax: igc ? igc.altMax : null,
-    relato: relato.slice(0, 900),
-    otro: (sel.tipo === 'otro') ? otro : null,
-    creado: Date.now(),
-    v: 2
-  };
-
-  $('txtEstado').textContent = 'Enviando…';
-  try{
-    await firebase.database().ref('nearmiss/incidentes').push(dato);
-    aviso('✅ Gracias', 'Ya está dentro.<br><br>Lo que has contado puede evitar que '
-      + 'otro pase por lo mismo.<br><br>'
-      + (sospecha ? '<b>⚠️ He visto algo en el texto que podría identificar a alguien. '
-        + 'Si es el caso, edítalo y manda otro.</b>' : '')
-      + 'Puedes reportar todos los que quieras: los sustos también cuentan.');
-
-    /* reinicio el formulario */
-    sel = { tipo:null, gravedad:null, fase:null, mes:null, franja:null, viento:null, lat:null, lon:null };
-    $('relato').value = '';
-    $('txtEstado').textContent = '';
-    ['opTipos','opGrav','opFase','opFranja'].forEach(id => {
-      $(id).querySelectorAll('button').forEach(b => b.classList.remove('on'));
-    });
-    $('fecha').value = '';
-    $('ficheroIGC').value = '';
-    igc = null;
-    $('bIGC').classList.remove('on');
-    $('bIGC').textContent = '📁 Subir mi archivo IGC';
-    $('igcInfo').classList.remove('on');
-    $('otroTexto').value = '';
-    $('cajaOtro').classList.remove('on');
-    $('txtSitio').textContent = 'Toca el sitio aproximado. No hace falta que sea exacto: solo queremos saber la zona.';
-    if (marcaMia && mapaMarca){ mapaMarca.removeLayer(marcaMia); marcaMia = null; }
-    ponPestana('tMapa');
-  }catch(e){
-    $('txtEstado').textContent = '';
-    aviso('No se pudo enviar', 'Revisa tu conexión e inténtalo otra vez.<br><br>'
-      + '<span style="font-size:12px;color:#6b7f88">' + escapa(e.message) + '</span>');
-  }
-  $('bEnviar').disabled = false;
-}
-
-/* ---------- PESTAÑAS ---------- */
-function ponPestana(id){
-  document.querySelectorAll('.tabs button').forEach(b => b.classList.toggle('on', b.id === id));
-  const vista = { tMapa:'vMapa', tReportar:'vReportar', tPatrones:'vPatrones' }[id];
-  document.querySelectorAll('.vista').forEach(v => v.classList.toggle('on', v.id === vista));
-  if (id === 'tMapa' && mapaPrincipal) setTimeout(() => mapaPrincipal.invalidateSize(), 120);
-  if (id === 'tReportar'){ creaMapaMarca(); setTimeout(() => mapaMarca.invalidateSize(), 150); }
-  window.scrollTo(0, 0);
-}
-$('tMapa').onclick = () => ponPestana('tMapa');
-$('tReportar').onclick = () => ponPestana('tReportar');
-$('tPatrones').onclick = () => ponPestana('tPatrones');
-
-/* ---------- ARRANQUE ---------- */
-firebase.initializeApp({ databaseURL: FIRE + '/' });
-
-
-pintaOpciones('opTipos', TIPOS, 'tipo');
-pintaOpciones('opGrav', GRAV, 'gravedad');
-pintaOpciones('opFase', FASES, 'fase');
-pintaOpciones('opFranja', FRANJAS, 'franja');
-/* ==========================================================================
-   EL VIENTO NO SE PREGUNTA: SE DEDUCE (idea de Pam)
-   --------------------------------------------------------------------------
-   Antes le pediamos al piloto que dijera si el aire estaba flojo o fuerte.
-   Eso es preguntar lo que ya sabemos: con el dia que puso, los datos del
-   clima nos dicen el viento REAL que hacia a esa hora en ese sitio.
-   Y es mejor dato: no es lo que uno recuerda, es lo que habia.
-   Si ademas sube su IGC, la hora es exacta y el dato mejora todavia.
-   ========================================================================== */
-
-/* el dia que eligio, en formato AAAA-MM-DD (o null) */
-function diaElegido(){
-  const v = $('fecha').value;
-  return v || null;
-}
-
-/* la hora aproximada, segun la franja */
+/* ---------- el viento real ---------- */
+function diaElegido(){ return $('fecha').value || null; }
 function horaDeFranja(f){
   if (f === 'manana') return 9;
   if (f === 'mediodia') return 13;
   if (f === 'tarde') return 16;
+  if (f === 'noche') return 19;
   return 13;
 }
-
-/* le pido el viento a Open-Meteo: gratis, sin llave, y con datos desde 1940 */
 async function vientoReal(lat, lon, dia, hora){
   try{
     const u = 'https://archive-api.open-meteo.com/v1/archive'
@@ -788,17 +877,15 @@ async function vientoReal(lat, lon, dia, hora){
     if (!d.hourly || !d.hourly.time) return null;
     const i = Math.min(23, Math.max(0, Math.round(hora)));
     const v = d.hourly.wind_speed_10m ? d.hourly.wind_speed_10m[i] : null;
-    const g = d.hourly.wind_gusts_10m ? d.hourly.wind_gusts_10m[i] : null;
-    const dir = d.hourly.wind_direction_10m ? d.hourly.wind_direction_10m[i] : null;
     if (v == null) return null;
+    const g = d.hourly.wind_gusts_10m ? d.hourly.wind_gusts_10m[i] : null;
+    const dr = d.hourly.wind_direction_10m ? d.hourly.wind_direction_10m[i] : null;
     return { kmh: Math.round(v), racha: g != null ? Math.round(g) : null,
-             dir: dir != null ? Math.round(dir) : null };
+             dir: dr != null ? Math.round(dr) : null };
   }catch(e){ return null; }
 }
 
-/* ===== EL ARCHIVO IGC =====
-   Es el registro estandar que graba el vario. De aqui saco la hora exacta,
-   la duracion y la altura maxima. NO guardo el archivo ni el recorrido. */
+/* ---------- el archivo IGC ---------- */
 function leeIGC(texto){
   const lineas = texto.split(/\r?\n/);
   const puntos = [];
@@ -809,13 +896,12 @@ function leeIGC(texto){
       if (m) dia = '20' + m[3] + '-' + m[2] + '-' + m[1];
     }
     if (l.charAt(0) === 'B' && l.length > 34){
-      const hh = parseInt(l.substr(1,2), 10);
-      const mi = parseInt(l.substr(3,2), 10);
+      const hh = parseInt(l.substr(1,2), 10), mi = parseInt(l.substr(3,2), 10);
       const la = parseInt(l.substr(7,2), 10) + parseFloat(l.substr(9,5)) / 1000 / 60;
       const lo = parseInt(l.substr(15,3), 10) + parseFloat(l.substr(18,5)) / 1000 / 60;
       const alt = parseInt(l.substr(30,5), 10);
       if (!isNaN(hh) && !isNaN(la) && !isNaN(lo))
-        puntos.push({ h: hh + mi / 60, lat: la, lon: lo, alt: isNaN(alt) ? null : alt });
+        puntos.push({ h:hh + mi/60, lat:la, lon:lo, alt: isNaN(alt) ? null : alt });
     }
   });
   if (!puntos.length) return null;
@@ -825,14 +911,157 @@ function leeIGC(texto){
     if (p.h < t0) t0 = p.h;
     if (p.h > t1) t1 = p.h;
   });
-  return { dia: dia, horaInicio: t0, horaFin: t1,
-           minutos: Math.round((t1 - t0) * 60),
-           altMax: altMax, puntos: puntos.length,
-           lat: puntos[Math.floor(puntos.length / 2)].lat,
-           lon: puntos[Math.floor(puntos.length / 2)].lon };
+  const medio = puntos[Math.floor(puntos.length / 2)];
+  return { dia, horaInicio:t0, horaFin:t1, minutos:Math.round((t1 - t0) * 60),
+           altMax, puntos:puntos.length, lat:medio.lat, lon:medio.lon };
 }
 
-let igc = null;
+/* ---------- los datos en vivo ---------- */
+function escucha(){
+  firebase.database().ref('nearmiss/incidentes').on('value', snap => {
+    const d = snap.val() || {};
+    incidentes = Object.entries(d).map(([id, v]) => Object.assign({ id }, v));
+    $('nReportes').textContent = incidentes.length;
+
+    /* sitios distintos (por zona de ~1 km) */
+    const sitios = new Set();
+    incidentes.forEach(i => { if (i.lat != null) sitios.add(i.lat.toFixed(2) + ',' + i.lon.toFixed(2)); });
+    $('nSitios').textContent = sitios.size;
+
+    /* patrones recurrentes: tipos que aparecen 3 veces o más */
+    const cuenta = {};
+    incidentes.forEach(i => { cuenta[i.tipo] = (cuenta[i.tipo] || 0) + 1; });
+    $('nPatrones').textContent = Object.values(cuenta).filter(n => n >= 3).length;
+
+    /* el ranking de zonas de la derecha */
+    const zonas = {};
+    incidentes.forEach(i => {
+      if (i.lat == null) return;
+      const k = i.lat.toFixed(1) + ',' + i.lon.toFixed(1);
+      zonas[k] = (zonas[k] || 0) + 1;
+    });
+    const top = Object.entries(zonas).sort((a, b) => b[1] - a[1]).slice(0, 5);
+    $('zonasTop').innerHTML = top.length ? top.map((z, k) =>
+      '<div class="zf"><span>' + (k + 1) + '. ' + z[0] + '</span><b>' + z[1] + '</b></div>').join('')
+      : '<div style="font-size:12px;color:var(--gris)">Aún no hay zonas con reportes.</div>';
+
+    pintaIncidentes();
+    pintaPatrones();
+    pintaCalorMini();
+  });
+}
+
+/* ---------- enviar ---------- */
+async function envia(){
+  const falta = [];
+  if (!sel.tipo) falta.push('el tipo de incidente');
+  if (!sel.gravedad) falta.push('cómo acabó');
+  const fase = $('selFase').value;
+  if (!fase) falta.push('la fase del vuelo');
+  if (sel.lat == null) falta.push('el sitio en el mapa');
+  if (!sel.franja) falta.push('la franja del día');
+  const otro = $('otroTexto').value.trim();
+  if (sel.tipo === 'otro' && !otro) falta.push('cuál era el «otro»');
+
+  if (falta.length){
+    aviso('Falta algún dato', 'Necesito: <b>' + falta.join(', ') + '</b>.<br><br>'
+      + 'Son 30 segundos y con eso ya sirve.');
+    return;
+  }
+
+  const dia = diaElegido();
+  const mes = dia ? dia.slice(0, 7) : null;
+  const relato = $('relato').value.trim();
+
+  $('bEnviar').disabled = true;
+  /* el viento no se pregunta: lo saco del clima real de ese dia */
+  let viento = null;
+  if (dia){
+    $('txtEstado').textContent = 'Mirando el viento que hacía ese día…';
+    const hora = igc ? igc.horaInicio : horaDeFranja(sel.franja);
+    const lat = sel.lat, lon = sel.lon;
+    viento = await vientoReal(lat, lon, dia, hora);
+  }
+  $('txtEstado').textContent = 'Enviando…';
+
+  const dato = {
+    tipo: sel.tipo, gravedad: sel.gravedad, fase: fase,
+    lat: sel.lat, lon: sel.lon, mes: mes, franja: sel.franja,
+    aire: sel.aire || null,          /* lo que sintio el piloto */
+    viento: viento,                  /* lo que habia de verdad (clima) */
+    igcMin: igc ? igc.minutos : null,
+    igcAltMax: igc ? igc.altMax : null,
+    relato: relato.slice(0, 1000),
+    otro: (sel.tipo === 'otro') ? otro : null,
+    creado: Date.now(), v: 3
+  };
+
+  try{
+    await firebase.database().ref('nearmiss/incidentes').push(dato);
+    aviso('Gracias. Ya está dentro.',
+      'Lo que has contado puede evitar que otro pase por lo mismo.'
+      + (viento ? '<br><br>Y he guardado el viento real de ese día: <b>'
+          + textoViento(viento) + '</b>.' : '')
+      + '<br><br>Puedes reportar todos los que quieras: <b>los sustos también cuentan</b>.');
+
+    /* limpio el formulario */
+    sel = { tipo:null, gravedad:null, franja:null, aire:null, lat:null, lon:null };
+    igc = null;
+    $('relato').value = '';
+    $('cuentaTxt').textContent = '0';
+    $('fecha').value = '';
+    $('selFase').value = '';
+    $('otroTexto').value = '';
+    $('cajaOtro').classList.remove('on');
+    $('ficheroIGC').value = '';
+    $('bIGC').classList.remove('on');
+    $('bIGC').innerHTML = '<span class="mso">upload_file</span> Subir mi archivo IGC';
+    $('igcInfo').classList.remove('on');
+    $('txtEstado').textContent = '';
+    document.querySelectorAll('.ops button, .filtros button').forEach(b => {});
+    ['opTipos','opGrav','opFranja','opAire'].forEach(id => {
+      $(id).querySelectorAll('button').forEach(b => b.classList.remove('on'));
+    });
+    if (marcaMia && mapaMarca){ mapaMarca.removeLayer(marcaMia); marcaMia = null; }
+    ponPestana('tMapa');
+  }catch(e){
+    $('txtEstado').textContent = '';
+    aviso('No se pudo enviar', 'Revisa tu conexión e inténtalo otra vez.<br><br>'
+      + '<span style="font-size:12px;color:#6b7f88">' + escapa(e.message) + '</span>');
+  }
+  $('bEnviar').disabled = false;
+}
+
+/* ---------- pestañas ---------- */
+function ponPestana(id){
+  document.querySelectorAll('.nav button').forEach(b => b.classList.toggle('on', b.id === id));
+  const v = { tMapa:'vMapa', tReportar:'vReportar', tPatrones:'vPatrones' }[id];
+  document.querySelectorAll('.vista').forEach(x => x.classList.toggle('on', x.id === v));
+  if (id === 'tMapa'){ creaMapaPrincipal(); setTimeout(() => mapaPrincipal.invalidateSize(), 130); }
+  if (id === 'tReportar'){ creaMapaMarca(); setTimeout(() => mapaMarca.invalidateSize(), 170); }
+  window.scrollTo(0, 0);
+}
+$('tMapa').onclick = () => ponPestana('tMapa');
+$('tReportar').onclick = () => ponPestana('tReportar');
+$('tPatrones').onclick = () => ponPestana('tPatrones');
+$('verMapa').onclick = e => { e.preventDefault(); ponPestana('tMapa'); };
+$('verPatrones').onclick = e => { e.preventDefault(); ponPestana('tPatrones'); };
+$('masPrivacidad').onclick = e => {
+  e.preventDefault();
+  aviso('Privacidad', 'No pedimos tu nombre, ni tu teléfono, ni tu correo.'
+    + '<br><br>La ubicación se <b>redondea a unos 100 metros</b>, así que no señala un punto exacto.'
+    + '<br><br>El <b>día</b> que pongas se usa solo para calcular el viento de esa jornada '
+    + 'y <b>no se guarda</b>: solo queda el mes y el año.'
+    + '<br><br>Y no hay cuentas ni usuarios: nadie puede ver quién reportó qué.'
+    + '<br><br>El anonimato no es un extra. Es lo único que hace que esto sirva.');
+};
+
+/* ---------- el contador del relato ---------- */
+$('relato').addEventListener('input', e => {
+  $('cuentaTxt').textContent = e.target.value.length;
+});
+
+/* ---------- el IGC ---------- */
 $('bIGC').onclick = () => $('ficheroIGC').click();
 $('ficheroIGC').onchange = ev => {
   const f = ev.target.files && ev.target.files[0];
@@ -847,26 +1076,36 @@ $('ficheroIGC').onchange = ev => {
     }
     igc = d;
     $('bIGC').classList.add('on');
-    $('bIGC').textContent = '✅ ' + f.name;
-    const h = Math.floor(d.horaInicio) + ':' + String(Math.round((d.horaInicio % 1) * 60)).padStart(2,'0');
-    $('igcInfo').innerHTML = '🛫 Volaste <b>' + d.minutos + ' minutos</b>, '
-      + 'despegando sobre las <b>' + h + '</b>'
-      + (d.altMax ? ', hasta <b>' + d.altMax + ' m</b>' : '') + '.'
-      + '<br>Con esto el viento sale de la hora exacta, no de una estimación.';
+    $('bIGC').innerHTML = '<span class="mso">check_circle</span> ' + escapa(f.name);
+    const h = Math.floor(d.horaInicio) + ':'
+            + String(Math.round((d.horaInicio % 1) * 60)).padStart(2, '0');
+    $('igcInfo').innerHTML = '🛫 Volaste <b>' + d.minutos + ' minutos</b>, despegando sobre las <b>'
+      + h + '</b>' + (d.altMax ? ', hasta <b>' + d.altMax + ' m</b>' : '') + '.'
+      + '<br>Con esto el viento sale de la hora exacta.';
     $('igcInfo').classList.add('on');
-    /* si el IGC trae el dia y el piloto no lo puso, lo relleno */
     if (d.dia && !$('fecha').value) $('fecha').value = d.dia;
   };
   lector.readAsText(f);
 };
 
-/* ===== EL BOTON DE ENVIAR: calcula el viento y guarda ===== */
-$('bEnviar').onclick = envia;
+/* ---------- arranque ---------- */
+firebase.initializeApp({ databaseURL: FIRE + '/' });
+
+pintaOps('opTipos', TIPOS, 'tipo');
+pintaOps('opGrav', GRAV, 'gravedad');
+pintaOps('opFranja', FRANJAS, 'franja');
+pintaOps('opAire', AIRES, 'aire');
+
+/* la fase, en desplegable como en el diseño de Pam */
+$('selFase').innerHTML = '<option value="">Selecciona una fase…</option>'
+  + FASES.map(f => '<option value="' + f.id + '">' + f.n + '</option>').join('');
+
 $('bEnviar').onclick = envia;
 
-/* los filtros del mapa */
-$('filtros').innerHTML = '<button class="on" data-f="todos">Todos</button>'
-  + TIPOS.map(t => '<button data-f="' + t.id + '">' + t.e + ' ' + t.n + '</button>').join('');
+$('filtros').innerHTML = '<button class="on" data-f="todos">'
+  + '<span class="mso">apps</span>Todos</button>'
+  + TIPOS.map(t => '<button data-f="' + t.id + '"><span class="mso">' + t.e + '</span>'
+      + t.n + '</button>').join('');
 $('filtros').onclick = ev => {
   const b = ev.target.closest('button');
   if (!b) return;
@@ -876,7 +1115,8 @@ $('filtros').onclick = ev => {
   pintaIncidentes();
 };
 
-creaMapaPrincipal();
+creaMapaMarca();
+creaMapaCalor();
 escucha();
 </script>
 </body>
