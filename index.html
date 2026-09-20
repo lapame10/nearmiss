@@ -2174,6 +2174,10 @@ function escucha(){
   firebase.database().ref('skyreport/incidentes').on('value', snap => {
     const d = snap.val() || {};
     incidentes = Object.entries(d).map(([id, v]) => Object.assign({ id }, v));
+    /* si soy admin, la vista de admin tambien depende de estos datos */
+    if (typeof yoAdmin !== 'undefined' && yoAdmin){
+      try { pintaPendientes(); pintaTodos(); } catch(e){}
+    }
     /* singular o plural, que '1 patrones' se ve muy mal */
     const uno = n => n === 1;
     /* Pam: los ceros parecen una plataforma abandonada. Un contador a 0 no se
