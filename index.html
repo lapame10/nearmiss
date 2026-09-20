@@ -1269,7 +1269,7 @@ function escucha(){
     /* singular o plural, que '1 patrones' se ve muy mal */
     const uno = n => n === 1;
     $('nReportes').textContent = incidentes.length;
-    $('tReportes').textContent = uno(incidentes.length) ? 'reporte' : 'reportes';
+    $('tReportes').textContent = uno(incidentes.length) ? 'evento' : 'eventos';
 
     /* sitios distintos (por zona de ~1 km) */
     const sitios = new Set();
