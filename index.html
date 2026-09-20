@@ -386,7 +386,11 @@
     .nav button>span:not(.mso){display:none}
     .nav button.on{gap:6px;padding:9px 12px}
     .nav button.on>span:not(.mso){display:inline}
-    .nav select.idioma{padding:7px 6px;padding-right:19px;font-size:11.5px}
+    .nav select.idioma{padding:6px 4px;padding-right:15px;font-size:11.5px;
+      background-position:right 4px center}
+    .nav button{padding:9px 8px}
+    .marca{font-size:15.5px}
+    .marca .pico{height:25px}
   }
 
   @media(max-width:640px){
@@ -473,11 +477,11 @@
   </div>
   <nav class="nav">
     <select id="bIdioma" class="idioma" aria-label="Language" title="Idioma / Language">
-      <option value="es">🌐 ES</option>
-      <option value="en">🌐 EN</option>
-      <option value="fr">🌐 FR</option>
-      <option value="de">🌐 DE</option>
-      <option value="pt">🌐 PT</option>
+      <option value="es">ES</option>
+      <option value="en">EN</option>
+      <option value="fr">FR</option>
+      <option value="de">DE</option>
+      <option value="pt">PT</option>
     </select>
     <button id="tMapa"><span class="mso">map</span><span data-i18n="navMapa">Mapa</span></button>
     <button id="tReportar" class="on"><span class="mso">edit_note</span><span data-i18n="navReportar">Reportar</span></button>
