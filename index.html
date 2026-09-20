@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#1f4d5c">
+<title>NearMiss — incidentes de parapente</title>
+<link rel="manifest" href="manifest.json">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+  :root{
+    --mar:#1f4d5c; --mar2:#2d6b80; --fondo:#f4f7f6; --papel:#fff;
+    --tinta:#16323b; --gris:#6b7f88; --linea:#dde8ec;
+    --casi:#7fb3c8; --leve:#d9a441; --grave:#b5544a;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+    background:var(--fondo);color:var(--tinta);
+    padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+
+  /* ===== CABECERA ===== */
+  .cab{background:var(--mar);color:#fff;padding:12px 14px}
+  .cab h1{margin:0;font-size:20px;letter-spacing:-.3px}
+  .cab .sub{font-size:11.5px;opacity:.85;letter-spacing:.3px;margin-top:2px}
+  .cab .cuantos{float:right;text-align:right;font-size:11px;opacity:.9;line-height:1.4}
+
+  /* ===== PESTAÑAS ===== */
+  .tabs{display:flex;background:var(--mar2);position:sticky;top:0;z-index:1400}
+  .tabs button{flex:1;border:none;background:none;color:#fff;opacity:.62;
+    padding:13px 6px;font-size:13px;font-weight:800;font-family:inherit;
+    cursor:pointer;border-bottom:3px solid transparent}
+  .tabs button.on{opacity:1;border-bottom-color:#fff;background:rgba(255,255,255,.08)}
+
+  .vista{display:none;padding-bottom:80px}
+  .vista.on{display:block}
+
+  /* ===== MAPA ===== */
+  #mapa{height:52vh;min-height:290px;width:100%}
+  .leaflet-container{background:#dfeae4}
+
+  /* ===== FILTROS ===== */
+  .filtros{padding:11px 11px 0;display:flex;gap:7px;flex-wrap:wrap}
+  .filtros button{border:2px solid var(--linea);background:#fff;color:var(--tinta);
+    border-radius:20px;padding:7px 13px;font-size:12px;font-weight:700;
+    font-family:inherit;cursor:pointer}
+  .filtros button.on{background:var(--mar);border-color:var(--mar);color:#fff}
+
+  /* ===== TARJETAS DE INCIDENTE ===== */
+  .lista{padding:11px}
+  .inc{background:var(--papel);border-radius:13px;padding:12px 14px;margin-bottom:9px;
+    box-shadow:0 1px 5px rgba(22,50,59,.08);border-left:5px solid var(--casi)}
+  .inc.leve{border-left-color:var(--leve)}
+  .inc.grave{border-left-color:var(--grave)}
+  .inc .tit{font-weight:800;font-size:14.5px;display:flex;align-items:center;gap:7px}
+  .inc .meta{font-size:11.5px;color:var(--gris);margin-top:4px;line-height:1.5}
+  .inc .relato{font-size:13px;margin-top:8px;line-height:1.55;color:#2b4750;
+    border-left:3px solid var(--linea);padding-left:10px}
+  .inc .sitio{font-weight:700;color:var(--mar)}
+
+  /* ===== FORMULARIO ===== */
+  .caja{background:var(--papel);border-radius:14px;padding:16px;margin:11px;
+    box-shadow:0 1px 6px rgba(22,50,59,.08)}
+  .caja h2{margin:0 0 4px;font-size:16px}
+  .caja .ayuda{font-size:12px;color:var(--gris);line-height:1.55;margin-bottom:12px}
+  label{display:block;font-size:11.5px;font-weight:800;color:var(--gris);
+    text-transform:uppercase;letter-spacing:.7px;margin:14px 0 6px}
+  label:first-of-type{margin-top:0}
+  .opciones{display:flex;gap:7px;flex-wrap:wrap}
+  .opciones button{border:2px solid var(--linea);background:#fff;color:var(--tinta);
+    border-radius:11px;padding:10px 12px;font-size:12.5px;font-weight:700;
+    font-family:inherit;cursor:pointer;line-height:1.3;text-align:left}
+  .opciones button.on{background:#eaf4f7;border-color:var(--mar);color:var(--mar)}
+  .opciones.grav button.on{background:#f7f2e8;border-color:var(--leve);color:#8a6420}
+  textarea,input[type=text]{width:100%;font-family:inherit;font-size:14px;
+    padding:12px;border:2px solid var(--linea);border-radius:11px;background:#fbfdfd;
+    color:var(--tinta);line-height:1.5}
+  textarea{min-height:88px;resize:vertical}
+  textarea:focus,input:focus{outline:none;border-color:var(--mar2)}
+  .avisoPii{background:#fdf6e8;border-left:4px solid var(--leve);border-radius:8px;
+    padding:10px 12px;font-size:12px;line-height:1.55;margin-top:12px;color:#6b5220}
+
+  /* el mapa pequeño para marcar el sitio */
+  #mapaMarca{height:210px;border-radius:11px;margin-top:6px;overflow:hidden}
+
+  .btn{width:100%;border:none;border-radius:12px;padding:17px;font-size:16px;
+    font-weight:800;cursor:pointer;margin-top:16px;background:var(--mar);color:#fff;
+    font-family:inherit;box-shadow:0 3px 0 #12333d}
+  .btn:active{transform:translateY(2px);box-shadow:0 1px 0 #12333d}
+  .btn.suave{background:#fff;color:var(--mar);border:2px solid var(--mar);box-shadow:none}
+
+  /* ===== PATRONES ===== */
+  .patron{background:var(--papel);border-radius:13px;padding:14px;margin-bottom:10px;
+    box-shadow:0 1px 5px rgba(22,50,59,.08)}
+  .patron h3{margin:0 0 3px;font-size:15px;color:var(--mar)}
+  .patron .cuantos{font-size:11.5px;color:var(--gris);margin-bottom:10px}
+  .barra{display:flex;align-items:center;gap:9px;margin-bottom:7px;font-size:12.5px}
+  .barra .nom{flex:0 0 44%;font-weight:600}
+  .barra .pista{flex:1;height:16px;background:#eef3f5;border-radius:8px;overflow:hidden}
+  .barra .pista i{display:block;height:100%;background:var(--mar2);border-radius:8px}
+  .barra .n{flex:0 0 34px;text-align:right;font-weight:800;color:var(--gris)}
+
+  .pie{text-align:center;font-size:11px;color:var(--gris);padding:16px 20px 30px;line-height:1.7}
+
+  /* ===== AVISO ===== */
+  .aviso{position:fixed;inset:0;background:rgba(22,50,59,.72);display:none;
+    align-items:center;justify-content:center;z-index:3000;padding:24px}
+  .aviso.on{display:flex}
+  .aviso .caja2{background:#fff;border-radius:16px;padding:22px 18px;max-width:330px;
+    width:100%;text-align:center;box-shadow:0 12px 40px rgba(0,0,0,.35)}
+  .aviso .t{font-size:18px;font-weight:900;color:var(--mar);margin-bottom:6px}
+  .aviso .d{font-size:14px;line-height:1.6;text-align:left}
+
+  .pie .legal{opacity:.85}
+</style>
+</head>
+<body>
+
+<header class="cab">
+  <div class="cuantos" id="cuantos"></div>
+  <h1>NearMiss</h1>
+  <div class="sub">incidentes y casi-accidentes de parapente · anónimo</div>
+</header>
+
+<nav class="tabs">
+  <button id="tMapa" class="on">🗺️ MAPA</button>
+  <button id="tReportar">✍️ REPORTAR</button>
+  <button id="tPatrones">📊 PATRONES</button>
+</nav>
+
+<!-- ===== MAPA ===== -->
+<div class="vista on" id="vMapa">
+  <div id="mapa"></div>
+  <div class="filtros" id="filtros"></div>
+  <div class="lista" id="listaInc"></div>
+</div>
+
+<!-- ===== REPORTAR ===== -->
+<div class="vista" id="vReportar">
+  <div class="caja">
+    <h2>¿Qué pasó?</h2>
+    <div class="ayuda">
+      Cuenta lo que <b>te pasó a ti o viste</b>, sin nombres. Esto no es para señalar
+      a nadie: es para que todos sepamos dónde y cuándo pasan las cosas.
+      <b>Tarda 40 segundos.</b>
+    </div>
+
+    <label>1 · Qué tipo de incidente</label>
+    <div class="opciones" id="opTipos"></div>
+
+    <label>2 · ¿Cómo acabó?</label>
+    <div class="opciones grav" id="opGrav"></div>
+
+    <label>3 · Fase del vuelo</label>
+    <div class="opciones" id="opFase"></div>
+
+    <label>4 · ¿Dónde? (toca el mapa)</label>
+    <div id="mapaMarca"></div>
+    <div style="font-size:11.5px;color:var(--gris);margin-top:6px" id="txtSitio">
+      Toca el sitio aproximado. No hace falta que sea exacto: solo queremos saber la zona.
+    </div>
+
+    <label>5 · ¿Cuándo? (mes y año, sin día)</label>
+    <div class="opciones" id="opMes"></div>
+
+    <label>6 · Franja del día</label>
+    <div class="opciones" id="opFranja"></div>
+
+    <label>7 · ¿Cómo estaba el aire?</label>
+    <div class="opciones" id="opViento"></div>
+
+    <label>8 · Cuéntalo (opcional, pero ayuda mucho)</label>
+    <textarea id="relato" maxlength="900"
+      placeholder="Ej: entré a una térmica fuerte con la vela muy cargada, se me cerró el lado derecho y me costó 3 giros recuperar. No pasó nada, pero me asustó."></textarea>
+
+    <div class="avisoPii">
+      ⚠️ <b>No escribas nombres, ni matrículas, ni marcas de equipo.</b>
+      Si aparece algo así, se quita. El anonimato es lo único que hace que esto sirva.
+    </div>
+
+    <button class="btn" id="bEnviar">ENVIAR (anónimo)</button>
+    <div style="text-align:center;font-size:12px;color:var(--gris);margin-top:10px"
+         id="txtEstado"></div>
+  </div>
+</div>
+
+<!-- ===== PATRONES ===== -->
+<div class="vista" id="vPatrones">
+  <div style="padding:12px 13px 0;font-size:13px;color:var(--gris);line-height:1.6">
+    Lo que sale cuando mucha gente reporta. <b>Aquí está el valor de verdad.</b>
+  </div>
+  <div id="patrones" style="padding:11px"></div>
+</div>
+
+<div class="pie">
+  <div class="legal">
+    Esto <b>no es un canal de emergencia</b>. Si tienes un accidente, 112 o el
+    servicio de rescate de tu zona.<br>
+    Los datos son anónimos y se guardan redondeados (±100 m) para no identificar
+    a nadie.
+  </div>
+</div>
+
+<div class="aviso" id="aviso">
+  <div class="caja2">
+    <div class="t" id="avT"></div>
+    <div class="d" id="avD"></div>
+    <button class="btn" id="avX">ENTENDIDO</button>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+<script>
+/* ==========================================================================
+   NEARMISS — incidentes y casi-accidentes de parapente
+   --------------------------------------------------------------------------
+   Idea de Pam: aprender de los sustos, no señalar culpables.
+   La aviacion comercial lleva 50 años haciendolo (ASRS, CHIRP) y funciona:
+   la mayoria de mejoras de seguridad salen de los reportes, no de los
+   accidentes. El parapente no lo tiene, y deberia.
+   ========================================================================== */
+
+const FIRE = 'https://plan-gym-8aff7-default-rtdb.firebaseio.com';
+const $ = id => document.getElementById(id);
+
+const TIPOS = [
+  { id:'plegada',    e:'🪂', n:'Plegada o cierre' },
+  { id:'colision',   e:'⚠️', n:'Colisión evitada' },
+  { id:'cable',      e:'⚡', n:'Cable o tendido' },
+  { id:'arbol',      e:'🌳', n:'Árbol o zona arbolada' },
+  { id:'rotor',      e:'🌪️', n:'Rotor o turbulencia' },
+  { id:'bajo',       e:'📉', n:'Quedarse bajo / no llegar' },
+  { id:'despegue',   e:'🚀', n:'Incidente en despegue' },
+  { id:'aterrizaje', e:'🛬', n:'Incidente al aterrizar' },
+  { id:'otro',       e:'❓', n:'Otro' },
+];
+const GRAV = [
+  { id:'casi',  n:'Solo el susto' },
+  { id:'leve',  n:'Consecuencias leves' },
+  { id:'grave', n:'Grave (lesión o daño)' },
+];
+const FASES = [
+  { id:'despegue', n:'Despegue' },
+  { id:'termica',  n:'Térmica / ascenso' },
+  { id:'transito', n:'Tránsito' },
+  { id:'aproximacion', n:'Aproximación' },
+  { id:'aterrizaje',   n:'Aterrizaje' },
+];
+const FRANJAS = [
+  { id:'manana',   n:'Mañana' },
+  { id:'mediodia', n:'Mediodía' },
+  { id:'tarde',    n:'Tarde' },
+];
+const VIENTOS = [
+  { id:'flojo',     n:'Flojo' },
+  { id:'normal',    n:'Normal' },
+  { id:'fuerte',    n:'Fuerte' },
+  { id:'cambiante', n:'Cambiante / racheado' },
+  { id:'nose',      n:'No sé' },
+];
+const MESES = ['enero','febrero','marzo','abril','mayo','junio',
+               'julio','agosto','septiembre','octubre','noviembre','diciembre'];
+
+let incidentes = [];
+let mapaPrincipal = null, mapaMarca = null, marcaMia = null, capaPuntos = null, capaCalor = null;
+let filtro = 'todos';
+let sel = { tipo:null, gravedad:null, fase:null, mes:null, franja:null, viento:null, lat:null, lon:null };
+
+/* ---------- utilidades ---------- */
+function aviso(t, d){
+  $('avT').textContent = t;
+  $('avD').innerHTML = d;
+  $('aviso').classList.add('on');
+}
+$('avX').onclick = () => $('aviso').classList.remove('on');
+
+function tipoDe(id){ return TIPOS.find(t => t.id === id) || TIPOS[TIPOS.length - 1]; }
+function nombreMes(m){
+  const p = String(m).split('-');
+  return MESES[parseInt(p[1], 10) - 1] + ' ' + p[0];
+}
+/* redondeo a 3 decimales (~100 m): asi no se identifica a nadie */
+function redondea(v){ return Math.round(v * 1000) / 1000; }
+
+/* ---------- pintar las opciones de los botones ---------- */
+function pintaOpciones(idDiv, lista, campo){
+  const div = $(idDiv);
+  div.innerHTML = lista.map(o =>
+    `<button data-id="${o.id}">${o.e ? o.e + ' ' : ''}${o.n}</button>`).join('');
+  div.onclick = ev => {
+    const b = ev.target.closest('button');
+    if (!b) return;
+    div.querySelectorAll('button').forEach(x => x.classList.remove('on'));
+    b.classList.add('on');
+    sel[campo] = b.dataset.id;
+  };
+}
+
+/* ---------- EL MAPA DE LOS DATOS ---------- */
+function creaMapaPrincipal(){
+  if (mapaPrincipal) return;
+  mapaPrincipal = L.map('mapa', { zoomControl:true, attributionControl:false })
+    .setView([19.06, -100.09], 11);
+  L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', { maxZoom:16 })
+    .addTo(mapaPrincipal);
+  L.control.attribution({ position:'bottomright', prefix:false })
+    .addAttribution('OpenTopoMap · OpenStreetMap').addTo(mapaPrincipal);
+  capaPuntos = L.layerGroup().addTo(mapaPrincipal);
+  setTimeout(() => mapaPrincipal.invalidateSize(), 300);
+}
+function creaMapaMarca(){
+  if (mapaMarca) return;
+  mapaMarca = L.map('mapaMarca', { zoomControl:true, attributionControl:false })
+    .setView([19.06, -100.09], 11);
+  L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', { maxZoom:16 })
+    .addTo(mapaMarca);
+  mapaMarca.on('click', e => {
+    sel.lat = redondea(e.latlng.lat);
+    sel.lon = redondea(e.latlng.lng);
+    if (marcaMia) mapaMarca.removeLayer(marcaMia);
+    marcaMia = L.circleMarker([sel.lat, sel.lon],
+      { radius:9, color:'#fff', weight:3, fillColor:'#2d6b80', fillOpacity:1 })
+      .addTo(mapaMarca);
+    $('txtSitio').innerHTML = '📍 Marcado: <b>' + sel.lat.toFixed(3) + ', ' + sel.lon.toFixed(3) +
+      '</b> (redondeado a ~100 m, no se sabrá quién eres)';
+  });
+  setTimeout(() => mapaMarca.invalidateSize(), 300);
+}
+
+/* ---------- PINTAR LOS INCIDENTES ---------- */
+function pintaIncidentes(){
+  const vis = incidentes.filter(i => filtro === 'todos' || i.tipo === filtro);
+  vis.sort((a, b) => (b.mes || '').localeCompare(a.mes || ''));
+
+  $('listaInc').innerHTML = vis.length ? vis.map(i => {
+    const t = tipoDe(i.tipo);
+    return `<div class="inc ${i.gravedad || ''}">
+      <div class="tit">${t.e} ${t.n}</div>
+      <div class="meta">
+        <span class="sitio">${i.lat != null && i.lon != null ? i.lat.toFixed(2) + ', ' + i.lon.toFixed(2) : 'zona no marcada'}</span>
+        · ${i.mes ? nombreMes(i.mes) : 'sin fecha'}
+        · ${(FRANJAS.find(f => f.id === i.franja) || {}).n || ''}
+        · ${(FASES.find(f => f.id === i.fase) || {}).n || ''}
+        ${i.viento ? '· viento ' + ((VIENTOS.find(v => v.id === i.viento) || {}).n || '').toLowerCase() : ''}
+      </div>
+      ${i.relato ? '<div class="relato">' + escapa(i.relato) + '</div>' : ''}
+    </div>`;
+  }).join('') : '<div style="text-align:center;color:var(--gris);padding:28px 20px;line-height:1.6">Todavía no hay reportes.<br>Sé el primero en contar uno.</div>';
+
+  /* el mapa */
+  if (!mapaPrincipal) return;
+  capaPuntos.clearLayers();
+  if (capaCalor){ mapaPrincipal.removeLayer(capaCalor); capaCalor = null; }
+  const pts = [];
+  vis.forEach(i => {
+    if (i.lat == null || i.lon == null) return;
+    pts.push([i.lat, i.lon]);
+    const t = tipoDe(i.tipo);
+    const col = i.gravedad === 'grave' ? '#b5544a' : i.gravedad === 'leve' ? '#d9a441' : '#4a8ba6';
+    L.circleMarker([i.lat, i.lon], { radius:8, color:'#fff', weight:2.5,
+      fillColor:col, fillOpacity:.9 })
+      .bindPopup('<b>' + t.e + ' ' + t.n + '</b><br>' +
+        (i.mes ? nombreMes(i.mes) : '') + ' · ' +
+        ((FASES.find(f => f.id === i.fase) || {}).n || '') +
+        (i.relato ? '<br><span style="font-size:12px">' + escapa(i.relato).slice(0, 180) + '</span>' : ''))
+      .addTo(capaPuntos);
+  });
+  /* el mapa de calor: donde se acumulan */
+  if (pts.length >= 3 && window.L && L.heatLayer){
+    capaCalor = L.heatLayer(pts.map(p => [p[0], p[1], 1]), {
+      radius: 32, blur: 26, maxZoom: 13,
+      gradient: { 0.2:'#7fb3c8', 0.5:'#d9a441', 0.8:'#b5544a' }
+    }).addTo(mapaPrincipal);
+    capaCalor.bringToBack();
+  }
+}
+
+function escapa(s){
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+/* ---------- LOS PATRONES (aqui esta el oro) ---------- */
+function pintaPatrones(){
+  const caja = $('patrones');
+  if (incidentes.length < 3){
+    caja.innerHTML = '<div class="caja"><h2>Todavía no hay suficientes datos</h2>'
+      + '<div class="ayuda">Los patrones salen cuando hay <b>al menos 3 reportes</b>. '
+      + 'Ahora mismo hay ' + incidentes.length + '. Por eso lo importante ahora es que la '
+      + 'gente reporte: cada susto cuenta.</div></div>';
+    return;
+  }
+
+  /* 1) por tipo */
+  const porTipo = {};
+  incidentes.forEach(i => { porTipo[i.tipo] = (porTipo[i.tipo] || 0) + 1; });
+  const tipos = Object.entries(porTipo).sort((a, b) => b[1] - a[1]);
+
+  /* 2) por sitio (cuadricula de ~2 km, para no señalar un punto exacto) */
+  const porZona = {};
+  incidentes.forEach(i => {
+    if (i.lat == null) return;
+    const clave = i.lat.toFixed(1) + ', ' + i.lon.toFixed(1);
+    porZona[clave] = porZona[clave] || { n:0, tipos:{} };
+    porZona[clave].n++;
+    porZona[clave].tipos[i.tipo] = (porZona[clave].tipos[i.tipo] || 0) + 1;
+  });
+  const zonas = Object.entries(porZona).sort((a, b) => b[1].n - a[1].n).slice(0, 8);
+
+  /* 3) por mes */
+  const porMes = {};
+  incidentes.forEach(i => { if (i.mes) porMes[i.mes] = (porMes[i.mes] || 0) + 1; });
+  const meses = Object.entries(porMes).sort((a, b) => a[0].localeCompare(b[0]));
+
+  /* 4) por franja y fase */
+  const porFranja = {};
+  incidentes.forEach(i => { if (i.franja) porFranja[i.franja] = (porFranja[i.franja] || 0) + 1; });
+  const porFase = {};
+  incidentes.forEach(i => { if (i.fase) porFase[i.fase] = (porFase[i.fase] || 0) + 1; });
+
+  function bloque(titulo, sub, filas, color){
+    const max = Math.max.apply(null, filas.map(f => f[1])) || 1;
+    return '<div class="patron"><h3>' + titulo + '</h3>'
+      + '<div class="cuantos">' + sub + '</div>'
+      + filas.map(f => '<div class="barra"><span class="nom">' + f[0] + '</span>'
+        + '<span class="pista"><i style="width:' + (f[1] / max * 100).toFixed(0) + '%'
+        + (color ? ';background:' + color : '') + '"></i></span>'
+        + '<span class="n">' + f[1] + '</span></div>').join('')
+      + '</div>';
+  }
+
+  const total = incidentes.length;
+  let html = '';
+
+  /* la frase que resume el hallazgo mas gordo */
+  const zTop = zonas[0];
+  if (zTop && zTop[1].n >= 3){
+    const tTop = Object.entries(zTop[1].tipos).sort((a, b) => b[1] - a[1])[0];
+    html += '<div class="patron" style="background:#eaf4f7">'
+      + '<h3>💡 El patrón más claro hasta ahora</h3>'
+      + '<div style="font-size:14px;line-height:1.65">En la zona de <b>' + zTop[0] + '</b> hay '
+      + '<b>' + zTop[1].n + ' reportes</b>, y de ellos <b>' + tTop[1] + '</b> son de tipo '
+      + '<b>' + tipoDe(tTop[0]).n.toLowerCase() + '</b>.</div>'
+      + '<div class="cuantos" style="margin-top:9px;margin-bottom:0">Con más datos esto dirá '
+      + 'cosas como «aquí, en esta época, pasa esto». Ese es el objetivo.</div></div>';
+  }
+
+  if (tipos.length) html += bloque('Qué pasa más', total + ' reportes en total',
+    tipos.map(t => [tipoDe(t[0]).e + ' ' + tipoDe(t[0]).n, t[1]]));
+  if (meses.length > 1) html += bloque('En qué meses',
+    'cuándo se acumulan los sustos', meses.map(m => [nombreMes(m[0]), m[1]]));
+  if (Object.keys(porFase).length) html += bloque('En qué fase del vuelo',
+    'dónde se complica', Object.entries(porFase).sort((a, b) => b[1] - a[1])
+      .map(f => [(FASES.find(x => x.id === f[0]) || {}).n || f[0], f[1]]));
+  if (Object.keys(porFranja).length) html += bloque('A qué hora del día',
+    'franja del día', Object.entries(porFranja).sort((a, b) => b[1] - a[1])
+      .map(f => [(FRANJAS.find(x => x.id === f[0]) || {}).n || f[0], f[1]]));
+  if (zonas.length) html += bloque('Dónde (por zona de ~2 km)',
+    'sin señalar puntos exactos', zonas.map(z => [z[0], z[1].n]));
+
+  caja.innerHTML = html;
+}
+
+/* ---------- ESCUCHAR LOS DATOS ---------- */
+function escucha(){
+  firebase.database().ref('nearmiss/incidentes').on('value', snap => {
+    const d = snap.val() || {};
+    incidentes = Object.entries(d).map(([id, v]) => Object.assign({ id:id }, v));
+    $('cuantos').innerHTML = '<b>' + incidentes.length + '</b><br>reportes';
+    pintaIncidentes();
+    pintaPatrones();
+  });
+}
+
+/* ---------- ENVIAR ---------- */
+async function envia(){
+  const falta = [];
+  if (!sel.tipo) falta.push('el tipo');
+  if (!sel.gravedad) falta.push('cómo acabó');
+  if (!sel.fase) falta.push('la fase del vuelo');
+  if (sel.lat == null) falta.push('el sitio en el mapa');
+  if (!sel.mes) falta.push('el mes');
+  if (falta.length){
+    aviso('Falta algo', 'Necesito ' + falta.join(', ') + '.<br><br>'
+      + 'Son 40 segundos y con eso ya sirve.', 5000);
+    return;
+  }
+
+  const relato = $('relato').value.trim();
+  /* red de seguridad por si alguien escribe un nombre: lo aviso antes de enviar */
+  const sospecha = /\b(se llama|el piloto|la piloto|tal persona)\b/i.test(relato);
+
+  const dato = {
+    tipo: sel.tipo, gravedad: sel.gravedad, fase: sel.fase,
+    lat: sel.lat, lon: sel.lon, mes: sel.mes, franja: sel.franja,
+    viento: sel.viento, relato: relato.slice(0, 900),
+    creado: Date.now(),
+    v: 1
+  };
+
+  $('bEnviar').disabled = true;
+  $('txtEstado').textContent = 'Enviando…';
+  try{
+    await firebase.database().ref('nearmiss/incidentes').push(dato);
+    aviso('✅ Gracias', 'Ya está dentro.<br><br>Lo que has contado puede evitar que '
+      + 'otro pase por lo mismo.<br><br>'
+      + (sospecha ? '<b>⚠️ He visto algo en el texto que podría identificar a alguien. '
+        + 'Si es el caso, edítalo y manda otro.</b>' : '')
+      + 'Puedes reportar todos los que quieras: los sustos también cuentan.');
+
+    /* reinicio el formulario */
+    sel = { tipo:null, gravedad:null, fase:null, mes:null, franja:null, viento:null, lat:null, lon:null };
+    $('relato').value = '';
+    $('txtEstado').textContent = '';
+    ['opTipos','opGrav','opFase','opMes','opFranja','opViento'].forEach(id => {
+      $(id).querySelectorAll('button').forEach(b => b.classList.remove('on'));
+    });
+    $('txtSitio').textContent = 'Toca el sitio aproximado. No hace falta que sea exacto: solo queremos saber la zona.';
+    if (marcaMia && mapaMarca){ mapaMarca.removeLayer(marcaMia); marcaMia = null; }
+    ponPestana('tMapa');
+  }catch(e){
+    $('txtEstado').textContent = '';
+    aviso('No se pudo enviar', 'Revisa tu conexión e inténtalo otra vez.<br><br>'
+      + '<span style="font-size:12px;color:#6b7f88">' + escapa(e.message) + '</span>');
+  }
+  $('bEnviar').disabled = false;
+}
+
+/* ---------- PESTAÑAS ---------- */
+function ponPestana(id){
+  document.querySelectorAll('.tabs button').forEach(b => b.classList.toggle('on', b.id === id));
+  const vista = { tMapa:'vMapa', tReportar:'vReportar', tPatrones:'vPatrones' }[id];
+  document.querySelectorAll('.vista').forEach(v => v.classList.toggle('on', v.id === vista));
+  if (id === 'tMapa' && mapaPrincipal) setTimeout(() => mapaPrincipal.invalidateSize(), 120);
+  if (id === 'tReportar'){ creaMapaMarca(); setTimeout(() => mapaMarca.invalidateSize(), 150); }
+  window.scrollTo(0, 0);
+}
+$('tMapa').onclick = () => ponPestana('tMapa');
+$('tReportar').onclick = () => ponPestana('tReportar');
+$('tPatrones').onclick = () => ponPestana('tPatrones');
+
+/* ---------- ARRANQUE ---------- */
+firebase.initializeApp({ databaseURL: FIRE + '/' });
+
+/* los meses: los ultimos 18, del mas nuevo al mas viejo */
+(function(){
+  const hoy = new Date();
+  const meses = [];
+  for (let k = 0; k < 18; k++){
+    const d = new Date(hoy.getFullYear(), hoy.getMonth() - k, 1);
+    meses.push({ id: d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'),
+                 n: MESES[d.getMonth()] + ' ' + d.getFullYear() });
+  }
+  pintaOpciones('opMes', meses, 'mes');
+})();
+
+pintaOpciones('opTipos', TIPOS, 'tipo');
+pintaOpciones('opGrav', GRAV, 'gravedad');
+pintaOpciones('opFase', FASES, 'fase');
+pintaOpciones('opFranja', FRANJAS, 'franja');
+pintaOpciones('opViento', VIENTOS, 'viento');
+$('bEnviar').onclick = envia;
+
+/* los filtros del mapa */
+$('filtros').innerHTML = '<button class="on" data-f="todos">Todos</button>'
+  + TIPOS.map(t => '<button data-f="' + t.id + '">' + t.e + ' ' + t.n + '</button>').join('');
+$('filtros').onclick = ev => {
+  const b = ev.target.closest('button');
+  if (!b) return;
+  $('filtros').querySelectorAll('button').forEach(x => x.classList.remove('on'));
+  b.classList.add('on');
+  filtro = b.dataset.f;
+  pintaIncidentes();
+};
+
+creaMapaPrincipal();
+escucha();
+</script>
+</body>
+</html>
