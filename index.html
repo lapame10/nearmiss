@@ -62,10 +62,13 @@
   .hero .cita b{font-style:normal;display:block;margin-bottom:5px}
 
   /* ===================== LAYOUT ===================== */
-  .cuerpo{display:grid;grid-template-columns:1fr;gap:18px;padding:18px 24px 40px;
-    max-width:1500px;margin:0 auto}
+  /* OJO: minmax(0,1fr) y min-width:0 son necesarios. Sin eso, el formulario
+     impone un ancho minimo grande y la columna derecha se sale de la pantalla. */
+  .cuerpo{display:grid;grid-template-columns:minmax(0,1fr);gap:18px;
+    padding:18px 24px 40px;max-width:1500px;margin:0 auto}
+  .cuerpo>*{min-width:0}
   @media(min-width:1000px){
-    .cuerpo{grid-template-columns:1fr 370px}
+    .cuerpo{grid-template-columns:minmax(0,1fr) 360px}
     .hero .cita{display:block}
     .marcaTxt{display:inline}
     .cabDer{display:block}
@@ -522,7 +525,7 @@ const $ = id => document.getElementById(id);
 const TIPOS = [
   { id:'casi',     e:'warning',            n:'Casi accidente' },
   { id:'perdida',  e:'airwave',            n:'Pérdida de control' },
-  { id:'colision', e:'collision',          n:'Colisión' },
+  { id:'colision', e:'merge',              n:'Colisión' },
   { id:'equipo',   e:'handyman',           n:'Problema de equipo' },
   { id:'meteo',    e:'cloud',              n:'Condiciones meteorológicas' },
   { id:'otro',     e:'more_horiz',         n:'Otro' },
@@ -581,6 +584,52 @@ function nombreMes(m){
   return MESES[parseInt(p[1], 10) - 1] + ' ' + p[0];
 }
 function redondea(v){ return Math.round(v * 1000) / 1000; }
+
+/* ==========================================================================
+   LOS NOMBRES DE LOS SITIOS
+   Las coordenadas no dicen nada. Mejor "Valle de Bravo" que "19.1, -100.1".
+   Si el punto no esta cerca de ningun sitio conocido, se muestran los numeros.
+   ========================================================================== */
+const SITIOS = [
+  /* Mexico */
+  { n:'Valle de Bravo',   lat:19.107, lon:-100.126 },
+  { n:'La Torre (Valle)', lat:19.093, lon:-100.150 },
+  { n:'Sacacorchos',      lat:19.110, lon:-100.162 },
+  { n:'Malinalco',        lat:18.949, lon: -99.496 },
+  { n:'Tapalpa',          lat:19.945, lon:-103.766 },
+  { n:'La Huasteca',      lat:25.636, lon:-100.440 },
+  { n:'San Miguel de Allende', lat:20.914, lon:-100.744 },
+  { n:'Taxco',            lat:18.556, lon: -99.605 },
+  { n:'Huasca',           lat:20.203, lon: -98.570 },
+  { n:'Mineral del Chico',lat:20.216, lon: -98.729 },
+  { n:'Pico de Orizaba',  lat:18.853, lon: -97.107 },
+  { n:'Chapala',          lat:20.296, lon:-103.191 },
+  { n:'Tequesquitengo',   lat:18.617, lon: -99.260 },
+  { n:'Amecameca',        lat:19.126, lon: -98.766 },
+  { n:'Cuetzalan',        lat:20.018, lon: -97.523 },
+  { n:'Real de Catorce',  lat:23.690, lon:-100.887 },
+  /* los clasicos internacionales */
+  { n:'Roldanillo (Colombia)', lat:4.415, lon:-76.153 },
+  { n:'Castejón de Sos (España)', lat:42.512, lon:0.487 },
+  { n:'Algodonales (España)',   lat:36.877, lon:-5.404 },
+  { n:'Piedrahíta (España)',    lat:40.464, lon:-5.327 },
+  { n:'Organyà (España)',       lat:42.211, lon:1.325 },
+  { n:'Áger (España)',          lat:42.000, lon:0.760 },
+];
+
+/* el sitio conocido mas cercano, si esta a menos de 35 km */
+function nombreSitio(lat, lon){
+  let mejor = null, dMin = 1e9;
+  const cos = Math.cos(lat * Math.PI / 180);
+  SITIOS.forEach(s => {
+    const dLat = (lat - s.lat) * 111;
+    const dLon = (lon - s.lon) * 111 * cos;
+    const d = Math.sqrt(dLat * dLat + dLon * dLon);
+    if (d < dMin){ dMin = d; mejor = s.n; }
+  });
+  if (dMin <= 35) return mejor;
+  return lat.toFixed(2) + ', ' + lon.toFixed(2);
+}
 
 /* ---------- el viento: datos, no etiquetas ---------- */
 const CARDINALES = ['Norte','Noreste','Este','Sureste','Sur','Suroeste','Oeste','Noroeste'];
@@ -690,7 +739,7 @@ function pintaIncidentes(){
     return '<div class="inc ' + (i.gravedad || '') + '">'
       + '<div class="tipo"><span class="mso">' + t.e + '</span>' + titulo + '</div>'
       + '<div class="meta">'
-      + (i.lat != null ? i.lat.toFixed(2) + ', ' + i.lon.toFixed(2) + ' · ' : '')
+      + (i.lat != null ? '<b>' + escapa(nombreSitio(i.lat, i.lon)) + '</b> · ' : '')
       + (i.mes ? nombreMes(i.mes) : 'sin fecha')
       + (i.franja ? ' · ' + ((FRANJAS.find(f => f.id === i.franja) || {}).n || '') : '')
       + (i.aire ? ' · aire ' + ((AIRES.find(a => a.id === i.aire) || {}).n || '').toLowerCase() : '')
@@ -793,7 +842,8 @@ function pintaPatrones(){
     const tTop = Object.entries(zTop[1].tipos).sort((a, b) => b[1] - a[1])[0];
     html += '<div class="patron destaca">'
       + '<h3><span class="mso">lightbulb</span>El patrón más claro hasta ahora</h3>'
-      + '<div style="font-size:14.5px;line-height:1.7">En la zona de <b>' + zTop[0]
+      + '<div style="font-size:14.5px;line-height:1.7">En <b>'
+      + escapa(nombreSitio(parseFloat(zTop[0].split(',')[0]), parseFloat(zTop[0].split(',')[1])))
       + '</b> hay <b>' + zTop[1].n + ' reportes</b>, y de ellos <b>' + tTop[1]
       + '</b> son de tipo <b>' + tipoDe(tTop[0]).n.toLowerCase() + '</b>.</div>'
       + '<div class="cuantos" style="margin:10px 0 0">Con más datos esto dirá cosas como '
@@ -850,8 +900,12 @@ function pintaPatrones(){
     'franja del día', Object.entries(porFranja).sort((a, b) => b[1] - a[1])
       .map(f => [(FRANJAS.find(x => x.id === f[0]) || {}).n || f[0], f[1]]));
 
-  if (zonas.length) html += bloque('Dónde (por zona de ~2 km)', 'place',
-    'sin señalar puntos exactos', zonas.map(z => [z[0], z[1].n]));
+  if (zonas.length) html += bloque('Dónde', 'place',
+    'por zona, sin señalar puntos exactos',
+    zonas.map(z => {
+      const p = z[0].split(',');
+      return [escapa(nombreSitio(parseFloat(p[0]), parseFloat(p[1]))), z[1].n];
+    }));
 
   caja.innerHTML = html;
 }
@@ -941,8 +995,12 @@ function escucha(){
       zonas[k] = (zonas[k] || 0) + 1;
     });
     const top = Object.entries(zonas).sort((a, b) => b[1] - a[1]).slice(0, 5);
-    $('zonasTop').innerHTML = top.length ? top.map((z, k) =>
-      '<div class="zf"><span>' + (k + 1) + '. ' + z[0] + '</span><b>' + z[1] + '</b></div>').join('')
+    $('zonasTop').innerHTML = top.length ? top.map((z, k) => {
+      const p = z[0].split(',');
+      return '<div class="zf"><span>' + (k + 1) + '. '
+        + escapa(nombreSitio(parseFloat(p[0]), parseFloat(p[1])))
+        + '</span><b>' + z[1] + '</b></div>';
+    }).join('')
       : '<div style="font-size:12px;color:var(--gris)">Aún no hay zonas con reportes.</div>';
 
     pintaIncidentes();
