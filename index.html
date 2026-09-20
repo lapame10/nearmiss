@@ -293,11 +293,16 @@
   .etq.pendEtq .mso{font-size:13px}
   .inc.pendiente{background:#fcfcfa}
 
-  /* el check del IGC */
-  .marcaCheck{display:flex;align-items:center;gap:9px;margin-top:11px;
-    font-size:12.5px;color:#2b4750;cursor:pointer;line-height:1.4}
-  .marcaCheck input{width:18px;height:18px;accent-color:var(--mar);flex-shrink:0}
-  .marcaCheck span{font-weight:600}
+  /* la nota del IGC: dice que el archivo se borra solo, sin casilla que marcar */
+  .igcNota{display:flex;gap:9px;align-items:flex-start;margin-top:11px;
+    font-size:12.5px;color:#2b4750;line-height:1.5}
+  .igcNota .mso{font-size:19px;color:var(--mar);flex-shrink:0;margin-top:1px}
+  .igcNota span:last-child{flex:1}
+
+  /* cuando todavia no hay nada: en vez de tres ceros, decir que esto empieza */
+  .empezando{display:none;gap:11px;align-items:flex-start;background:#f2f6f8;
+    border-radius:11px;padding:14px;font-size:12.5px;line-height:1.55;color:#3b5560}
+  .empezando .mso{color:var(--mar);font-size:20px;flex-shrink:0;margin-top:1px}
 
   /* ===== EL PUNTO QUE HAS TOCADO =====
      Con muchos puntos en el mapa no sabes cual es el tuyo. Este pin oscuro con
@@ -542,10 +547,8 @@
               <button class="btnIgc" id="bIGC"><span class="mso">upload_file</span> <span data-i18n="igcBoton">Subir mi archivo IGC</span></button>
               <input type="file" id="ficheroIGC" accept=".igc,text/plain" style="display:none">
               <div class="igcInfo" id="igcInfo"></div>
-              <label class="marcaCheck">
-                <input type="checkbox" id="borrarTrack" checked>
-                <span data-i18n="igcBorrar"></span>
-              </label>
+              <div class="igcNota"><span class="mso">delete_sweep</span>
+                <span data-i18n="igcNota"></span></div>
             </div>
           </div>
 
@@ -576,13 +579,17 @@
 
     <!-- ===== COLUMNA DERECHA ===== -->
     <aside class="lateral">
-      <div class="stats">
-        <div class="stat"><span class="mso">description</span>
+      <div class="stats" id="filaStats">
+        <div class="stat" id="stEventos"><span class="mso">description</span>
           <div class="n" id="nReportes">0</div><div class="t" id="tReportes">eventos</div></div>
-        <div class="stat"><span class="mso">place</span>
+        <div class="stat" id="stSitios"><span class="mso">place</span>
           <div class="n" id="nSitios">0</div><div class="t" id="tSitios">sitios</div></div>
-        <div class="stat"><span class="mso">insights</span>
+        <div class="stat" id="stPatrones"><span class="mso">insights</span>
           <div class="n" id="nPatrones">0</div><div class="t" id="tPatronesTxt">patrones</div></div>
+      </div>
+      <div class="empezando" id="empezando" style="display:none">
+        <span class="mso">eco</span>
+        <div data-i18n="empezando"></div>
       </div>
 
       <div class="miniTarj">
@@ -696,17 +703,18 @@ const TXT = {
     /* el formulario */
     formTitulo: 'Reportar un evento',
     formAviso: 'Todo es anónimo. Los campos marcados son obligatorios.',
-    c1t: '¿Qué ocurrió?', c1a: 'De un susto a lo peor. Esto clasifica el evento.',
+    c1t: '¿Qué ocurrió?', c1a: 'Clasifica el nivel del evento, desde un casi accidente hasta una fatalidad.',
     c2t: '¿Qué pasó?', c2a: 'La situación concreta. Es lo que permite ver patrones después.',
     c3t: 'Consecuencias', c3a: 'El resultado concreto.',
     c4t: 'Fase del vuelo', c4a: '¿En qué momento del vuelo?',
-    c5t: 'Dónde', c5a: 'Toca la zona en el mapa. Se guarda redondeado a ~100 m: '
-                     + 'suficiente para ver patrones, poco para señalar a nadie.',
+    c5t: 'Dónde', c5a: 'Toca la zona en el mapa. La ubicación pública se muestra de forma '
+                     + 'aproximada, para reducir la posibilidad de identificar al piloto.',
     c6t: 'Cuándo', c6a: 'Con el día saco el viento real que hacía ahí. '
                       + '<b>El día no se publica</b>: se guarda el mes y el año.',
     c7t: 'Franja del día', c7a: 'Se publica la franja, nunca la hora.',
-    c8t: 'Cómo estaba el aire', c8a: 'Lo que tú sentiste. El dato real del viento lo saco yo.',
-    c9t: 'Tu archivo de vuelo', c9a: 'Un IGC identifica un vuelo concreto. Lee esto antes.',
+    c8t: 'Cómo estaba el aire', c8a: 'Lo que tú sentiste. Si indicas fecha y ubicación, SkyReport puede '
+       + 'complementar el reporte con datos meteorológicos registrados de esa zona.',
+    c9t: 'Tu archivo de vuelo', c9a: 'Un IGC identifica un vuelo concreto. Lee cómo se trata antes de subirlo.',
     c10t: 'Cuéntalo', c10a: 'Sin nombres. El detalle que identifica a alguien, fuera; '
                           + 'el que explica lo que pasó, dentro.',
     obligatorio: 'obligatorio', opcional: 'opcional',
@@ -719,17 +727,20 @@ const TXT = {
               + 'quedan pendientes de verificación para que un error o un rumor no se '
               + 'convierta en un dato.',
     igcBoton: 'Subir mi archivo IGC',
-    igcBorrar: 'Borrar el track después de procesarlo',
+    igcNota: 'El archivo se elimina automáticamente después de extraer los datos '
+           + 'necesarios: la hora del vuelo y la altura máxima. No se guarda ni se '
+           + 'publica en ningún caso.',
     relatoEjemplo: 'Escribe aquí tu relato (opcional)...',
     privacidad: '<b>Qué se publica y qué no.</b><br><b>Se publica:</b> el mes y el año, '
-              + 'la zona redondeada, la franja del día, la situación y las consecuencias.'
+              + 'la ubicación aproximada, la franja del día, la situación y las consecuencias.'
               + '<br><b>No se publica nunca:</b> tu nombre, el día exacto, la hora exacta, '
               + 'tu posición precisa, ni el archivo IGC. El archivo se usa solo para leer '
-              + 'las condiciones del vuelo y no se queda.',
+              + 'las condiciones del vuelo y se elimina en el momento.',
     enviar: 'Enviar evento anónimo',
     /* los contadores y la columna derecha */
     evEventos: 'eventos', evEvento: 'evento',
-    evSitios: 'sitios', evSitio: 'sitio', evPatrones: 'patrones', evPatron: 'patrón',
+    evSitios: 'sitios', evSitio: 'sitio',
+    empezando: 'La base de conocimiento está empezando.<br>Cada reporte ayuda a construirla.', evPatrones: 'patrones', evPatron: 'patrón',
     principios: 'Principios',
     p1: 'Seguridad antes que todo', p1s: 'Aprendemos de la experiencia real.',
     p2: 'Sin juicios, sin culpables', p2s: 'Esto no trata de señalar, sino de mejorar.',
@@ -767,7 +778,9 @@ const TXT = {
     errorTexto: 'Revisa tu conexión e inténtalo otra vez.',
     privTitulo: 'Privacidad',
     privTexto: 'No pedimos tu nombre, ni tu teléfono, ni tu correo.<br><br>La ubicación '
-             + 'se <b>redondea a unos 100 metros</b>, así que no señala un punto exacto.'
+             + 'que se publica es <b>aproximada</b>. En un despegue remoto, con la fecha y '
+             + 'las circunstancias, eso todavía podría ser identificable — por eso pedimos '
+             + 'también que no pongas detalles que señalen a una persona.'
              + '<br><br>El <b>día</b> que pongas se usa solo para calcular el viento de '
              + 'esa jornada y <b>no se guarda</b>: solo queda el mes y el año.'
              + '<br><br>Y no hay cuentas ni usuarios: nadie puede ver quién reportó qué.'
@@ -813,17 +826,18 @@ const TXT = {
             + 'what happened.”',
     formTitulo: 'Report an event',
     formAviso: 'Everything is anonymous. The marked fields are required.',
-    c1t: 'What happened?', c1a: 'From a close call to the worst. This classifies the event.',
+    c1t: 'What happened?', c1a: 'Sets the level of the event, from a near miss to a fatality.',
     c2t: 'What was it?', c2a: 'The specific situation. This is what makes patterns possible.',
     c3t: 'Consequences', c3a: 'The actual outcome.',
     c4t: 'Phase of flight', c4a: 'At what point in the flight?',
-    c5t: 'Where', c5a: 'Tap the area on the map. It is stored rounded to ~100 m: '
-                     + 'enough to see patterns, too little to point at anyone.',
+    c5t: 'Where', c5a: 'Tap the area on the map. The public location is shown only approximately, '
+                     + 'to reduce the chance of identifying the pilot.',
     c6t: 'When', c6a: 'With the day I work out the real wind that day. '
                     + '<b>The day is never published</b>: only the month and year are kept.',
     c7t: 'Time of day', c7a: 'The time of day is published, never the exact hour.',
-    c8t: 'How was the air', c8a: 'What you felt. I work out the real wind myself.',
-    c9t: 'Your flight file', c9a: 'An IGC identifies one specific flight. Read this first.',
+    c8t: 'How was the air', c8a: 'What you felt. If you give the date and location, SkyReport can add '
+       + 'recorded weather data for that area.',
+    c9t: 'Your flight file', c9a: 'An IGC identifies one specific flight. Read how it is handled before uploading.',
     c10t: 'Tell the story', c10a: 'No names. Leave out anything that identifies someone; '
                                 + 'keep what explains what happened.',
     obligatorio: 'required', opcional: 'optional',
@@ -836,7 +850,9 @@ const TXT = {
               + '<b>Fatalities are not published immediately:</b> they stay pending '
               + 'verification so a mistake or a rumour does not become data.',
     igcBoton: 'Upload my IGC file',
-    igcBorrar: 'Delete the track after processing it',
+    igcNota: 'The file is deleted automatically after extracting the data we need: '
+           + 'the flight time and the maximum altitude. It is never stored or '
+           + 'published.',
     relatoEjemplo: 'Write your story here (optional)...',
     privacidad: '<b>What is published and what is not.</b><br><b>Published:</b> the month '
               + 'and year, the rounded area, the time of day, the situation and the '
@@ -845,7 +861,8 @@ const TXT = {
               + 'read for the flight conditions and is not kept.',
     enviar: 'Send anonymous event',
     evEventos: 'events', evEvento: 'event',
-    evSitios: 'sites', evSitio: 'site', evPatrones: 'patterns', evPatron: 'pattern',
+    evSitios: 'sites', evSitio: 'site',
+    empezando: 'The knowledge base is just starting.<br>Every report helps build it.', evPatrones: 'patterns', evPatron: 'pattern',
     principios: 'Principles',
     p1: 'Safety above all', p1s: 'We learn from real experience.',
     p2: 'No judgement, no blame', p2s: 'This is not about pointing fingers, it is about improving.',
@@ -1501,6 +1518,12 @@ function escucha(){
     incidentes = Object.entries(d).map(([id, v]) => Object.assign({ id }, v));
     /* singular o plural, que '1 patrones' se ve muy mal */
     const uno = n => n === 1;
+    /* Pam: los ceros parecen una plataforma abandonada. Un contador a 0 no se
+       enseña, y si no hay NADA se dice que esto acaba de empezar. */
+    const verStat = (id, v) => {
+      const n = $(id);
+      if (n) n.style.display = v > 0 ? '' : 'none';
+    };
     $('nReportes').textContent = incidentes.length;
     $('tReportes').textContent = uno(incidentes.length) ? t('evEvento') : t('evEventos');
 
@@ -1516,6 +1539,14 @@ function escucha(){
     const nPat = Object.values(cuenta).filter(n => n >= 3).length;
     $('nPatrones').textContent = nPat;
     $('tPatronesTxt').textContent = uno(nPat) ? t('evPatron') : t('evPatrones');
+
+    /* escondo los contadores que estan a cero, y si no hay nada lo digo */
+    verStat('stEventos', incidentes.length);
+    verStat('stSitios', sitios.size);
+    verStat('stPatrones', nPat);
+    const vacio = (incidentes.length === 0);
+    if ($('empezando')) $('empezando').style.display = vacio ? 'flex' : 'none';
+    if ($('filaStats')) $('filaStats').style.display = vacio ? 'none' : '';
 
     /* el ranking de zonas de la derecha */
     const zonas = {};
