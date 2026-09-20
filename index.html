@@ -591,11 +591,11 @@
     <aside class="lateral">
       <div class="stats">
         <div class="stat"><span class="mso">description</span>
-          <div class="n" id="nReportes">0</div><div class="t" id="tReportes">reportes</div></div>
+          <div class="n" id="nReportes">0</div><div class="t" id="tReportes">eventos</div></div>
         <div class="stat"><span class="mso">place</span>
           <div class="n" id="nSitios">0</div><div class="t" id="tSitios">sitios</div></div>
         <div class="stat"><span class="mso">insights</span>
-          <div class="n" id="nPatrones">0</div><div class="t" id="tPatrones">patrones</div></div>
+          <div class="n" id="nPatrones">0</div><div class="t" id="tPatronesTxt">patrones</div></div>
       </div>
 
       <div class="miniTarj">
@@ -1282,7 +1282,7 @@ function escucha(){
     incidentes.forEach(i => { if (i.sit) cuenta[i.sit] = (cuenta[i.sit] || 0) + 1; });
     const nPat = Object.values(cuenta).filter(n => n >= 3).length;
     $('nPatrones').textContent = nPat;
-    $('tPatrones').textContent = uno(nPat) ? 'patrón' : 'patrones';
+    $('tPatronesTxt').textContent = uno(nPat) ? 'patrón' : 'patrones';
 
     /* el ranking de zonas de la derecha */
     const zonas = {};
