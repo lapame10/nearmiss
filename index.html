@@ -2817,6 +2817,14 @@ function idiomaDelNavegador(){
   return TXT[l] ? l : null;
 }
 
+/* los atajos del icono (mantener pulsado el icono de la app en el móvil):
+   ?ir=reportar o ?ir=mapa, para entrar directo donde quieres. */
+try {
+  const ir = new URLSearchParams(location.search).get('ir');
+  if (ir === 'mapa') ponPestana('tMapa');
+  else if (ir === 'reportar') ponPestana('tReportar');
+} catch(e){}
+
 ponIdioma((function(){
   try {                                        /* 1) ?lang= en la dirección */
     const q = new URLSearchParams(location.search).get('lang');
