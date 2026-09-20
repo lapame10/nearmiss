@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#16323b">
-<title>SkyReport — reportes anónimos de incidentes de parapente</title>
+<title>SkyReport — reportes anónimos de eventos de parapente</title>
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icono-192.png">
 <link rel="apple-touch-icon" href="icono-192.png">
@@ -50,6 +50,10 @@
     display:flex;align-items:center;gap:7px;white-space:nowrap}
   .nav button .mso{font-size:19px}
   .nav button.on{opacity:1;background:rgba(255,255,255,.13)}
+  /* el boton de idioma: discreto, a la derecha del todo */
+  .nav button.idioma{opacity:.85;border:1px solid rgba(255,255,255,.3);
+    padding:7px 12px;font-size:12px;letter-spacing:.4px}
+  .nav button.idioma:hover{opacity:1;background:rgba(255,255,255,.1)}
   .cabDer{font-size:11px;opacity:.7;text-align:right;line-height:1.35;
     border-left:1px solid rgba(255,255,255,.2);padding-left:18px;display:none;
     flex-shrink:0}
@@ -435,26 +439,23 @@
   <div class="marca">
     <img src="logo.png" class="pico" alt="SkyReport">
     SkyReport
-    <span class="marcaTxt">Reportes anónimos de incidentes y accidentes de parapente</span>
+    <span class="marcaTxt" data-i18n="subTitulo"></span>
   </div>
   <nav class="nav">
-    <button id="tMapa"><span class="mso">map</span>Mapa</button>
-    <button id="tReportar" class="on"><span class="mso">edit_note</span>Reportar</button>
-    <button id="tPatrones"><span class="mso">bar_chart</span>Patrones</button>
+    <button id="bIdioma" class="idioma" aria-label="Language">🌐 <span id="idTxt">ES</span></button>
+    <button id="tMapa"><span class="mso">map</span><span data-i18n="navMapa">Mapa</span></button>
+    <button id="tReportar" class="on"><span class="mso">edit_note</span><span data-i18n="navReportar">Reportar</span></button>
+    <button id="tPatrones"><span class="mso">bar_chart</span><span data-i18n="navPatrones">Patrones</span></button>
   </nav>
-  <div class="cabDer">Una comunidad<br>por vuelos más seguros</div>
+  <div class="cabDer" data-i18n="lema"></div>
 </header>
 
 <!-- ===================== PORTADA ===================== -->
 <div class="vista on" id="vReportar">
   <div class="hero">
-    <h1>Seguridad compartida. Aprendizaje colectivo.</h1>
-    <p>Aquí puedes reportar de forma anónima incidentes y accidentes de parapente.<br>
-    No buscamos culpables, buscamos aprender para que todos volvamos a volar.</p>
-    <div class="cita">
-      <b>“Cada experiencia cuenta.</b>
-      Un vuelo más seguro empieza con compartir lo que ocurrió.”
-    </div>
+    <h1 data-i18n="heroTitulo">Seguridad compartida. Aprendizaje colectivo.</h1>
+    <p data-i18n="heroTexto"></p>
+    <div class="cita" data-i18n="heroCita"></div>
   </div>
 
   <div class="cuerpo">
@@ -462,96 +463,88 @@
     <div>
       <div class="tarj">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap">
-          <h2>Reportar un evento</h2>
-          <span class="avisoTop">Todo es anónimo. Los campos marcados son obligatorios.</span>
+          <h2 data-i18n="formTitulo">Reportar un evento</h2>
+          <span class="avisoTop" data-i18n="formAviso"></span>
         </div>
 
         <div class="rejilla dos" style="margin-top:22px">
 
           <div class="campo">
-            <div class="campoTit"><span class="num">1</span><h3>¿Qué ocurrió?</h3>
-              <span class="etq req">obligatorio</span></div>
-            <p class="campoAyuda">De un susto a lo peor. Esto clasifica el evento.</p>
+            <div class="campoTit"><span class="num">1</span><h3 data-i18n="c1t">¿Qué ocurrió?</h3>
+              <span class="etq req" data-i18n="obligatorio"></span></div>
+            <p class="campoAyuda" data-i18n="c1a"></p>
             <div class="ops sev" id="opSev"></div>
           </div>
 
           <div class="campo">
-            <div class="campoTit"><span class="num">2</span><h3>¿Qué pasó?</h3>
-              <span class="etq req">obligatorio</span></div>
-            <p class="campoAyuda">La situación concreta. Es lo que permite ver patrones después.</p>
+            <div class="campoTit"><span class="num">2</span><h3 data-i18n="c2t">¿Qué pasó?</h3>
+              <span class="etq req" data-i18n="obligatorio"></span></div>
+            <p class="campoAyuda" data-i18n="c2a"></p>
             <div class="ops" id="opSit"></div>
             <div class="cajaOtro" id="cajaOtro">
-              <label>¿Cuál? Cuéntalo en una línea</label>
+              <label data-i18n="otroTitulo"></label>
               <input type="text" id="otroTexto" maxlength="70"
-                placeholder="Ej: enganche con el arnés · objetivo en el aire · nudo en el freno">
+                data-i18n-ph="otroEjemplo">
             </div>
           </div>
 
           <div class="campo">
-            <div class="campoTit"><span class="num">3</span><h3>Consecuencias</h3>
-              <span class="etq req">obligatorio</span></div>
-            <p class="campoAyuda">El resultado concreto.</p>
+            <div class="campoTit"><span class="num">3</span><h3 data-i18n="c3t">Consecuencias</h3>
+              <span class="etq req" data-i18n="obligatorio"></span></div>
+            <p class="campoAyuda" data-i18n="c3a"></p>
             <div class="ops cons" id="opCons"></div>
             <div class="cajaFatalidad" id="cajaFatalidad">
               <span class="mso">volunteer_activism</span>
-              <div>Gracias por contarlo. <b>Es el dato que más ayuda</b> a que no
-              vuelva a pasar.<br><br>
-              Cuéntalo <b>sin nombres</b> y sin detalles que no aporten aprendizaje.
-              Lo que importa es qué pasó y en qué condiciones, no quién.
-              <br><br>
-              <b>Las fatalidades no se publican al momento:</b> quedan pendientes de
-              verificación para que un error o un rumor no se convierta en un dato.</div>
+              <div data-i18n="fatalTexto"></div>
             </div>
           </div>
 
           <div class="campo">
-            <div class="campoTit"><span class="num">4</span><h3>Fase del vuelo</h3>
-              <span class="etq req">obligatorio</span></div>
-            <p class="campoAyuda">¿En qué momento del vuelo?</p>
-            <select id="selFase"><option value="">Selecciona una fase…</option></select>
+            <div class="campoTit"><span class="num">4</span><h3 data-i18n="c4t">Fase del vuelo</h3>
+              <span class="etq req" data-i18n="obligatorio"></span></div>
+            <p class="campoAyuda" data-i18n="c4a"></p>
+            <select id="selFase"></select>
           </div>
 
           <div class="campo">
-            <div class="campoTit"><span class="num">5</span><h3>Dónde</h3>
-              <span class="etq req">obligatorio</span></div>
-            <p class="campoAyuda">Toca la zona en el mapa. Se guarda redondeado a ~100 m:
-            suficiente para ver patrones, poco para señalar a nadie.</p>
+            <div class="campoTit"><span class="num">5</span><h3 data-i18n="c5t">Dónde</h3>
+              <span class="etq req" data-i18n="obligatorio"></span></div>
+            <p class="campoAyuda" data-i18n="c5a"></p>
             <div class="mapaMarcar" id="mapaMarca"></div>
           </div>
 
           <div class="campo">
-            <div class="campoTit"><span class="num">6</span><h3>Cuándo</h3>
-              <span class="etq opc">opcional</span></div>
-            <p class="campoAyuda">Con el día saco el viento real que hacía ahí.
-            <b>El día no se publica</b>: se guarda el mes y el año.</p>
+            <div class="campoTit"><span class="num">6</span><h3 data-i18n="c6t">Cuándo</h3>
+              <span class="etq opc" data-i18n="opcional"></span></div>
+            <p class="campoAyuda" data-i18n="c6a"></p>
             <input type="date" id="fecha">
           </div>
 
           <div class="campo">
-            <div class="campoTit"><span class="num">7</span><h3>Franja del día</h3>
-              <span class="etq req">obligatorio</span></div>
-            <p class="campoAyuda">Se publica la franja, nunca la hora.</p>
+            <div class="campoTit"><span class="num">7</span><h3 data-i18n="c7t">Franja del día</h3>
+              <span class="etq req" data-i18n="obligatorio"></span></div>
+            <p class="campoAyuda" data-i18n="c7a"></p>
             <div class="ops" id="opFranja" style="grid-template-columns:repeat(2,1fr)"></div>
           </div>
 
           <div class="campo">
-            <div class="campoTit"><span class="num">8</span><h3>Cómo estaba el aire</h3>
-              <span class="etq opc">opcional</span></div>
-            <p class="campoAyuda">Lo que tú sentiste. El dato real del viento lo saco yo.</p>
+            <div class="campoTit"><span class="num">8</span><h3 data-i18n="c8t">Cómo estaba el aire</h3>
+              <span class="etq opc" data-i18n="opcional"></span></div>
+            <p class="campoAyuda" data-i18n="c8a"></p>
             <div class="ops" id="opAire"></div>
           </div>
 
           <div class="campo">
-            <div class="campoTit"><span class="num">9</span><h3>Tu archivo de vuelo</h3>
-              <span class="etq opc">opcional</span></div>
-            <p class="campoAyuda">Un IGC identifica un vuelo concreto. Lee esto antes.</p>
+            <div class="campoTit"><span class="num">9</span><h3 data-i18n="c9t">Tu archivo de vuelo</h3>
+              <span class="etq opc" data-i18n="opcional"></span></div>
+            <p class="campoAyuda" data-i18n="c9a"></p>
             <div class="igcBox">
-              <button class="btnIgc" id="bIGC"><span class="mso">upload_file</span> Subir mi archivo IGC</button>
+              <button class="btnIgc" id="bIGC"><span class="mso">upload_file</span> <span data-i18n="igcBoton">Subir mi archivo IGC</span></button>
               <input type="file" id="ficheroIGC" accept=".igc,text/plain" style="display:none">
               <div class="igcInfo" id="igcInfo"></div>
               <label class="marcaCheck">
                 <input type="checkbox" id="borrarTrack" checked>
-                <span>Borrar el track después de procesarlo</span>
+                <span data-i18n="igcBorrar"></span>
               </label>
             </div>
           </div>
@@ -559,28 +552,22 @@
         </div>
 
         <div style="margin-top:22px">
-          <div class="campoTit"><span class="num">10</span><h3>Cuéntalo</h3>
-            <span class="etq opc">opcional</span></div>
-          <p class="campoAyuda">Sin nombres. El detalle que identifica a alguien, fuera;
-          el que explica lo que pasó, dentro.</p>
+          <div class="campoTit"><span class="num">10</span><h3 data-i18n="c10t">Cuéntalo</h3>
+            <span class="etq opc" data-i18n="opcional"></span></div>
+          <p class="campoAyuda" data-i18n="c10a"></p>
           <textarea id="relato" maxlength="1000"
-            placeholder="Escribe aquí tu relato (opcional)..."></textarea>
+            data-i18n-ph="relatoEjemplo"></textarea>
           <div class="contador"><span id="cuentaTxt">0</span> / 1000</div>
         </div>
 
         <div class="privacidad">
           <span class="mso">lock</span>
-          <div><b>Qué se publica y qué no.</b><br>
-          <b>Se publica:</b> el mes y el año, la zona redondeada, la franja del día,
-          la situación y las consecuencias.<br>
-          <b>No se publica nunca:</b> tu nombre, el día exacto, la hora exacta, tu
-          posición precisa, ni el archivo IGC. El archivo se usa solo para leer las
-          condiciones del vuelo y no se queda.</div>
+          <div data-i18n="privacidad"></div>
         </div>
 
         <div class="enviarFila">
           <button class="btnEnviar" id="bEnviar">
-            <span class="mso">send</span> Enviar reporte anónimo
+            <span class="mso">send</span> <span data-i18n="enviar">Enviar reporte anónimo</span>
           </button>
         </div>
         <div style="text-align:right;font-size:12px;color:var(--gris);margin-top:9px" id="txtEstado"></div>
@@ -599,44 +586,37 @@
       </div>
 
       <div class="miniTarj">
-        <h3><span class="mso">verified_user</span> Principios</h3>
+        <h3><span class="mso">verified_user</span> <span data-i18n="principios"></span></h3>
         <div class="princ"><span class="mso">health_and_safety</span>
-          <div><b>Seguridad antes que todo</b><span>Aprendemos de la experiencia real.</span></div></div>
+          <div><b data-i18n="p1"></b><span data-i18n="p1s"></span></div></div>
         <div class="princ"><span class="mso">balance</span>
-          <div><b>Sin juicios, sin culpables</b><span>Esto no trata de señalar, sino de mejorar.</span></div></div>
+          <div><b data-i18n="p2"></b><span data-i18n="p2s"></span></div></div>
         <div class="princ"><span class="mso">public</span>
-          <div><b>Comunidad global</b><span>El conocimiento compartido hace nuestros vuelos más seguros.</span></div></div>
+          <div><b data-i18n="p3"></b><span data-i18n="p3s"></span></div></div>
       </div>
 
       <div class="miniTarj">
-        <h3><span class="mso">lock</span> Anónimo por diseño</h3>
-        <div style="font-size:12.5px;color:var(--gris);line-height:1.6">
-          No pedimos tu nombre, ni datos personales, ni información que pueda
-          identificarte. La ubicación es aproximada y los detalles se tratan con cuidado.
-        </div>
-        <a class="enlace" href="#" id="masPrivacidad">Saber más sobre tu privacidad →</a>
+        <h3><span class="mso">lock</span> <span data-i18n="anonTitulo"></span></h3>
+        <div style="font-size:12.5px;color:var(--gris);line-height:1.6" data-i18n="anonTexto"></div>
+        <a class="enlace" href="#" id="masPrivacidad"><span data-i18n="anonMas"></span> →</a>
       </div>
 
       <div class="miniTarj">
-        <h3><span class="mso">school</span> Qué aprendemos</h3>
-        <div style="font-size:12.5px;color:var(--gris);line-height:1.6">
-          Los reportes nos permiten identificar patrones, zonas de riesgo y
-          situaciones recurrentes para compartir aprendizajes con toda la comunidad.
-        </div>
-        <a class="enlace" href="#" id="verPatrones">Ver patrones y análisis →</a>
+        <h3><span class="mso">school</span> <span data-i18n="aprendeTitulo"></span></h3>
+        <div style="font-size:12.5px;color:var(--gris);line-height:1.6" data-i18n="aprendeTexto"></div>
+        <a class="enlace" href="#" id="verPatrones"><span data-i18n="aprendeVer"></span> →</a>
       </div>
 
       <div class="miniTarj">
-        <h3><span class="mso">map</span> Actividad reciente en el mapa</h3>
+        <h3><span class="mso">map</span> <span data-i18n="reciente"></span></h3>
         <div id="mapaCalor"></div>
         <div class="zonas" id="zonasTop"></div>
-        <a class="enlace" href="#" id="verMapa">Ver mapa completo →</a>
+        <a class="enlace" href="#" id="verMapa"><span data-i18n="verMapaCompleto"></span> →</a>
       </div>
 
       <div class="alertaEmerg">
         <span class="mso">warning</span>
-        <div><b>Importante</b><br>SkyReport no es un canal de emergencia. Si necesitas
-        ayuda inmediata, contacta con los servicios de rescate locales.</div>
+        <div data-i18n="emergencia"></div>
       </div>
     </aside>
   </div>
@@ -646,8 +626,8 @@
 <div class="vista" id="vMapa">
   <div class="cuerpo" style="grid-template-columns:1fr">
     <div>
-      <div class="cabSeccion"><h2>Mapa de reportes</h2>
-        <span class="sub">Cada punto es un reporte. El calor muestra dónde se acumulan.</span></div>
+      <div class="cabSeccion"><h2 data-i18n="mapaTitulo"></h2>
+        <span class="sub" data-i18n="mapaSub"></span></div>
       <div id="mapa" style="margin-top:14px"></div>
       <div class="filtros" id="filtros"></div>
       <div class="lista" id="listaInc"></div>
@@ -659,8 +639,8 @@
 <div class="vista" id="vPatrones">
   <div class="cuerpo" style="grid-template-columns:1fr">
     <div>
-      <div class="cabSeccion"><h2>Patrones</h2>
-        <span class="sub">Los eventos aislados cuentan historias. Juntos revelan patrones.</span></div>
+      <div class="cabSeccion"><h2 data-i18n="patronesTitulo"></h2>
+        <span class="sub" data-i18n="patronesSub"></span></div>
       <div class="patrones" id="patrones" style="margin-top:16px"></div>
     </div>
   </div>
@@ -668,15 +648,15 @@
 
 <footer class="pie">
   <div><b>SkyReport</b></div>
-  <div>Reportes anónimos de incidentes y accidentes de parapente</div>
-  <div class="lema">Volar. Aprender. Volver.</div>
+  <div data-i18n="pieTexto">Reportes anónimos de eventos de parapente</div>
+  <div class="lema" data-i18n="pieLema">Volar. Aprender. Volver.</div>
 </footer>
 
 <div class="aviso" id="aviso">
   <div class="caja">
     <h3 id="avT"></h3>
     <div class="cuerpo" id="avD"></div>
-    <button class="btn" id="avX">Entendido</button>
+    <button class="btn" id="avX" data-i18n="entender">Entendido</button>
   </div>
 </div>
 
@@ -694,6 +674,251 @@
 const FIRE = 'https://plan-gym-8aff7-default-rtdb.firebaseio.com';
 const $ = id => document.getElementById(id);
 
+/* ==========================================================================
+   LOS IDIOMAS (idea de Pam)
+   --------------------------------------------------------------------------
+   'Si queremos que sea para todo el mundo eso es super importante'.
+   El español va primero porque es el idioma en que se piensa esto, pero el
+   inglés es el que hace que un piloto de Suiza o de Brasil lo pueda usar.
+   Añadir otro idioma = copiar un bloque y traducirlo. Nada mas.
+   ========================================================================== */
+const TXT = {
+  es: {
+    /* cabecera */
+    lema: 'Una comunidad<br>por vuelos más seguros',
+    navMapa: 'Mapa', navReportar: 'Reportar', navPatrones: 'Patrones',
+    /* portada */
+    heroTitulo: 'Seguridad compartida. Aprendizaje colectivo.',
+    heroTexto: 'Aquí puedes reportar de forma anónima eventos de parapente.<br>'
+             + 'No buscamos culpables, buscamos aprender para que todos volvamos a volar.',
+    heroCita: '<b>“Cada experiencia cuenta.</b> Un vuelo más seguro empieza con '
+            + 'compartir lo que ocurrió.”',
+    /* el formulario */
+    formTitulo: 'Reportar un evento',
+    formAviso: 'Todo es anónimo. Los campos marcados son obligatorios.',
+    c1t: '¿Qué ocurrió?', c1a: 'De un susto a lo peor. Esto clasifica el evento.',
+    c2t: '¿Qué pasó?', c2a: 'La situación concreta. Es lo que permite ver patrones después.',
+    c3t: 'Consecuencias', c3a: 'El resultado concreto.',
+    c4t: 'Fase del vuelo', c4a: '¿En qué momento del vuelo?',
+    c5t: 'Dónde', c5a: 'Toca la zona en el mapa. Se guarda redondeado a ~100 m: '
+                     + 'suficiente para ver patrones, poco para señalar a nadie.',
+    c6t: 'Cuándo', c6a: 'Con el día saco el viento real que hacía ahí. '
+                      + '<b>El día no se publica</b>: se guarda el mes y el año.',
+    c7t: 'Franja del día', c7a: 'Se publica la franja, nunca la hora.',
+    c8t: 'Cómo estaba el aire', c8a: 'Lo que tú sentiste. El dato real del viento lo saco yo.',
+    c9t: 'Tu archivo de vuelo', c9a: 'Un IGC identifica un vuelo concreto. Lee esto antes.',
+    c10t: 'Cuéntalo', c10a: 'Sin nombres. El detalle que identifica a alguien, fuera; '
+                          + 'el que explica lo que pasó, dentro.',
+    obligatorio: 'obligatorio', opcional: 'opcional',
+    otroTitulo: '¿Cuál? Cuéntalo en una línea',
+    otroEjemplo: 'Ej: enganche con el arnés · objetivo en el aire · nudo en el freno',
+    fatalTexto: '<b>Gracias por contarlo.</b> Es el dato que más ayuda a que no vuelva '
+              + 'a pasar.<br><br>Cuéntalo <b>sin nombres</b> y sin detalles que no '
+              + 'aporten aprendizaje. Lo que importa es qué pasó y en qué condiciones, '
+              + 'no quién.<br><br><b>Las fatalidades no se publican al momento:</b> '
+              + 'quedan pendientes de verificación para que un error o un rumor no se '
+              + 'convierta en un dato.',
+    igcBoton: 'Subir mi archivo IGC',
+    igcBorrar: 'Borrar el track después de procesarlo',
+    relatoEjemplo: 'Escribe aquí tu relato (opcional)...',
+    privacidad: '<b>Qué se publica y qué no.</b><br><b>Se publica:</b> el mes y el año, '
+              + 'la zona redondeada, la franja del día, la situación y las consecuencias.'
+              + '<br><b>No se publica nunca:</b> tu nombre, el día exacto, la hora exacta, '
+              + 'tu posición precisa, ni el archivo IGC. El archivo se usa solo para leer '
+              + 'las condiciones del vuelo y no se queda.',
+    enviar: 'Enviar evento anónimo',
+    /* los contadores y la columna derecha */
+    evEventos: 'eventos', evEvento: 'evento',
+    evSitios: 'sitios', evPatrones: 'patrones', evPatron: 'patrón',
+    principios: 'Principios',
+    p1: 'Seguridad antes que todo', p1s: 'Aprendemos de la experiencia real.',
+    p2: 'Sin juicios, sin culpables', p2s: 'Esto no trata de señalar, sino de mejorar.',
+    p3: 'Comunidad global', p3s: 'El conocimiento compartido hace nuestros vuelos más seguros.',
+    anonTitulo: 'Anónimo por diseño',
+    anonTexto: 'No pedimos tu nombre, ni datos personales, ni información que pueda '
+             + 'identificarte. La ubicación es aproximada y los detalles se tratan con cuidado.',
+    anonMas: 'Saber más sobre tu privacidad',
+    aprendeTitulo: 'Qué aprendemos',
+    aprendeTexto: 'Los reportes nos permiten identificar patrones, zonas de riesgo y '
+                + 'situaciones recurrentes para compartir aprendizajes con toda la comunidad.',
+    aprendeVer: 'Ver patrones y análisis',
+    reciente: 'Actividad reciente en el mapa',
+    verMapaCompleto: 'Ver mapa completo',
+    emergencia: '<b>Importante</b><br>SkyReport no es un canal de emergencia. Si '
+              + 'necesitas ayuda inmediata, contacta con los servicios de rescate locales.',
+    /* las vistas */
+    mapaTitulo: 'Mapa de eventos',
+    mapaSub: 'Cada punto es un evento. El calor muestra dónde se acumulan.',
+    patronesTitulo: 'Patrones',
+    patronesSub: 'Los eventos aislados cuentan historias. Juntos revelan patrones.',
+    todos: 'Todos',
+    subTitulo: 'Reportes anónimos de eventos de parapente',
+    pieTexto: 'Reportes anónimos de eventos de parapente',
+    pieLema: 'Volar. Aprender. Volver.',
+    eligeFase: 'Selecciona una fase…',
+    /* avisos */
+    faltaTitulo: 'Falta algún dato', faltaTexto: 'Necesito: ',
+    faltaFin: '.<br><br>Son 30 segundos y con eso ya sirve.',
+    graciasTitulo: 'Gracias. Ya está dentro.',
+    graciasTexto: 'Lo que has contado puede evitar que otro pase por lo mismo.',
+    graciasViento: 'Y he guardado el viento real de ese día: ',
+    graciasFin: 'Puedes reportar todos los que quieras: <b>los sustos también cuentan</b>.',
+    errorTitulo: 'No se pudo enviar',
+    errorTexto: 'Revisa tu conexión e inténtalo otra vez.',
+    privTitulo: 'Privacidad',
+    privTexto: 'No pedimos tu nombre, ni tu teléfono, ni tu correo.<br><br>La ubicación '
+             + 'se <b>redondea a unos 100 metros</b>, así que no señala un punto exacto.'
+             + '<br><br>El <b>día</b> que pongas se usa solo para calcular el viento de '
+             + 'esa jornada y <b>no se guarda</b>: solo queda el mes y el año.'
+             + '<br><br>Y no hay cuentas ni usuarios: nadie puede ver quién reportó qué.'
+             + '<br><br>El anonimato no es un extra. Es lo único que hace que esto sirva.',
+    sinPuntoTitulo: 'Ese evento no tiene punto',
+    sinPuntoTexto: 'Quien lo escribió no marcó dónde pasó. Es lo único que se pide y no '
+                 + 'se obligó, así que no hay sitio al que llevarte.',
+    mirandoViento: 'Mirando el viento que hacía ese día…',
+    enviando: 'Enviando…',
+    verEnMapa: 'Ver en el mapa',
+    pendVerif: 'pendiente de verificación',
+    entender: 'Entendido',
+    nada: 'Todavía no hay eventos.<br>Sé el primero en contar uno.',
+    /* los patrones */
+    masClaro: 'El patrón más claro hasta ahora', en: 'En', hayEventos: 'hay',
+    eventos2: 'eventos', yDeEllos: 'y de ellos', sonDe: 'son de',
+    masDatos: 'Con más datos esto dirá cosas como «aquí, en esta época, pasa esto». Ese es el objetivo.',
+    quePasaMas: 'Qué pasa más', enTotal: 'eventos en total',
+    faseTitulo: 'En qué fase del vuelo', faseSub: 'dónde se complica',
+    vientoTitulo: 'El viento de esos días', vientoSub: 'traen el viento real del clima de ese día',
+    vientoMedio: 'Viento medio', rachasMedias: 'rachas medias',
+    tenianRachas: 'tenían <b>rachas muy por encima del viento medio</b>',
+    mayoriaRachado: ' — la mayoría fueron con aire <b>racheado</b>',
+    conSostenido: 'fueron con viento sostenido de <b>25 km/h o más</b>',
+    gravedadTitulo: 'Gravedad de los eventos', gravedadSub: 'del susto a lo peor: mirarlo sin morbo, para aprender',
+    consecTitulo: 'Consecuencias', consecSub: 'el resultado, en datos',
+    horaTitulo: 'A qué hora del día', horaSub: 'franja del día',
+    dondeTitulo: 'Dónde', dondeSub: 'por sitio, sin señalar puntos exactos',
+    pocosDatos: 'Todavía no hay suficientes datos',
+    pocosTexto: 'Los patrones salen cuando hay al menos 3 eventos. Ahora hay ',
+    pocosFin: 'Por eso lo importante ahora es que la gente reporte: <b>cada susto cuenta</b>. '
+            + 'Con 20 eventos esto ya dice cosas útiles.',
+  },
+
+  en: {
+    lema: 'A community<br>for safer flights',
+    navMapa: 'Map', navReportar: 'Report', navPatrones: 'Patterns',
+    heroTitulo: 'Shared safety. Collective learning.',
+    heroTexto: 'Here you can anonymously report paragliding events.<br>'
+             + 'We are not looking for someone to blame — we are looking to learn, '
+             + 'so we all land safely.',
+    heroCita: '<b>“Every experience counts.</b> A safer flight starts by sharing '
+            + 'what happened.”',
+    formTitulo: 'Report an event',
+    formAviso: 'Everything is anonymous. The marked fields are required.',
+    c1t: 'What happened?', c1a: 'From a close call to the worst. This classifies the event.',
+    c2t: 'What was it?', c2a: 'The specific situation. This is what makes patterns possible.',
+    c3t: 'Consequences', c3a: 'The actual outcome.',
+    c4t: 'Phase of flight', c4a: 'At what point in the flight?',
+    c5t: 'Where', c5a: 'Tap the area on the map. It is stored rounded to ~100 m: '
+                     + 'enough to see patterns, too little to point at anyone.',
+    c6t: 'When', c6a: 'With the day I work out the real wind that day. '
+                    + '<b>The day is never published</b>: only the month and year are kept.',
+    c7t: 'Time of day', c7a: 'The time of day is published, never the exact hour.',
+    c8t: 'How was the air', c8a: 'What you felt. I work out the real wind myself.',
+    c9t: 'Your flight file', c9a: 'An IGC identifies one specific flight. Read this first.',
+    c10t: 'Tell the story', c10a: 'No names. Leave out anything that identifies someone; '
+                                + 'keep what explains what happened.',
+    obligatorio: 'required', opcional: 'optional',
+    otroTitulo: 'Which one? Describe it in one line',
+    otroEjemplo: 'E.g. harness snag · someone in the air · brake knot',
+    fatalTexto: '<b>Thank you for telling it.</b> This is the data that helps most to '
+              + 'keep it from happening again.<br><br>Please tell it <b>without names</b> '
+              + 'and without details that do not add to what we learn. What matters is '
+              + 'what happened and in what conditions, not who.<br><br>'
+              + '<b>Fatalities are not published immediately:</b> they stay pending '
+              + 'verification so a mistake or a rumour does not become data.',
+    igcBoton: 'Upload my IGC file',
+    igcBorrar: 'Delete the track after processing it',
+    relatoEjemplo: 'Write your story here (optional)...',
+    privacidad: '<b>What is published and what is not.</b><br><b>Published:</b> the month '
+              + 'and year, the rounded area, the time of day, the situation and the '
+              + 'consequences.<br><b>Never published:</b> your name, the exact day, the '
+              + 'exact hour, your precise position, or the IGC file. The file is only '
+              + 'read for the flight conditions and is not kept.',
+    enviar: 'Send anonymous event',
+    evEventos: 'events', evEvento: 'event',
+    evSitios: 'sites', evPatrones: 'patterns', evPatron: 'pattern',
+    principios: 'Principles',
+    p1: 'Safety above all', p1s: 'We learn from real experience.',
+    p2: 'No judgement, no blame', p2s: 'This is not about pointing fingers, it is about improving.',
+    p3: 'A global community', p3s: 'Shared knowledge makes our flights safer.',
+    anonTitulo: 'Anonymous by design',
+    anonTexto: 'We do not ask for your name, personal data, or anything that could '
+             + 'identify you. The location is approximate and details are handled with care.',
+    anonMas: 'Learn more about your privacy',
+    aprendeTitulo: 'What we learn',
+    aprendeTexto: 'Events let us spot patterns, risk areas and recurring situations so '
+                + 'we can share what we learn with the whole community.',
+    aprendeVer: 'See patterns and analysis',
+    reciente: 'Recent activity on the map',
+    verMapaCompleto: 'See the full map',
+    emergencia: '<b>Important</b><br>SkyReport is not an emergency channel. If you need '
+              + 'immediate help, contact your local rescue services.',
+    mapaTitulo: 'Event map',
+    mapaSub: 'Each dot is one event. The heat shows where they pile up.',
+    patronesTitulo: 'Patterns',
+    patronesSub: 'Single events tell stories. Together they reveal patterns.',
+    todos: 'All',
+    subTitulo: 'Anonymous paragliding event reports',
+    pieTexto: 'Anonymous paragliding event reports',
+    pieLema: 'Fly. Learn. Come back.',
+    eligeFase: 'Choose a phase…',
+    faltaTitulo: 'Something is missing', faltaTexto: 'I need: ',
+    faltaFin: '.<br><br>It takes 30 seconds and that is all it needs.',
+    graciasTitulo: 'Thank you. It is in.',
+    graciasTexto: 'What you told us may keep someone else from going through the same.',
+    graciasViento: 'And I saved the real wind from that day: ',
+    graciasFin: 'You can report as many as you like: <b>close calls count too</b>.',
+    errorTitulo: 'Could not send it',
+    errorTexto: 'Check your connection and try again.',
+    privTitulo: 'Privacy',
+    privTexto: 'We do not ask for your name, phone or email.<br><br>The location is '
+             + '<b>rounded to about 100 metres</b>, so it does not point at an exact spot.'
+             + '<br><br>The <b>day</b> you enter is used only to work out the wind that '
+             + 'day and is <b>not saved</b>: only the month and year remain.'
+             + '<br><br>There are no accounts and no users: nobody can see who reported what.'
+             + '<br><br>Anonymity is not a feature. It is the only thing that makes this work.',
+    sinPuntoTitulo: 'That event has no location',
+    sinPuntoTexto: 'Whoever wrote it did not mark where it happened. It is the one thing '
+                 + 'we ask for and it is not required, so there is nowhere to take you.',
+    mirandoViento: 'Checking the wind that day…',
+    enviando: 'Sending…',
+    verEnMapa: 'See on the map',
+    pendVerif: 'pending verification',
+    entender: 'Got it',
+    nada: 'No events yet.<br>Be the first to tell one.',
+    masClaro: 'The clearest pattern so far', en: 'At', hayEventos: 'there are',
+    eventos2: 'events', yDeEllos: 'and of those', sonDe: 'are',
+    masDatos: 'With more data this will say things like “here, in this season, this is '
+            + 'what happens”. That is the goal.',
+    quePasaMas: 'What happens most', enTotal: 'events in total',
+    faseTitulo: 'Phase of flight', faseSub: 'where it gets complicated',
+    vientoTitulo: 'The wind on those days', vientoSub: 'carry the real wind from the weather of that day',
+    vientoMedio: 'Average wind', rachasMedias: 'average gusts',
+    tenianRachas: 'had <b>gusts well above the average wind</b>',
+    mayoriaRachado: ' — most of them were in <b>gusty</b> air',
+    conSostenido: 'had sustained wind of <b>25 km/h or more</b>',
+    gravedadTitulo: 'Severity of the events', gravedadSub: 'from a scare to the worst: read it without morbid curiosity, to learn',
+    consecTitulo: 'Consequences', consecSub: 'the outcome, in numbers',
+    horaTitulo: 'Time of day', horaSub: 'time of day',
+    dondeTitulo: 'Where', dondeSub: 'by site, without pointing at exact spots',
+    pocosDatos: 'Not enough data yet',
+    pocosTexto: 'Patterns appear once there are at least 3 events. Right now there are ',
+    pocosFin: 'That is why the important thing now is that people report: <b>every close '
+            + 'call counts</b>. With 20 events this already tells you useful things.',
+  },
+};
+
+let idioma = 'es';
+
 /* ---------- las opciones ---------- */
 /* ==========================================================================
    LA CLASIFICACIÓN (revisión de Pam)
@@ -710,60 +935,64 @@ const $ = id => document.getElementById(id);
 
 /* 1 · la gravedad. Esto es lo que hace que SkyReport sea el paraguas */
 const SEVERIDAD = [
-  { id:'near',      e:'warning',         n:'Near miss / casi accidente' },
-  { id:'incidente', e:'error_outline',   n:'Incidente' },
-  { id:'accidente', e:'report_problem',  n:'Accidente' },
-  { id:'grave',     e:'personal_injury', n:'Accidente grave' },
-  { id:'fatal',     e:'emergency',       n:'Fatalidad' },
+  { id:'near',      e:'warning',         es:'Near miss / casi accidente', en:'Near miss' },
+  { id:'incidente', e:'error_outline',   es:'Incidente',      en:'Incident' },
+  { id:'accidente', e:'report_problem',  es:'Accidente',      en:'Accident' },
+  { id:'grave',     e:'personal_injury', es:'Accidente grave', en:'Serious accident' },
+  { id:'fatal',     e:'emergency',       es:'Fatalidad',      en:'Fatality' },
 ];
 
 /* 2 · la situación. Aquí está el valor: es lo que permite decir
    '17 eventos con sotavento' o '8 proximidades entre pilotos' */
 const SITUACION = [
-  { id:'plegada',    e:'air',            n:'Plegada o cierre' },
-  { id:'proximidad', e:'groups',         n:'Proximidad entre pilotos' },
-  { id:'sotavento',  e:'landscape',      n:'Sotavento' },
-  { id:'rotor',      e:'storm',          n:'Rotor o turbulencia' },
-  { id:'cable',      e:'cable',          n:'Cable o tendido' },
-  { id:'arbol',      e:'forest',         n:'Árbol o zona arbolada' },
-  { id:'despegue',   e:'flight_takeoff', n:'Despegue' },
-  { id:'aterrizaje', e:'flight_land',    n:'Aterrizaje' },
-  { id:'bajo',       e:'trending_down',  n:'Quedarse bajo' },
-  { id:'otro',       e:'more_horiz',     n:'Otro' },
+  { id:'plegada',    e:'air',            es:'Plegada o cierre',           en:'Collapse or closure' },
+  { id:'proximidad', e:'groups',         es:'Proximidad entre pilotos',   en:'Close to another pilot' },
+  { id:'sotavento',  e:'landscape',      es:'Sotavento',                  en:'Lee side' },
+  { id:'rotor',      e:'storm',          es:'Rotor o turbulencia',        en:'Rotor or turbulence' },
+  { id:'cable',      e:'cable',          es:'Cable o tendido',            en:'Cable or power line' },
+  { id:'arbol',      e:'forest',         es:'Árbol o zona arbolada',      en:'Tree or wooded area' },
+  { id:'despegue',   e:'flight_takeoff', es:'Despegue',                   en:'Launch' },
+  { id:'aterrizaje', e:'flight_land',    es:'Aterrizaje',                 en:'Landing' },
+  { id:'bajo',       e:'trending_down',  es:'Quedarse bajo',              en:'Getting low' },
+  { id:'otro',       e:'more_horiz',     es:'Otro',                       en:'Other' },
 ];
 
 /* 3 · las consecuencias. '¿Cómo acabó?' sonaba feo para una muerte. */
 const CONSEC = [
-  { id:'sin',    e:'check_circle',    n:'Sin lesiones' },
-  { id:'leves',  e:'healing',         n:'Lesiones leves' },
-  { id:'graves', e:'personal_injury', n:'Lesiones graves' },
-  { id:'danos',  e:'car_crash',       n:'Daños materiales' },
-  { id:'fatal',  e:'emergency',       n:'Fatalidad' },
+  { id:'sin',    e:'check_circle',    es:'Sin lesiones',      en:'No injuries' },
+  { id:'leves',  e:'healing',         es:'Lesiones leves',    en:'Minor injuries' },
+  { id:'graves', e:'personal_injury', es:'Lesiones graves',   en:'Serious injuries' },
+  { id:'danos',  e:'car_crash',       es:'Daños materiales',  en:'Material damage' },
+  { id:'fatal',  e:'emergency',       es:'Fatalidad',         en:'Fatality' },
 ];
 
 const FASES = [
-  { id:'despegue',     n:'Despegue' },
-  { id:'termica',      n:'Térmica / ascenso' },
-  { id:'transito',     n:'Tránsito' },
-  { id:'aproximacion', n:'Aproximación' },
-  { id:'aterrizaje',   n:'Aterrizaje' },
+  { id:'despegue',     es:'Despegue',            en:'Launch' },
+  { id:'termica',      es:'Térmica / ascenso',   en:'Thermal / climb' },
+  { id:'transito',     es:'Tránsito',            en:'Transition' },
+  { id:'aproximacion', es:'Aproximación',        en:'Approach' },
+  { id:'aterrizaje',   es:'Aterrizaje',          en:'Landing' },
 ];
 const FRANJAS = [
-  { id:'manana',   e:'wb_twilight',   n:'Mañana' },
-  { id:'mediodia', e:'light_mode',    n:'Mediodía' },
-  { id:'tarde',    e:'wb_sunny',      n:'Tarde' },
-  { id:'noche',    e:'dark_mode',     n:'Noche' },
+  { id:'manana',   e:'wb_twilight',   es:'Mañana',   en:'Morning' },
+  { id:'mediodia', e:'light_mode',    es:'Mediodía', en:'Midday' },
+  { id:'tarde',    e:'wb_sunny',      es:'Tarde',    en:'Afternoon' },
+  { id:'noche',    e:'dark_mode',     es:'Noche',    en:'Evening' },
 ];
 const AIRES = [
-  { id:'tranquilo',  e:'air',              n:'Tranquilo' },
-  { id:'turbulento', e:'waves',            n:'Turbulento' },
-  { id:'termico',    e:'local_fire_department', n:'Térmico' },
-  { id:'fuerte',     e:'storm',            n:'Con viento fuerte' },
-  { id:'variable',   e:'swap_horiz',       n:'Variable' },
-  { id:'nose',       e:'help',             n:'No lo sé' },
+  { id:'tranquilo',  e:'air',                   es:'Tranquilo',         en:'Calm' },
+  { id:'turbulento', e:'waves',                 es:'Turbulento',        en:'Turbulent' },
+  { id:'termico',    e:'local_fire_department', es:'Térmico',           en:'Thermal' },
+  { id:'fuerte',     e:'storm',                 es:'Con viento fuerte', en:'Strong wind' },
+  { id:'variable',   e:'swap_horiz',            es:'Variable',          en:'Variable' },
+  { id:'nose',       e:'help',                  es:'No lo sé',          en:'Not sure' },
 ];
-const MESES = ['enero','febrero','marzo','abril','mayo','junio',
-               'julio','agosto','septiembre','octubre','noviembre','diciembre'];
+const MESES = {
+  es: ['enero','febrero','marzo','abril','mayo','junio',
+       'julio','agosto','septiembre','octubre','noviembre','diciembre'],
+  en: ['January','February','March','April','May','June',
+       'July','August','September','October','November','December'],
+};
 
 let incidentes = [];
 let marcasInc = {};      /* id del reporte -> su marca en el mapa */
@@ -785,9 +1014,16 @@ function escapa(s){
   return String(s).replace(/[&<>"']/g, c =>
     ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
+/* el nombre de una opcion, en el idioma que toque */
+function nb(o){ return o ? (o[idioma] || o.es || '') : ''; }
 function sevDe(id){ return SEVERIDAD.find(t => t.id === id) || SEVERIDAD[0]; }
 function sitDe(id){ return SITUACION.find(t => t.id === id) || SITUACION[SITUACION.length - 1]; }
-function consDe(id){ return CONSEC.find(t => t.id === id) || { n: id || '', e:'help' }; }
+function consDe(id){ return CONSEC.find(t => t.id === id) || { es: id || '', en: id || '', e:'help' }; }
+function faseDe(id){ return FASES.find(f => f.id === id) || { es:'', en:'' }; }
+function franjaDe(id){ return FRANJAS.find(f => f.id === id) || { es:'', en:'' }; }
+function aireDe(id){ return AIRES.find(a => a.id === id) || { es:'', en:'' }; }
+/* y el texto de la interfaz */
+function t(k){ return (TXT[idioma] && TXT[idioma][k]) || (TXT.es[k] || ''); }
 /* el color, segun Pam: gris para lo leve, naranja para lo que avisa,
    y rojo SOLO para accidente grave o fatalidad */
 function colorDe(id){
@@ -799,7 +1035,8 @@ function colorDe(id){
 }
 function nombreMes(m){
   const p = String(m).split('-');
-  return MESES[parseInt(p[1], 10) - 1] + ' ' + p[0];
+  const mm = MESES[idioma][parseInt(p[1], 10) - 1] || '';
+  return idioma === 'es' ? (mm + ' ' + p[0]) : (mm + ' ' + p[0]);
 }
 function redondea(v){ return Math.round(v * 1000) / 1000; }
 
@@ -850,18 +1087,24 @@ function nombreSitio(lat, lon){
 }
 
 /* ---------- el viento: datos, no etiquetas ---------- */
-const CARDINALES = ['Norte','Noreste','Este','Sureste','Sur','Suroeste','Oeste','Noroeste'];
+/* los puntos cardinales, en cada idioma (el viento se dice de donde VIENE) */
+const CARDINALES = {
+  es: ['Norte','Noreste','Este','Sureste','Sur','Suroeste','Oeste','Noroeste'],
+  en: ['North','North-east','East','South-east','South','South-west','West','North-west'],
+};
 function deDonde(g){
   if (g == null) return '';
   const i = Math.round((((g % 360) + 360) % 360) / 45) % 8;
-  return 'del ' + CARDINALES[i];
+  return (idioma === 'es' ? 'del ' : 'from ') + CARDINALES[idioma][i];
 }
 function textoViento(v){
   if (!v || v.kmh == null) return '';
-  let t = v.kmh + ' km/h';
-  if (v.racha != null && v.racha > v.kmh + 8) t += ' · rachas ' + v.racha + ' km/h';
-  if (v.dir != null) t += ' · ' + deDonde(v.dir) + ' (' + v.dir + '°)';
-  return t;
+  /* OJO: la variable NO se llama 't' a proposito: t() es la traduccion */
+  let txt = v.kmh + ' km/h';
+  if (v.racha != null && v.racha > v.kmh + 8)
+    txt += ' · ' + (idioma === 'es' ? 'rachas ' : 'gusts ') + v.racha + ' km/h';
+  if (v.dir != null) txt += ' · ' + deDonde(v.dir) + ' (' + v.dir + '°)';
+  return txt;
 }
 function eraRacheado(v){
   return !!(v && v.kmh != null && v.racha != null && v.racha > v.kmh + 12);
@@ -873,7 +1116,7 @@ function pintaOps(idDiv, lista, campo, unacol){
   div.innerHTML = lista.map(o =>
     '<button data-id="' + o.id + '">' +
     (o.e ? '<span class="mso">' + o.e + '</span>' : '') +
-    '<span>' + o.n + '</span></button>').join('');
+    '<span>' + nb(o) + '</span></button>').join('');
   if (unacol) div.classList.add('unaCol');
   div.onclick = ev => {
     const b = ev.target.closest('button');
@@ -959,9 +1202,7 @@ function irAlPunto(id){
   const i = incidentes.find(x => x.id === id);
   if (!i) return;
   if (i.lat == null){
-    aviso('Ese reporte no tiene punto',
-      'Quien lo escribió no marcó dónde pasó. Es lo único que se pide y no se '
-      + 'obligó, así que no hay sitio al que llevarte.');
+    aviso(t('sinPuntoTitulo'), t('sinPuntoTexto'));
     return;
   }
   idSenalado = id;            /* <- esto hace que SU punto se resalte */
@@ -988,22 +1229,22 @@ function pintaIncidentes(){
   vis.sort((a, b) => (b.mes || '').localeCompare(a.mes || ''));
 
   $('listaInc').innerHTML = vis.length ? vis.map(i => {
-    const t = sevDe(i.sev);
+    const sv = sevDe(i.sev);          /* NO llamarlo 't': t() es la traduccion */
     const sit = sitDe(i.sit);
-    const titulo = (i.sit === 'otro' && i.otro) ? escapa(i.otro) : sit.n;
+    const titulo = (i.sit === 'otro' && i.otro) ? escapa(i.otro) : nb(sit);
     const pend = (i.verif === 'pendiente');
     return '<div class="inc ' + (i.cons || '') + ' sev' + (i.sev || 'near')
       + (pend ? ' pendiente' : '') + '" data-id="' + i.id
       + '" onclick="irAlPunto(\'' + i.id + '\')">'
       + '<div class="tipo"><span class="mso">' + sit.e + '</span>' + titulo
-      + '<span class="etq sevEtq">' + t.n + '</span>'
-      + (pend ? '<span class="etq pendEtq"><span class="mso">pending</span>pendiente de verificación</span>' : '')
+      + '<span class="etq sevEtq">' + nb(sv) + '</span>'
+      + (pend ? '<span class="etq pendEtq"><span class="mso">pending</span>' + t('pendVerif') + '</span>' : '')
       + '</div>'
       + '<div class="meta">'
       + (i.lat != null ? '<b>' + escapa(nombreSitio(i.lat, i.lon)) + '</b> · ' : '')
       + (i.mes ? nombreMes(i.mes) : 'sin fecha')
-      + (i.franja ? ' · ' + ((FRANJAS.find(f => f.id === i.franja) || {}).n || '') : '')
-      + (i.aire ? ' · aire ' + ((AIRES.find(a => a.id === i.aire) || {}).n || '').toLowerCase() : '')
+      + (i.franja ? ' · ' + nb(franjaDe(i.franja)) : '')
+      + (i.aire ? ' · ' + nb(aireDe(i.aire)) : '')
       + '</div>'
       + (textoViento(i.viento) ? '<div class="dato">💨 <b>' + textoViento(i.viento) + '</b>'
           + (eraRacheado(i.viento) ? '<span class="marcaRacha">racheado</span>' : '') + '</div>' : '')
@@ -1011,10 +1252,10 @@ function pintaIncidentes(){
           + (i.igcAltMax ? ' · techo <b>' + i.igcAltMax + ' m</b>' : '') + '</div>' : '')
       + (i.relato ? '<div class="relato">' + escapa(i.relato) + '</div>' : '')
       + (i.lat != null
-          ? '<div class="verPunto"><span class="mso">my_location</span>Ver en el mapa</div>'
+          ? '<div class="verPunto"><span class="mso">my_location</span>' + t('verEnMapa') + '</div>'
           : '')
       + '</div>';
-  }).join('') : '<div class="vacio">Todavía no hay reportes.<br>Sé el primero en contar uno.</div>';
+  }).join('') : '<div class="vacio">' + t('nada') + '</div>';
 
   /* el mapa principal */
   if (mapaPrincipal){
@@ -1025,7 +1266,7 @@ function pintaIncidentes(){
     vis.forEach(i => {
       if (i.lat == null) return;
       pts.push([i.lat, i.lon]);
-      const t = sevDe(i.sev);
+      const sv = sevDe(i.sev);
       const col = colorDe(i.sev);
       /* el elegido se agranda y se pone oscuro; los demas se atenuan */
       const elegido = (i.id === idSenalado);
@@ -1035,9 +1276,8 @@ function pintaIncidentes(){
           weight: elegido ? 5 : 2.5,
           fillColor: elegido ? '#16323b' : col,
           fillOpacity: elegido ? 1 : (idSenalado ? 0.38 : 0.92) })
-        .bindPopup('<b>' + sitDe(i.sit).n + '</b> · ' + t.n + '<br>'
-          + (i.mes ? nombreMes(i.mes) : '') + ' · '
-          + ((FASES.find(f => f.id === i.fase) || {}).n || '')
+        .bindPopup('<b>' + nb(sitDe(i.sit)) + '</b> · ' + nb(sv) + '<br>'
+          + (i.mes ? nombreMes(i.mes) : '') + ' · ' + nb(faseDe(i.fase))
           + (textoViento(i.viento) ? '<br><b>💨 ' + textoViento(i.viento) + '</b>' : '')
           + (i.igcMin ? '<br>🛫 ' + i.igcMin + ' min de vuelo'
               + (i.igcAltMax ? ', techo ' + i.igcAltMax + ' m' : '') : '')
@@ -1079,12 +1319,10 @@ function pintaPatrones(){
   const caja = $('patrones');
   if (incidentes.length < 3){
     caja.innerHTML = '<div class="patron" style="grid-column:1/-1">'
-      + '<h3><span class="mso">hourglass_empty</span>Todavía no hay suficientes datos</h3>'
-      + '<div class="cuantos">Los patrones salen cuando hay al menos 3 eventos. '
-      + 'Ahora hay ' + incidentes.length + '.</div>'
+      + '<h3><span class="mso">hourglass_empty</span>' + t('pocosDatos') + '</h3>'
+      + '<div class="cuantos">' + t('pocosTexto') + incidentes.length + '.</div>'
       + '<div style="font-size:13px;line-height:1.65;color:var(--gris)">'
-      + 'Por eso lo importante ahora es que la gente reporte: <b>cada susto cuenta</b>. '
-      + 'Con 20 reportes esto ya dice cosas útiles.</div></div>';
+      + t('pocosFin') + '</div></div>';
     return;
   }
 
@@ -1120,22 +1358,20 @@ function pintaPatrones(){
   if (zTop && zTop[1].n >= 3){
     const tTop = Object.entries(zTop[1].tipos).sort((a, b) => b[1] - a[1])[0];
     html += '<div class="patron destaca">'
-      + '<h3><span class="mso">lightbulb</span>El patrón más claro hasta ahora</h3>'
+      + '<h3><span class="mso">lightbulb</span>' + t('masClaro') + '</h3>'
       + '<div style="font-size:14.5px;line-height:1.7">En <b>' + escapa(zTop[0])
       + '</b> hay <b>' + zTop[1].n + ' eventos</b>, y de ellos <b>' + tTop[1]
-      + '</b> son de <b>' + sitDe(tTop[0]).n.toLowerCase() + '</b>.</div>'
-      + '<div class="cuantos" style="margin:10px 0 0">Con más datos esto dirá cosas como '
-      + '«aquí, en esta época, pasa esto». Ese es el objetivo.</div></div>';
+      + '</b> son de <b>' + nb(sitDe(tTop[0])) + '</b>.</div>'
+      + '<div class="cuantos" style="margin:10px 0 0">' + t('masDatos') + '</div></div>';
   }
 
-  if (tipos.length) html += bloque('Qué pasa más', 'pie_chart', total + ' eventos en total',
+  if (tipos.length) html += bloque(t('quePasaMas'), 'pie_chart', total + ' ' + t('enTotal'),
     tipos.map(t => t[0].indexOf('otro::') === 0
       ? ['Otro: ' + t[0].slice(6), t[1]]
-      : [sitDe(t[0]).n, t[1]]));
+      : [nb(sitDe(t[0])), t[1]]));
 
-  if (Object.keys(porFase).length) html += bloque('En qué fase del vuelo', 'flight',
-    'dónde se complica', Object.entries(porFase).sort((a, b) => b[1] - a[1])
-      .map(f => [(FASES.find(x => x.id === f[0]) || {}).n || f[0], f[1]]));
+  if (Object.keys(porFase).length) html += bloque(t('faseTitulo'), 'flight', t('faseSub'), Object.entries(porFase).sort((a, b) => b[1] - a[1])
+      .map(f => [nb(faseDe(f[0])) || f[0], f[1]]));
 
   /* el viento: aqui estan los numeros */
   const conViento = incidentes.filter(i => i.viento && i.viento.kmh != null);
@@ -1149,29 +1385,30 @@ function pintaPatrones(){
     const dirs = {};
     conViento.forEach(i => {
       if (i.viento.dir == null) return;
-      const d = deDonde(i.viento.dir).replace('del ', '');
+      const d = deDonde(i.viento.dir).replace(/^(del |from )/, '');
       dirs[d] = (dirs[d] || 0) + 1;
     });
     const listaDirs = Object.entries(dirs).sort((a, b) => b[1] - a[1]);
 
-    let t = '<div class="patron"><h3><span class="mso">air</span>El viento de esos días</h3>'
-      + '<div class="cuantos">' + conViento.length + ' de ' + total
-      + ' eventos traen el viento real del clima de ese día</div>'
+    /* OJO: la variable NO puede llamarse 't', que es la funcion de traduccion */
+    let blk = '<div class="patron"><h3><span class="mso">air</span>' + t('vientoTitulo') + '</h3>'
+      + '<div class="cuantos">' + conViento.length + ' / ' + total + ' '
+      + t('vientoSub') + '</div>'
       + '<div style="font-size:13.5px;line-height:1.8">'
-      + 'Viento medio: <b>' + med + ' km/h</b>'
-      + (medRach != null ? ' · rachas medias: <b>' + medRach + ' km/h</b>' : '')
-      + '<br>' + nRach + ' de ' + conViento.length
-      + ' tenían <b>rachas muy por encima del viento medio</b>'
-      + (nRach > conViento.length / 2 ? ' — la mayoría fueron con aire <b>racheado</b>' : '')
-      + '<br>' + fuertes + ' fueron con viento sostenido de <b>25 km/h o más</b></div>';
+      + t('vientoMedio') + ': <b>' + med + ' km/h</b>'
+      + (medRach != null ? ' · ' + t('rachasMedias') + ': <b>' + medRach + ' km/h</b>' : '')
+      + '<br>' + nRach + ' / ' + conViento.length + ' ' + t('tenianRachas')
+      + (nRach > conViento.length / 2 ? t('mayoriaRachado') : '')
+      + '<br>' + fuertes + ' ' + t('conSostenido') + '</div>';
     if (listaDirs.length){
       const maxD = listaDirs[0][1];
-      t += '<div style="margin-top:13px">'
-        + listaDirs.map(d => '<div class="fila"><span class="nom">del ' + d[0] + '</span>'
+      blk += '<div style="margin-top:13px">'
+        + listaDirs.map(d => '<div class="fila"><span class="nom">'
+          + (idioma === 'es' ? 'del ' : 'from ') + d[0] + '</span>'
           + '<span class="pista"><i style="width:' + (d[1] / maxD * 100).toFixed(0) + '%"></i></span>'
           + '<span class="n">' + d[1] + '</span></div>').join('') + '</div>';
     }
-    html += t + '</div>';
+    html += blk + '</div>';
   }
 
   /* la gravedad: aqui se ve si los incidentes son sustos o algo peor.
@@ -1179,24 +1416,20 @@ function pintaPatrones(){
   /* la gravedad y las consecuencias: de menos a mas, sin morbo */
   const porSev = {};
   incidentes.forEach(i => { if (i.sev) porSev[i.sev] = (porSev[i.sev] || 0) + 1; });
-  if (Object.keys(porSev).length) html += bloque('Gravedad de los eventos', 'monitor_heart',
-    'del susto a lo peor: mirarlo sin morbo, para aprender',
+  if (Object.keys(porSev).length) html += bloque(t('gravedadTitulo'), 'monitor_heart', t('gravedadSub'),
     ['near','incidente','accidente','grave','fatal']
-      .filter(k => porSev[k]).map(k => [sevDe(k).n, porSev[k]]));
+      .filter(k => porSev[k]).map(k => [nb(sevDe(k)), porSev[k]]));
 
   const porCons = {};
   incidentes.forEach(i => { if (i.cons) porCons[i.cons] = (porCons[i.cons] || 0) + 1; });
-  if (Object.keys(porCons).length) html += bloque('Consecuencias', 'healing',
-    'el resultado, en datos',
+  if (Object.keys(porCons).length) html += bloque(t('consecTitulo'), 'healing', t('consecSub'),
     ['sin','leves','graves','danos','fatal']
-      .filter(k => porCons[k]).map(k => [consDe(k).n, porCons[k]]));
+      .filter(k => porCons[k]).map(k => [nb(consDe(k)), porCons[k]]));
 
-  if (Object.keys(porFranja).length) html += bloque('A qué hora del día', 'schedule',
-    'franja del día', Object.entries(porFranja).sort((a, b) => b[1] - a[1])
-      .map(f => [(FRANJAS.find(x => x.id === f[0]) || {}).n || f[0], f[1]]));
+  if (Object.keys(porFranja).length) html += bloque(t('horaTitulo'), 'schedule', t('horaSub'), Object.entries(porFranja).sort((a, b) => b[1] - a[1])
+      .map(f => [nb(franjaDe(f[0])) || f[0], f[1]]));
 
-  if (zonas.length) html += bloque('Dónde', 'place',
-    'por sitio, sin señalar puntos exactos', zonas.map(z => [escapa(z[0]), z[1].n]));
+  if (zonas.length) html += bloque(t('dondeTitulo'), 'place', t('dondeSub'), zonas.map(z => [escapa(z[0]), z[1].n]));
 
   caja.innerHTML = html;
 }
@@ -1306,19 +1539,19 @@ function escucha(){
 /* ---------- enviar ---------- */
 async function envia(){
   const falta = [];
-  if (!sel.sev) falta.push('qué ocurrió');
-  if (!sel.sit) falta.push('qué pasó');
-  if (!sel.cons) falta.push('las consecuencias');
+  if (!sel.sev) falta.push(t('c1t').toLowerCase());
+  if (!sel.sit) falta.push(t('c2t').toLowerCase());
+  if (!sel.cons) falta.push(t('c3t').toLowerCase());
   const fase = $('selFase').value;
-  if (!fase) falta.push('la fase del vuelo');
-  if (sel.lat == null) falta.push('el sitio en el mapa');
-  if (!sel.franja) falta.push('la franja del día');
+  $('selFase').dataset.v = fase;
+  if (!fase) falta.push(t('c4t').toLowerCase());
+  if (sel.lat == null) falta.push(t('c5t').toLowerCase());
+  if (!sel.franja) falta.push(t('c7t').toLowerCase());
   const otro = $('otroTexto').value.trim();
-  if (sel.sit === 'otro' && !otro) falta.push('cuál era el «otro»');
+  if (sel.sit === 'otro' && !otro) falta.push(t('otroTitulo').toLowerCase());
 
   if (falta.length){
-    aviso('Falta algún dato', 'Necesito: <b>' + falta.join(', ') + '</b>.<br><br>'
-      + 'Son 30 segundos y con eso ya sirve.');
+    aviso(t('faltaTitulo'), t('faltaTexto') + '<b>' + falta.join(', ') + '</b>' + t('faltaFin'));
     return;
   }
 
@@ -1330,12 +1563,12 @@ async function envia(){
   /* el viento no se pregunta: lo saco del clima real de ese dia */
   let viento = null;
   if (dia){
-    $('txtEstado').textContent = 'Mirando el viento que hacía ese día…';
+    $('txtEstado').textContent = t('mirandoViento');
     const hora = igc ? igc.horaInicio : horaDeFranja(sel.franja);
     const lat = sel.lat, lon = sel.lon;
     viento = await vientoReal(lat, lon, dia, hora);
   }
-  $('txtEstado').textContent = 'Enviando…';
+  $('txtEstado').textContent = t('enviando');
 
   const dato = {
     sev: sel.sev, sit: sel.sit, cons: sel.cons, fase: fase,
@@ -1355,11 +1588,10 @@ async function envia(){
 
   try{
     await firebase.database().ref('skyreport/incidentes').push(dato);
-    aviso('Gracias. Ya está dentro.',
-      'Lo que has contado puede evitar que otro pase por lo mismo.'
-      + (viento ? '<br><br>Y he guardado el viento real de ese día: <b>'
-          + textoViento(viento) + '</b>.' : '')
-      + '<br><br>Puedes reportar todos los que quieras: <b>los sustos también cuentan</b>.');
+    aviso(t('graciasTitulo'),
+      t('graciasTexto')
+      + (viento ? '<br><br>' + t('graciasViento') + '<b>' + textoViento(viento) + '</b>.' : '')
+      + '<br><br>' + t('graciasFin'));
 
     /* limpio el formulario */
     sel = { tipo:null, gravedad:null, franja:null, aire:null, lat:null, lon:null };
@@ -1368,6 +1600,7 @@ async function envia(){
     $('cuentaTxt').textContent = '0';
     $('fecha').value = '';
     $('selFase').value = '';
+    $('selFase').dataset.v = '';
     $('otroTexto').value = '';
     $('cajaOtro').classList.remove('on');
     $('cajaFatalidad').classList.remove('on');
@@ -1384,7 +1617,7 @@ async function envia(){
     ponPestana('tMapa');
   }catch(e){
     $('txtEstado').textContent = '';
-    aviso('No se pudo enviar', 'Revisa tu conexión e inténtalo otra vez.<br><br>'
+    aviso(t('errorTitulo'), t('errorTexto') + '<br><br>'
       + '<span style="font-size:12px;color:#6b7f88">' + escapa(e.message) + '</span>');
   }
   $('bEnviar').disabled = false;
@@ -1406,12 +1639,7 @@ $('verMapa').onclick = e => { e.preventDefault(); ponPestana('tMapa'); };
 $('verPatrones').onclick = e => { e.preventDefault(); ponPestana('tPatrones'); };
 $('masPrivacidad').onclick = e => {
   e.preventDefault();
-  aviso('Privacidad', 'No pedimos tu nombre, ni tu teléfono, ni tu correo.'
-    + '<br><br>La ubicación se <b>redondea a unos 100 metros</b>, así que no señala un punto exacto.'
-    + '<br><br>El <b>día</b> que pongas se usa solo para calcular el viento de esa jornada '
-    + 'y <b>no se guarda</b>: solo queda el mes y el año.'
-    + '<br><br>Y no hay cuentas ni usuarios: nadie puede ver quién reportó qué.'
-    + '<br><br>El anonimato no es un extra. Es lo único que hace que esto sirva.');
+  aviso(t('privTitulo'), t('privTexto'));
 };
 
 /* ---------- el contador del relato ---------- */
@@ -1446,18 +1674,93 @@ $('ficheroIGC').onchange = ev => {
   lector.readAsText(f);
 };
 
+/* ==========================================================================
+   CAMBIAR DE IDIOMA (idea de Pam)
+   --------------------------------------------------------------------------
+   El boton de la cabecera, la memoria en el movil, y la deteccion automatica:
+   si el navegador viene en ingles, entra en ingles sin que nadie toque nada.
+   ========================================================================== */
+const IDIOMAS = { es: 'ES', en: 'EN' };
+
+function ponIdioma(l, guardar){
+  if (!TXT[l]) l = 'es';
+  idioma = l;
+  try { if (guardar !== false) localStorage.setItem('sr_idioma', l); } catch(e){}
+  document.documentElement.lang = l;
+
+  /* los textos marcados en el HTML */
+  document.querySelectorAll('[data-i18n]').forEach(n => {
+    const t2 = t(n.dataset.i18n);
+    if (t2) n.innerHTML = t2;
+  });
+  document.querySelectorAll('[data-i18n-ph]').forEach(n => {
+    const t2 = t(n.dataset.i18nPh);
+    if (t2) n.placeholder = t2;
+  });
+
+  /* el boton */
+  if ($('idTxt')) $('idTxt').textContent = IDIOMAS[l];
+
+  /* las listas que se generan por codigo */
+  $('selFase').innerHTML = '<option value="">' + t('eligeFase') + '</option>'
+    + FASES.map(f => '<option value="' + f.id + '">' + nb(f) + '</option>').join('');
+  /* conservo lo que el usuario ya habia elegido y marcado */
+  const antesFase = $('selFase').dataset.v || '';
+  if (antesFase) $('selFase').value = antesFase;
+  /* el idioma: primero lo que eligio antes, si no el del navegador */
+ponIdioma((function(){
+  try {
+    const g = localStorage.getItem('sr_idioma');
+    if (g && TXT[g]) return g;
+  } catch(e){}
+  return (navigator.language || 'es').toLowerCase().indexOf('en') === 0 ? 'en' : 'es';
+})(), false);
+
+pintaOps('opSev', SEVERIDAD, 'sev');
+  pintaOps('opSit', SITUACION, 'sit');
+  pintaOps('opCons', CONSEC, 'cons');
+  pintaOps('opFranja', FRANJAS, 'franja');
+  pintaOps('opAire', AIRES, 'aire');
+  ['opSev','opSit','opCons','opFranja','opAire'].forEach((id, i2) => {
+    const campo = ['sev','sit','cons','franja','aire'][i2];
+    if (sel[campo]){
+      const b = $(id).querySelector('button[data-id="' + sel[campo] + '"]');
+      if (b) b.classList.add('on');
+    }
+  });
+  $('cajaOtro').classList.toggle('on', sel.sit === 'otro');
+  $('cajaFatalidad').classList.toggle('on', sel.cons === 'fatal' || sel.sev === 'fatal');
+  $('bIGC').querySelector('[data-i18n]') && ($('bIGC').querySelector('[data-i18n]').innerHTML = t('igcBoton'));
+  $('filtros').innerHTML = '<button class="on" data-f="todos">'
+    + '<span class="mso">apps</span>' + t('todos') + '</button>'
+    + SEVERIDAD.map(x => '<button data-f="' + x.id + '"><span class="mso">' + x.e
+        + '</span>' + nb(x) + '</button>').join('');
+  $('filtros').querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.f === filtro));
+
+  /* y repinto lo que depende de los datos */
+  if (mapaPrincipal) pintaIncidentes();
+  if (typeof incidentes !== 'undefined' && incidentes.length) pintaPatrones();
+}
+
+$('bIdioma').onclick = () => ponIdioma(idioma === 'es' ? 'en' : 'es');
+
 /* ---------- arranque ---------- */
 firebase.initializeApp({ databaseURL: FIRE + '/' });
+
+/* el idioma: primero lo que eligio antes, si no el del navegador */
+ponIdioma((function(){
+  try {
+    const g = localStorage.getItem('sr_idioma');
+    if (g && TXT[g]) return g;
+  } catch(e){}
+  return (navigator.language || 'es').toLowerCase().indexOf('en') === 0 ? 'en' : 'es';
+})(), false);
 
 pintaOps('opSev', SEVERIDAD, 'sev');
 pintaOps('opSit', SITUACION, 'sit');
 pintaOps('opCons', CONSEC, 'cons');
 pintaOps('opFranja', FRANJAS, 'franja');
 pintaOps('opAire', AIRES, 'aire');
-
-/* la fase, en desplegable como en el diseño de Pam */
-$('selFase').innerHTML = '<option value="">Selecciona una fase…</option>'
-  + FASES.map(f => '<option value="' + f.id + '">' + f.n + '</option>').join('');
 
 $('bEnviar').onclick = envia;
 
