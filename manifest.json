@@ -1,25 +1,32 @@
 {
-  "name": "SkyReport — incidentes de parapente",
+  "name": "SkyReport — eventos de parapente",
   "short_name": "SkyReport",
-  "description": "Reporta incidentes y accidentes de parapente de forma anónima. Para aprender entre todos, no para señalar a nadie.",
+  "description": "Reportes anónimos de eventos de parapente. Para aprender, no para señalar.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#ffffff",
+  "background_color": "#16323b",
   "theme_color": "#16323b",
+  "lang": "es",
+  "categories": ["sports", "safety", "utilities"],
   "icons": [
+    { "src": "icono-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icono-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icono-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
     {
-      "src": "icono-192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any"
+      "name": "Reportar un evento",
+      "short_name": "Reportar",
+      "url": "./?ir=reportar",
+      "icons": [{ "src": "icono-192.png", "sizes": "192x192" }]
     },
     {
-      "src": "icono-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any"
+      "name": "Ver el mapa",
+      "short_name": "Mapa",
+      "url": "./?ir=mapa",
+      "icons": [{ "src": "icono-192.png", "sizes": "192x192" }]
     }
   ]
 }

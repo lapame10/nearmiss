@@ -386,6 +386,12 @@
   .puerta .err{color:var(--rojo);font-size:12.5px;margin-top:10px;display:none}
   .puerta .err.on{display:block}
 
+  /* el boton de instalar la app */
+  .btn.instalar{width:100%;justify-content:center;background:#fff;
+    border:2px solid var(--mar);color:var(--mar);margin-bottom:16px}
+  .btn.instalar:hover{background:#eef6f9}
+  .btn.instalar .mso{font-size:19px}
+
   /* ===== EL PUNTO QUE HAS TOCADO =====
      Con muchos puntos en el mapa no sabes cual es el tuyo. Este pin oscuro con
      el aro que late no se puede confundir. */
@@ -723,6 +729,12 @@
       </div>
 
       <div class="miniTarj">
+        <button class="btn instalar" id="bInstalar" style="display:none"
+          onclick="instalar()">
+          <span class="mso">download_for_offline</span>
+          <span data-i18n="instBoton"></span>
+        </button>
+
         <h3><span class="mso">lock</span> <span data-i18n="anonTitulo"></span></h3>
         <div style="font-size:12.5px;color:var(--gris);line-height:1.6" data-i18n="anonTexto"></div>
         <a class="enlace" href="#" id="masPrivacidad"><span data-i18n="anonMas"></span> →</a>
@@ -942,6 +954,13 @@ const TXT = {
     todos: 'Todos',
     /* --- admin --- */
     navAdmin: 'Admin',
+    instBoton: 'Instalar la app',
+    instTitulo: 'Añádelo a tu pantalla de inicio',
+    instTexto: 'En iPhone no hay un botón de instalar. Es así:<br><br>'
+      + '<b>1.</b> Toca el botón de <b>Compartir</b> (el cuadradito con la flecha).<br>'
+      + '<b>2.</b> Baja y toca <b>«Añadir a pantalla de inicio»</b>.<br>'
+      + '<b>3.</b> Ponle nombre y dale a <b>Añadir</b>.<br><br>'
+      + 'Y ya lo tienes con su icono, como una app. <b>Y funciona sin cobertura.</b>',
     admTitulo: 'Administración',
     admSalir: 'Salir',
     admPendientes: 'Pendientes de verificar',
@@ -1101,6 +1120,14 @@ const TXT = {
     patronesSub: 'Single events tell stories. Together they reveal patterns.',
     todos: 'All',
     navAdmin: 'Admin',
+    instBoton: 'Install the app',
+    instTitulo: 'Add it to your home screen',
+    instTexto: 'On iPhone there is no install button. Here is how:<br><br>'
+      + '<b>1.</b> Tap the <b>Share</b> button (the square with the arrow).<br>'
+      + '<b>2.</b> Scroll down and tap <b>“Add to Home Screen”</b>.<br>'
+      + '<b>3.</b> Give it a name and tap <b>Add</b>.<br><br>'
+      + 'That is it — its own icon, just like an app. <b>And it works with no '
+      + 'signal.</b>',
     admTitulo: 'Administration',
     admSalir: 'Sign out',
     admPendientes: 'Pending verification',
@@ -2829,6 +2856,39 @@ $('filtros').onclick = ev => {
 creaMapaMarca();
 creaMapaCalor();
 escucha();
+</script>
+<script>
+/* El service worker: es lo que hace que Android ofrezca INSTALAR de verdad
+   y que la app abra sin cobertura. Se registra despues de cargar, para no
+   retrasar nada. */
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function(){
+    navigator.serviceWorker.register('sw.js').catch(function(){});
+  });
+}
+
+/* El aviso de instalar. Android ofrece el dialogo nativo; iOS no lo tiene,
+   asi que ahi se explica el camino a mano (Compartir -> Añadir a inicio). */
+var avisoInstalar = null;
+window.addEventListener('beforeinstallprompt', function(ev){
+  ev.preventDefault();
+  avisoInstalar = ev;
+  var b = document.getElementById('bInstalar');
+  if (b) b.style.display = '';
+});
+window.addEventListener('appinstalled', function(){
+  var b = document.getElementById('bInstalar');
+  if (b) b.style.display = 'none';
+});
+function instalar(){
+  if (avisoInstalar){
+    avisoInstalar.prompt();
+    avisoInstalar.userChoice.then(function(){ avisoInstalar = null; });
+  } else {
+    /* iOS no tiene el dialogo: se explica a mano */
+    aviso(t('instTitulo'), t('instTexto'));
+  }
+}
 </script>
 </body>
 </html>
