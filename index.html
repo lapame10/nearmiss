@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#16323b">
-<title>NearMiss — reportes anónimos de incidentes de parapente</title>
+<title>SkyReport — reportes anónimos de incidentes de parapente</title>
 <link rel="manifest" href="manifest.json">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&display=swap">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
@@ -129,6 +129,11 @@
   .ops.gravedad button.on[data-id=graves]{border-color:var(--grave);background:var(--graveBg);
     box-shadow:0 0 0 1px var(--grave) inset}
   .ops.gravedad button.on[data-id=graves] .mso{color:var(--grave)}
+  /* la fatalidad: gris muy oscuro, SOBRIO. Nada de rojo chillón: esto se trata
+     con respeto, no como una alarma mas. */
+  .ops.gravedad button.on[data-id=fatalidad]{border-color:#33424a;background:#eef1f3;
+    box-shadow:0 0 0 1px #33424a inset}
+  .ops.gravedad button.on[data-id=fatalidad] .mso{color:#33424a}
 
   select,input[type=date],input[type=text],textarea{
     width:100%;font-family:inherit;font-size:14.5px;color:var(--tinta);
@@ -149,6 +154,13 @@
   .cajaOtro.on{display:block}
   .cajaOtro label{font-size:12px;font-weight:800;color:var(--gris);text-transform:uppercase;
     letter-spacing:.4px;display:block;margin-bottom:7px}
+
+  /* al marcar una fatalidad: un texto de respeto, sin dramatismo ni morbo */
+  .cajaFatalidad{display:none;margin-top:10px;background:#eef1f3;border-radius:10px;
+    padding:13px;border-left:3px solid #33424a;gap:11px;align-items:flex-start}
+  .cajaFatalidad.on{display:flex}
+  .cajaFatalidad .mso{color:#33424a;font-size:20px;flex-shrink:0;margin-top:1px}
+  .cajaFatalidad div{font-size:12.5px;line-height:1.6;color:#2c3d45}
 
   /* el IGC */
   .igcBox{background:#f7fafb;border:1.5px dashed var(--borde);border-radius:10px;padding:13px}
@@ -235,6 +247,7 @@
   .inc.leves{border-left-color:var(--casi)}
   .inc.danos{border-left-color:var(--casi)}
   .inc.graves{border-left-color:var(--grave)}
+  .inc.fatalidad{border-left-color:#33424a}
   .inc .tipo{display:flex;align-items:center;gap:9px;font-weight:800;font-size:15px}
   .inc .tipo .mso{font-size:21px;color:var(--mar)}
   .inc .meta{font-size:12px;color:var(--gris);margin-top:5px;line-height:1.55}
@@ -385,8 +398,8 @@
 <header class="cab">
   <div class="marca">
     <span class="pico"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C7 2 3 5 3 8c0 4 6 8 8.4 9.7L12 22l.6-4.3C15 16 21 12 21 8c0-3-4-6-9-6z"/></svg></span>
-    NearMiss
-    <span class="marcaTxt">Reportes anónimos de incidentes y casi accidentes de parapente</span>
+    SkyReport
+    <span class="marcaTxt">Reportes anónimos de incidentes y accidentes de parapente</span>
   </div>
   <nav class="nav">
     <button id="tMapa"><span class="mso">map</span>Mapa</button>
@@ -400,7 +413,7 @@
 <div class="vista on" id="vReportar">
   <div class="hero">
     <h1>Seguridad compartida. Aprendizaje colectivo.</h1>
-    <p>Aquí puedes reportar de forma anónima incidentes y casi accidentes de parapente.<br>
+    <p>Aquí puedes reportar de forma anónima incidentes y accidentes de parapente.<br>
     No buscamos culpables, buscamos aprender para que todos volvamos a volar.</p>
     <div class="cita">
       <b>“Cada experiencia cuenta.</b>
@@ -413,7 +426,7 @@
     <div>
       <div class="tarj">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap">
-          <h2>Reportar un incidente o casi accidente</h2>
+          <h2>Reportar un incidente o accidente</h2>
           <span class="avisoTop">Todos los campos son anónimos y opcionales, excepto los indicados.</span>
         </div>
 
@@ -436,6 +449,13 @@
               <span class="etq req">obligatorio</span></div>
             <p class="campoAyuda">Selecciona el resultado del incidente.</p>
             <div class="ops gravedad" id="opGrav"></div>
+            <div class="cajaFatalidad" id="cajaFatalidad">
+              <span class="mso">volunteer_activism</span>
+              <div>Gracias por contarlo. <b>Es el dato que más ayuda</b> a que no
+              vuelva a pasar.<br><br>
+              Cuéntalo <b>sin nombres</b> y sin detalles que no aporten aprendizaje.
+              Lo que importa es qué pasó y en qué condiciones, no quién.</div>
+            </div>
           </div>
 
           <div class="campo">
@@ -559,7 +579,7 @@
 
       <div class="alertaEmerg">
         <span class="mso">warning</span>
-        <div><b>Importante</b><br>NearMiss no es un canal de emergencia. Si necesitas
+        <div><b>Importante</b><br>SkyReport no es un canal de emergencia. Si necesitas
         ayuda inmediata, contacta con los servicios de rescate locales.</div>
       </div>
     </aside>
@@ -591,8 +611,8 @@
 </div>
 
 <footer class="pie">
-  <div><b>NearMiss</b></div>
-  <div>Reportes anónimos de incidentes y casi accidentes de parapente</div>
+  <div><b>SkyReport</b></div>
+  <div>Reportes anónimos de incidentes y accidentes de parapente</div>
   <div class="lema">Volar. Aprender. Volver.</div>
 </footer>
 
@@ -627,11 +647,16 @@ const TIPOS = [
   { id:'meteo',    e:'cloud',              n:'Condiciones meteorológicas' },
   { id:'otro',     e:'more_horiz',         n:'Otro' },
 ];
+/* La gravedad, de menos a mas. La fatalidad esta aqui a proposito: sin ella
+   los datos estarian SESGADOS (solo analizarias a los que tuvieron suerte).
+   En aviacion comercial los accidentes mortales son los que mas cambiaron los
+   procedimientos. Pero se pide con respeto: sin nombres y sin detalles morbosos. */
 const GRAV = [
-  { id:'sin',    e:'check_circle',    n:'Sin lesiones' },
-  { id:'leves',  e:'healing',         n:'Lesiones leves' },
-  { id:'danos',  e:'car_crash',       n:'Daños materiales' },
-  { id:'graves', e:'personal_injury', n:'Lesiones graves' },
+  { id:'sin',       e:'check_circle',    n:'Sin lesiones' },
+  { id:'leves',     e:'healing',         n:'Lesiones leves' },
+  { id:'danos',     e:'car_crash',       n:'Daños materiales' },
+  { id:'graves',    e:'personal_injury', n:'Lesiones graves' },
+  { id:'fatalidad', e:'emergency',       n:'Fatalidad' },
 ];
 const FASES = [
   { id:'despegue',     n:'Despegue' },
@@ -766,6 +791,10 @@ function pintaOps(idDiv, lista, campo, unacol){
       $('cajaOtro').classList.toggle('on', sel.tipo === 'otro');
       if (sel.tipo === 'otro') setTimeout(() => $('otroTexto').focus(), 120);
     }
+    /* si marca una fatalidad, sale el texto de respeto */
+    if (campo === 'gravedad' && $('cajaFatalidad')){
+      $('cajaFatalidad').classList.toggle('on', sel.gravedad === 'fatalidad');
+    }
   };
 }
 
@@ -813,8 +842,9 @@ function pintaCalorMini(){
   incidentes.forEach(i => {
     if (i.lat == null) return;
     pts.push([i.lat, i.lon]);
-    const col = i.gravedad === 'graves' ? '#b5544a'
-              : (i.gravedad === 'sin' ? '#2f7d4f' : '#c98a24');
+    const col = i.gravedad === 'fatalidad' ? '#33424a'
+              : (i.gravedad === 'graves' ? '#b5544a'
+              : (i.gravedad === 'sin' ? '#2f7d4f' : '#c98a24'));
     L.circleMarker([i.lat, i.lon], { radius:6, color:'#fff', weight:2,
       fillColor:col, fillOpacity:.92 }).addTo(capaCalorMini);
   });
@@ -895,8 +925,9 @@ function pintaIncidentes(){
       if (i.lat == null) return;
       pts.push([i.lat, i.lon]);
       const t = tipoDe(i.tipo);
-      const col = i.gravedad === 'graves' ? '#b5544a'
-                : (i.gravedad === 'sin' ? '#2f7d4f' : '#c98a24');
+      const col = i.gravedad === 'fatalidad' ? '#33424a'
+                : (i.gravedad === 'graves' ? '#b5544a'
+                : (i.gravedad === 'sin' ? '#2f7d4f' : '#c98a24'));
       /* el elegido se agranda y se pone oscuro; los demas se atenuan */
       const elegido = (i.id === idSenalado);
       marcasInc[i.id] = L.circleMarker([i.lat, i.lon],
@@ -1043,6 +1074,16 @@ function pintaPatrones(){
     }
     html += t + '</div>';
   }
+
+  /* la gravedad: aqui se ve si los incidentes son sustos o algo peor.
+     Es el dato que mas enseña, y el que hay que mirar sin morbo. */
+  const porGrav = {};
+  incidentes.forEach(i => { if (i.gravedad) porGrav[i.gravedad] = (porGrav[i.gravedad] || 0) + 1; });
+  if (Object.keys(porGrav).length) html += bloque('Cómo acabaron', 'monitor_heart',
+    'del susto a lo peor: mirarlo sin morbo, para aprender',
+    ['sin','leves','danos','graves','fatalidad']
+      .filter(k => porGrav[k])
+      .map(k => [(GRAV.find(g => g.id === k) || {}).n || k, porGrav[k]]));
 
   if (Object.keys(porFranja).length) html += bloque('A qué hora del día', 'schedule',
     'franja del día', Object.entries(porFranja).sort((a, b) => b[1] - a[1])
@@ -1218,6 +1259,7 @@ async function envia(){
     $('selFase').value = '';
     $('otroTexto').value = '';
     $('cajaOtro').classList.remove('on');
+    $('cajaFatalidad').classList.remove('on');
     $('ficheroIGC').value = '';
     $('bIGC').classList.remove('on');
     $('bIGC').innerHTML = '<span class="mso">upload_file</span> Subir mi archivo IGC';
