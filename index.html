@@ -85,6 +85,25 @@
     margin-top:10px;border-left:4px solid var(--mar2)}
   .cajaOtro.on{display:block}
 
+  /* ===== CONTROL DESLIZANTE (estilo iOS) =====
+     Pam dijo que los botones sueltos del aire parecian "de niño". Esto es lo
+     que usan las apps serias: un solo control, la opcion activa se ve como una
+     pastilla blanca. Sobrio y compacto. */
+  .seg{display:flex;background:#eaeff2;border-radius:11px;padding:3px;gap:2px}
+  .seg button{flex:1;border:none;background:none;font-family:inherit;
+    font-size:12.5px;font-weight:700;color:var(--gris);
+    padding:11px 3px;border-radius:9px;cursor:pointer;transition:all .16s;
+    letter-spacing:-.1px}
+  .seg button.on{background:#fff;color:var(--mar);
+    box-shadow:0 1px 4px rgba(22,50,59,.16)}
+
+  /* las etiquetas sueltas (racheado) */
+  .chips{display:flex;gap:7px;flex-wrap:wrap;margin-top:9px}
+  .chip{border:1.5px solid var(--linea);background:#fff;border-radius:20px;
+    padding:9px 15px;font-size:12.5px;font-weight:700;color:var(--gris);
+    font-family:inherit;cursor:pointer;transition:all .15s}
+  .chip.on{border-color:var(--mar);color:var(--mar);background:#eaf4f7}
+
   /* ===== SELECTOR DE MES Y AÑO =====
      Dos desplegables nativos: en iPhone se abren como la rueda del calendario,
      que es lo que pidio Pam. Mucho mejor que 18 botones apilados. */
@@ -200,7 +219,15 @@
     <div class="opciones" id="opFranja"></div>
 
     <label>7 · ¿Cómo estaba el aire?</label>
-    <div class="opciones" id="opViento"></div>
+    <div class="seg" id="segAire">
+      <button data-id="calmo">Calmo</button>
+      <button data-id="flojo">Flojo</button>
+      <button data-id="normal">Normal</button>
+      <button data-id="fuerte">Fuerte</button>
+    </div>
+    <div class="chips" id="chipsAire">
+      <button class="chip" data-id="racheado">Racheado o cambiante</button>
+    </div>
 
     <label>8 · Cuéntalo (opcional, pero ayuda mucho)</label>
     <textarea id="relato" maxlength="900"
@@ -287,12 +314,13 @@ const FRANJAS = [
   { id:'mediodia', n:'Mediodía' },
   { id:'tarde',    n:'Tarde' },
 ];
+/* la intensidad del aire, de menos a mas. El "racheado" va aparte porque no
+   es intensidad: puedes tener aire flojo y racheado a la vez. */
 const VIENTOS = [
-  { id:'flojo',     n:'Flojo' },
-  { id:'normal',    n:'Normal' },
-  { id:'fuerte',    n:'Fuerte' },
-  { id:'cambiante', n:'Cambiante / racheado' },
-  { id:'nose',      n:'No sé' },
+  { id:'calmo',  n:'Calmo' },
+  { id:'flojo',  n:'Flojo' },
+  { id:'normal', n:'Normal' },
+  { id:'fuerte', n:'Fuerte' },
 ];
 const MESES = ['enero','febrero','marzo','abril','mayo','junio',
                'julio','agosto','septiembre','octubre','noviembre','diciembre'];
@@ -385,7 +413,7 @@ function pintaIncidentes(){
         · ${i.mes ? nombreMes(i.mes) : 'sin fecha'}
         · ${(FRANJAS.find(f => f.id === i.franja) || {}).n || ''}
         · ${(FASES.find(f => f.id === i.fase) || {}).n || ''}
-        ${i.viento ? '· viento ' + ((VIENTOS.find(v => v.id === i.viento) || {}).n || '').toLowerCase() : ''}
+        ${i.viento ? '· aire ' + ((VIENTOS.find(v => v.id === i.viento) || {}).n || i.viento).toLowerCase() : ''}${i.racheado ? ' y racheado' : ''}
       </div>
       ${i.relato ? '<div class="relato">' + escapa(i.relato) + '</div>' : ''}
     </div>`;
@@ -548,7 +576,7 @@ async function envia(){
   const dato = {
     tipo: sel.tipo, gravedad: sel.gravedad, fase: sel.fase,
     lat: sel.lat, lon: sel.lon, mes: sel.mes, franja: sel.franja,
-    viento: sel.viento, relato: relato.slice(0, 900),
+    viento: sel.viento, racheado: !!sel.racheado, relato: relato.slice(0, 900),
     otro: (sel.tipo === 'otro') ? otro : null,
     creado: Date.now(),
     v: 1
@@ -568,9 +596,11 @@ async function envia(){
     sel = { tipo:null, gravedad:null, fase:null, mes:null, franja:null, viento:null, lat:null, lon:null };
     $('relato').value = '';
     $('txtEstado').textContent = '';
-    ['opTipos','opGrav','opFase','opFranja','opViento'].forEach(id => {
+    ['opTipos','opGrav','opFase','opFranja'].forEach(id => {
       $(id).querySelectorAll('button').forEach(b => b.classList.remove('on'));
     });
+    $('segAire').querySelectorAll('button').forEach(b => b.classList.remove('on'));
+    $('chipsAire').querySelectorAll('button').forEach(b => b.classList.remove('on'));
     $('selMes').value = '';
     $('selMes').classList.add('vacio');
     $('otroTexto').value = '';
@@ -650,7 +680,24 @@ pintaOpciones('opTipos', TIPOS, 'tipo');
 pintaOpciones('opGrav', GRAV, 'gravedad');
 pintaOpciones('opFase', FASES, 'fase');
 pintaOpciones('opFranja', FRANJAS, 'franja');
-pintaOpciones('opViento', VIENTOS, 'viento');
+/* ===== EL AIRE: control deslizante + etiqueta de racheado ===== */
+(function(){
+  const seg = $('segAire');
+  seg.onclick = ev => {
+    const b = ev.target.closest('button');
+    if (!b) return;
+    seg.querySelectorAll('button').forEach(x => x.classList.remove('on'));
+    b.classList.add('on');
+    sel.viento = b.dataset.id;
+  };
+  const chips = $('chipsAire');
+  chips.onclick = ev => {
+    const b = ev.target.closest('button');
+    if (!b) return;
+    b.classList.toggle('on');
+    sel.racheado = b.classList.contains('on');
+  };
+})();
 $('bEnviar').onclick = envia;
 
 /* los filtros del mapa */
