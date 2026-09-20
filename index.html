@@ -409,11 +409,11 @@
     <aside class="lateral">
       <div class="stats">
         <div class="stat"><span class="mso">description</span>
-          <div class="n" id="nReportes">0</div><div class="t">reportes</div></div>
+          <div class="n" id="nReportes">0</div><div class="t" id="tReportes">reportes</div></div>
         <div class="stat"><span class="mso">place</span>
-          <div class="n" id="nSitios">0</div><div class="t">sitios</div></div>
+          <div class="n" id="nSitios">0</div><div class="t" id="tSitios">sitios</div></div>
         <div class="stat"><span class="mso">insights</span>
-          <div class="n" id="nPatrones">0</div><div class="t">patrones</div></div>
+          <div class="n" id="nPatrones">0</div><div class="t" id="tPatrones">patrones</div></div>
       </div>
 
       <div class="miniTarj">
@@ -961,17 +961,23 @@ function escucha(){
   firebase.database().ref('nearmiss/incidentes').on('value', snap => {
     const d = snap.val() || {};
     incidentes = Object.entries(d).map(([id, v]) => Object.assign({ id }, v));
+    /* singular o plural, que '1 patrones' se ve muy mal */
+    const uno = n => n === 1;
     $('nReportes').textContent = incidentes.length;
+    $('tReportes').textContent = uno(incidentes.length) ? 'reporte' : 'reportes';
 
     /* sitios distintos (por zona de ~1 km) */
     const sitios = new Set();
     incidentes.forEach(i => { if (i.lat != null) sitios.add(i.lat.toFixed(2) + ',' + i.lon.toFixed(2)); });
     $('nSitios').textContent = sitios.size;
+    $('tSitios').textContent = uno(sitios.size) ? 'sitio' : 'sitios';
 
     /* patrones recurrentes: tipos que aparecen 3 veces o más */
     const cuenta = {};
     incidentes.forEach(i => { cuenta[i.tipo] = (cuenta[i.tipo] || 0) + 1; });
-    $('nPatrones').textContent = Object.values(cuenta).filter(n => n >= 3).length;
+    const nPat = Object.values(cuenta).filter(n => n >= 3).length;
+    $('nPatrones').textContent = nPat;
+    $('tPatrones').textContent = uno(nPat) ? 'patrón' : 'patrones';
 
     /* el ranking de zonas de la derecha */
     const zonas = {};
