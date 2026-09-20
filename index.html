@@ -146,23 +146,23 @@
   @media(min-width:620px){.ops.unaCol{grid-template-columns:1fr 1fr}}
 
   /* los que acaban bien / mal: color propio */
-  .ops.gravedad button.on[data-id=sin]{border-color:var(--ok);background:var(--okBg);
+  .ops.cons button.on[data-id=sin]{border-color:var(--ok);background:var(--okBg);
     box-shadow:0 0 0 1px var(--ok) inset}
-  .ops.gravedad button.on[data-id=sin] .mso{color:var(--ok)}
-  .ops.gravedad button.on[data-id=leves]{border-color:var(--casi);background:var(--casiBg);
+  .ops.cons button.on[data-id=sin] .mso{color:var(--ok)}
+  .ops.cons button.on[data-id=leves]{border-color:var(--casi);background:var(--casiBg);
     box-shadow:0 0 0 1px var(--casi) inset}
-  .ops.gravedad button.on[data-id=leves] .mso{color:var(--casi)}
-  .ops.gravedad button.on[data-id=danos]{border-color:var(--casi);background:var(--casiBg);
+  .ops.cons button.on[data-id=leves] .mso{color:var(--casi)}
+  .ops.cons button.on[data-id=danos]{border-color:var(--casi);background:var(--casiBg);
     box-shadow:0 0 0 1px var(--casi) inset}
-  .ops.gravedad button.on[data-id=danos] .mso{color:var(--casi)}
-  .ops.gravedad button.on[data-id=graves]{border-color:var(--grave);background:var(--graveBg);
+  .ops.cons button.on[data-id=danos] .mso{color:var(--casi)}
+  .ops.cons button.on[data-id=graves]{border-color:var(--grave);background:var(--graveBg);
     box-shadow:0 0 0 1px var(--grave) inset}
-  .ops.gravedad button.on[data-id=graves] .mso{color:var(--grave)}
+  .ops.cons button.on[data-id=graves] .mso{color:var(--grave)}
   /* la fatalidad: gris muy oscuro, SOBRIO. Nada de rojo chillón: esto se trata
      con respeto, no como una alarma mas. */
-  .ops.gravedad button.on[data-id=fatalidad]{border-color:#33424a;background:#eef1f3;
+  .ops.cons button.on[data-id=fatal]{border-color:#33424a;background:#eef1f3;
     box-shadow:0 0 0 1px #33424a inset}
-  .ops.gravedad button.on[data-id=fatalidad] .mso{color:#33424a}
+  .ops.cons button.on[data-id=fatal] .mso{color:#33424a}
 
   select,input[type=date],input[type=text],textarea{
     width:100%;font-family:inherit;font-size:14.5px;color:var(--tinta);
@@ -929,7 +929,8 @@ const TXT = {
     /* los contadores y la columna derecha */
     evEventos: 'eventos', evEvento: 'evento',
     evSitios: 'sitios', evSitio: 'sitio',
-    empezando: 'La base de conocimiento está empezando.<br>Cada reporte ayuda a construirla.', evPatrones: 'patrones', evPatron: 'patrón',
+    empezando: 'La base de conocimiento está empezando.<br>Cada reporte ayuda a construirla.',
+    zonasNada: 'Aún no hay zonas con reportes.', evPatrones: 'patrones', evPatron: 'patrón',
     principios: 'Principios',
     p1: 'Seguridad antes que todo', p1s: 'Aprendemos de la experiencia real.',
     p2: 'Sin juicios, sin culpables', p2s: 'Esto no trata de señalar, sino de mejorar.',
@@ -1097,7 +1098,8 @@ const TXT = {
     enviar: 'Send anonymous event',
     evEventos: 'events', evEvento: 'event',
     evSitios: 'sites', evSitio: 'site',
-    empezando: 'The knowledge base is just starting.<br>Every report helps build it.', evPatrones: 'patterns', evPatron: 'pattern',
+    empezando: 'The knowledge base is just starting.<br>Every report helps build it.',
+    zonasNada: 'No areas with reports yet.', evPatrones: 'patterns', evPatron: 'pattern',
     principios: 'Principles',
     p1: 'Safety above all', p1s: 'We learn from real experience.',
     p2: 'No judgement, no blame', p2s: 'This is not about pointing fingers, it is about improving.',
@@ -1331,6 +1333,53 @@ const TXT = {
     pocosTexto: 'Les tendances apparaissent à partir de 3 événements. Il y en a ',
     pocosFin: 'C’est pourquoi le plus important maintenant, c’est que les gens signalent : '
             + '<b>chaque frayeur compte</b>. Avec 20 événements, ceci dit déjà des choses utiles.',
+  
+    /* --- admin (francés) --- */
+    instBoton: 'Installer l’application',
+    instTitulo: 'Ajoute-le à ton écran d’accueil',
+    instTexto: 'Sur iPhone il n’y a pas de bouton d’installation. Voici comment :<br><br>'
+      + '<b>1.</b> Touche le bouton <b>Partager</b> (le carré avec la flèche).<br>'
+      + '<b>2.</b> Fais défiler et touche <b>« Sur l’écran d’accueil »</b>.<br>'
+      + '<b>3.</b> Donne-lui un nom et touche <b>Ajouter</b>.<br><br>'
+      + 'Et voilà : sa propre icône, comme une app. <b>Et ça marche sans réseau.</b>',
+    zonasNada: 'Pas encore de zones avec des signalements.',
+    admTitulo: 'Administration',
+    admSalir: 'Quitter',
+    admPendientes: 'En attente de vérification',
+    admPendientesAyuda: 'Les accidents mortels ne sont pas publiés tant que quelqu’un '
+      + 'ne les a pas confirmés. C’est ton rôle. En cas de doute, ne publie pas : '
+      + 'une donnée fausse fait plus de dégâts qu’une donnée manquante.',
+    admTodos: 'Tous les événements',
+    admTodosAyuda: 'Tu peux corriger une donnée mal saisie ou supprimer un événement. '
+      + 'Supprimer ne détruit pas : une copie est conservée au cas où.',
+    admBuscar: 'Chercher par site, type ou texte…',
+    admEquipo: 'Qui peut administrer',
+    admEquipoAyuda: 'Donne une clé à chaque personne de confiance. Tu peux la révoquer '
+      + 'quand tu veux. Les admins de zone ne voient et ne touchent que leur zone.',
+    admNombre: 'Nom',
+    admZona: 'Zone (ex : Valle de Bravo)',
+    admCrear: 'Créer une clé',
+    admRegistro: 'Journal des actions',
+    admRegistroAyuda: 'Qui a fait quoi et quand. Cela ne peut pas être supprimé.',
+    admPub: 'Publier', admRech: 'Refuser', admEditar: 'Modifier',
+    admBorrar: 'Supprimer', admRevocar: 'Révoquer',
+    admTuClave: 'Ta clé',
+    admPuerta: 'Entrer comme administrateur',
+    admPuertaAyuda: 'Colle ici la clé qu’on t’a donnée. Elle reste sur cet appareil et '
+      + 'n’est envoyée nulle part.',
+    admClaveMal: 'Cette clé n’est pas valable. Vérifie-la, ou demande-en une autre.',
+    admEres: 'Tu es <b>{n}</b> · {r}',
+    admRolSuper: 'super admin (tu peux tout)',
+    admRolZona: 'responsable de <b>{z}</b>',
+    admRolVer: 'vérificateur',
+    admSinPermiso: 'Cet événement n’est pas dans ta zone.',
+    admPublicado: 'Publié. Il est sur la carte.',
+    admRechazado: 'Refusé. Il ne sera pas publié, mais la trace reste.',
+    admBorrado: 'Supprimé. C’est réversible : une copie est conservée.',
+    admNadaPend: 'Rien en attente. Tout est vérifié.',
+    admNadaLog: 'Rien n’a encore été fait.',
+    admConfirmBorrar: 'Supprimer cet événement ? C’est réversible.',
+    admOk: 'C’est fait',
   },
 
   /* ==================== ALEMÁN ==================== */
@@ -1453,6 +1502,53 @@ const TXT = {
     pocosTexto: 'Muster entstehen ab 3 Ereignissen. Aktuell gibt es ',
     pocosFin: 'Deshalb ist jetzt das Wichtigste, dass Leute melden: <b>jeder Schreck zählt</b>. '
             + 'Mit 20 Ereignissen sagt das hier schon Nützliches.',
+  
+    /* --- admin (alemán) --- */
+    instBoton: 'App installieren',
+    instTitulo: 'Zum Home-Bildschirm hinzufügen',
+    instTexto: 'Auf dem iPhone gibt es keinen Installationsknopf. So geht es:<br><br>'
+      + '<b>1.</b> Tippe auf <b>Teilen</b> (das Quadrat mit dem Pfeil).<br>'
+      + '<b>2.</b> Scrolle und tippe auf <b>„Zum Home-Bildschirm“</b>.<br>'
+      + '<b>3.</b> Gib einen Namen und tippe auf <b>Hinzufügen</b>.<br><br>'
+      + 'Fertig — mit eigenem Symbol, wie eine App. <b>Und sie funktioniert ohne Netz.</b>',
+    zonasNada: 'Noch keine Gebiete mit Meldungen.',
+    admTitulo: 'Verwaltung',
+    admSalir: 'Abmelden',
+    admPendientes: 'Prüfung ausstehend',
+    admPendientesAyuda: 'Tödliche Unfälle werden erst veröffentlicht, wenn jemand sie '
+      + 'bestätigt hat. Das ist deine Aufgabe. Im Zweifel nicht veröffentlichen: eine '
+      + 'falsche Angabe schadet mehr als eine fehlende.',
+    admTodos: 'Alle Ereignisse',
+    admTodosAyuda: 'Du kannst eine falsche Angabe korrigieren oder ein Ereignis löschen. '
+      + 'Löschen zerstört nichts: eine Kopie bleibt erhalten.',
+    admBuscar: 'Nach Ort, Art oder Text suchen…',
+    admEquipo: 'Wer verwalten darf',
+    admEquipoAyuda: 'Gib jeder Vertrauensperson einen Schlüssel. Du kannst ihn jederzeit '
+      + 'entziehen. Gebiets-Admins sehen und bearbeiten nur ihr Gebiet.',
+    admNombre: 'Name',
+    admZona: 'Gebiet (z. B. Valle de Bravo)',
+    admCrear: 'Schlüssel erstellen',
+    admRegistro: 'Aktionsprotokoll',
+    admRegistroAyuda: 'Wer was getan hat und wann. Das lässt sich nicht löschen.',
+    admPub: 'Veröffentlichen', admRech: 'Ablehnen', admEditar: 'Bearbeiten',
+    admBorrar: 'Löschen', admRevocar: 'Entziehen',
+    admTuClave: 'Dein Schlüssel',
+    admPuerta: 'Als Administrator anmelden',
+    admPuertaAyuda: 'Füge hier den Schlüssel ein, den du bekommen hast. Er bleibt auf '
+      + 'diesem Gerät und wird nirgendwohin gesendet.',
+    admClaveMal: 'Dieser Schlüssel ist ungültig. Prüfe ihn, oder bitte um einen neuen.',
+    admEres: 'Du bist <b>{n}</b> · {r}',
+    admRolSuper: 'Super-Admin (du darfst alles)',
+    admRolZona: 'verantwortlich für <b>{z}</b>',
+    admRolVer: 'Prüfer',
+    admSinPermiso: 'Dieses Ereignis liegt nicht in deinem Gebiet.',
+    admPublicado: 'Veröffentlicht. Es ist auf der Karte.',
+    admRechazado: 'Abgelehnt. Es wird nicht veröffentlicht, bleibt aber protokolliert.',
+    admBorrado: 'Gelöscht. Rückgängig möglich: eine Kopie bleibt erhalten.',
+    admNadaPend: 'Nichts offen. Alles geprüft.',
+    admNadaLog: 'Bisher wurde nichts getan.',
+    admConfirmBorrar: 'Dieses Ereignis löschen? Es ist rückgängig zu machen.',
+    admOk: 'Erledigt',
   },
 
   /* ==================== PORTUGUÉS ==================== */
@@ -1572,6 +1668,53 @@ const TXT = {
     pocosTexto: 'Os padrões aparecem a partir de 3 eventos. Neste momento há ',
     pocosFin: 'Por isso o importante agora é que as pessoas relatem: <b>cada susto conta</b>. '
             + 'Com 20 eventos isto já diz coisas úteis.',
+  
+    /* --- admin (português) --- */
+    instBoton: 'Instalar a aplicação',
+    instTitulo: 'Adiciona ao ecrã principal',
+    instTexto: 'No iPhone não há botão de instalação. É assim:<br><br>'
+      + '<b>1.</b> Toca em <b>Partilhar</b> (o quadrado com a seta).<br>'
+      + '<b>2.</b> Desce e toca em <b>«Adicionar ao ecrã principal»</b>.<br>'
+      + '<b>3.</b> Dá-lhe um nome e toca em <b>Adicionar</b>.<br><br>'
+      + 'E fica com o seu ícone, como uma app. <b>E funciona sem rede.</b>',
+    zonasNada: 'Ainda não há zonas com relatos.',
+    admTitulo: 'Administração',
+    admSalir: 'Sair',
+    admPendientes: 'Pendentes de verificação',
+    admPendientesAyuda: 'As fatalidades não são publicadas até alguém as confirmar. '
+      + 'É a tua decisão. Em caso de dúvida, não publiques: um dado falso faz mais '
+      + 'dano do que um dado em falta.',
+    admTodos: 'Todos os eventos',
+    admTodosAyuda: 'Podes corrigir um dado mal introduzido ou apagar um evento. Apagar '
+      + 'não destrói: fica uma cópia para o caso de ser preciso.',
+    admBuscar: 'Procurar por local, tipo ou texto…',
+    admEquipo: 'Quem pode administrar',
+    admEquipoAyuda: 'Dá uma chave a cada pessoa de confiança. Podes revogá-la quando '
+      + 'quiseres. Os admins de zona só veem e mexem na sua zona.',
+    admNombre: 'Nome',
+    admZona: 'Zona (ex: Valle de Bravo)',
+    admCrear: 'Criar chave',
+    admRegistro: 'Registo de ações',
+    admRegistroAyuda: 'Quem fez o quê e quando. Isto não se pode apagar.',
+    admPub: 'Publicar', admRech: 'Rejeitar', admEditar: 'Editar',
+    admBorrar: 'Apagar', admRevocar: 'Revogar',
+    admTuClave: 'A tua chave',
+    admPuerta: 'Entrar como administrador',
+    admPuertaAyuda: 'Cola aqui a chave que te deram. Fica neste dispositivo e não é '
+      + 'enviada para lado nenhum.',
+    admClaveMal: 'Essa chave não é válida. Confirma-a, ou pede outra.',
+    admEres: 'És <b>{n}</b> · {r}',
+    admRolSuper: 'super admin (podes tudo)',
+    admRolZona: 'responsável por <b>{z}</b>',
+    admRolVer: 'verificador',
+    admSinPermiso: 'Esse evento não é da tua zona.',
+    admPublicado: 'Publicado. Já está no mapa.',
+    admRechazado: 'Rejeitado. Não será publicado, mas fica o registo.',
+    admBorrado: 'Apagado. Dá para desfazer: fica uma cópia.',
+    admNadaPend: 'Nada pendente. Tudo verificado.',
+    admNadaLog: 'Ainda não se fez nada.',
+    admConfirmBorrar: 'Apagar este evento? Dá para desfazer.',
+    admOk: 'Feito',
   },
 };
 
@@ -1700,7 +1843,10 @@ let idSenalado = null;   /* el reporte que has tocado: ese se resalta */
 let mapaPrincipal = null, mapaMarca = null, mapaCalorMini = null;
 let marcaMia = null, capaPuntos = null, capaCalor = null, capaCalorMini = null;
 let filtro = 'todos';
-let sel = { tipo:null, gravedad:null, franja:null, aire:null, lat:null, lon:null };
+/* OJO: las claves son sev / sit / cons. Antes ponia tipo y gravedad, que ya
+   no existen. Funcionaba por accidente (se reemplaza el objeto entero), pero
+   era una trampa para el proximo que lo lea. */
+let sel = { sev:null, sit:null, cons:null, franja:null, aire:null, lat:null, lon:null };
 let igc = null;
 
 /* ---------- utilidades ---------- */
@@ -2108,7 +2254,7 @@ function pintaPatrones(){
       const maxD = listaDirs[0][1];
       blk += '<div style="margin-top:13px">'
         + listaDirs.map(d => '<div class="fila"><span class="nom">'
-          + (idioma === 'es' ? 'del ' : 'from ') + d[0] + '</span>'
+          + (DESDE[idioma] || 'de') + ' ' + d[0] + '</span>'
           + '<span class="pista"><i style="width:' + (d[1] / maxD * 100).toFixed(0) + '%"></i></span>'
           + '<span class="n">' + d[1] + '</span></div>').join('') + '</div>';
     }
@@ -2147,24 +2293,78 @@ function horaDeFranja(f){
   if (f === 'noche') return 19;
   return 13;
 }
-async function vientoReal(lat, lon, dia, hora){
-  try{
-    const u = 'https://archive-api.open-meteo.com/v1/archive'
-      + '?latitude=' + lat.toFixed(3) + '&longitude=' + lon.toFixed(3)
-      + '&start_date=' + dia + '&end_date=' + dia
-      + '&hourly=wind_speed_10m,wind_gusts_10m,wind_direction_10m&timezone=auto';
-    const r = await fetch(u);
-    if (!r.ok) throw new Error('http ' + r.status);
-    const d = await r.json();
-    if (!d.hourly || !d.hourly.time) return null;
-    const i = Math.min(23, Math.max(0, Math.round(hora)));
-    const v = d.hourly.wind_speed_10m ? d.hourly.wind_speed_10m[i] : null;
-    if (v == null) return null;
-    const g = d.hourly.wind_gusts_10m ? d.hourly.wind_gusts_10m[i] : null;
-    const dr = d.hourly.wind_direction_10m ? d.hourly.wind_direction_10m[i] : null;
-    return { kmh: Math.round(v), racha: g != null ? Math.round(g) : null,
-             dir: dr != null ? Math.round(dr) : null };
-  }catch(e){ return null; }
+/* ==========================================================================
+   EL VIENTO DE ESE DIA
+   --------------------------------------------------------------------------
+   OJO CON LAS HORAS. Aqui se cuela un error que nadie ve:
+
+   - El IGC graba las horas en UTC (es el estandar del formato).
+   - Open-Meteo, si le pides timezone=auto, te devuelve las horas en la hora
+     LOCAL del sitio.
+   - En Mexico (UTC-6) eso son SEIS HORAS de desfase: si el vuelo fue a las
+     11:00 locales (17:00 UTC), se consultaba la hora 17 LOCAL, que son las
+     23:00 UTC. Se guardaba el viento de otra hora del dia. Y como el numero
+     sale igual de valido, nadie se entera.
+
+   Solucion: si la hora viene de un IGC (enUTC) se pide timezone=UTC y se busca
+   por la hora UTC. Si viene de la franja del dia (mañana/mediodia/tarde), que
+   ya esta en hora local, se pide timezone=auto.
+
+   Y el respaldo: el archivo historico de Open-Meteo lleva unos 5 dias de
+   retraso. Si alguien reporta algo de esta semana, el archivo NO tiene ese dia
+   y antes se quedaba sin viento en silencio. Ahora se prueba la API de
+   prevision con past_days, que si tiene los ultimos dias.
+   ========================================================================== */
+function sacaViento(d, hora, dia){
+  if (!d || !d.hourly || !d.hourly.time || !d.hourly.time.length) return null;
+  let i = -1;
+  if (dia){
+    /* cuando la API devuelve varios dias (el forecast), busco la hora exacta */
+    const clave = dia + 'T' + String(Math.floor(hora)).padStart(2, '0') + ':00';
+    i = d.hourly.time.indexOf(clave);
+    if (i < 0) return null;
+  } else {
+    i = Math.min(23, Math.max(0, Math.round(hora)));
+  }
+  const v = d.hourly.wind_speed_10m ? d.hourly.wind_speed_10m[i] : null;
+  if (v == null) return null;
+  const g = d.hourly.wind_gusts_10m ? d.hourly.wind_gusts_10m[i] : null;
+  const dr = d.hourly.wind_direction_10m ? d.hourly.wind_direction_10m[i] : null;
+  return { kmh: Math.round(v), racha: g != null ? Math.round(g) : null,
+           dir: dr != null ? Math.round(dr) : null };
+}
+
+async function vientoReal(lat, lon, dia, hora, enUTC){
+  const tz = enUTC ? 'UTC' : 'auto';
+  const par = '&hourly=wind_speed_10m,wind_gusts_10m,wind_direction_10m&timezone=' + tz;
+  const la = lat.toFixed(3), lo = lon.toFixed(3);
+
+  /* 1) el archivo historico: tiene todo, pero con ~5 dias de retraso */
+  try {
+    const r = await fetch('https://archive-api.open-meteo.com/v1/archive'
+      + '?latitude=' + la + '&longitude=' + lo
+      + '&start_date=' + dia + '&end_date=' + dia + par);
+    if (r.ok){
+      const d = await r.json();
+      const v = sacaViento(d, hora, null);   /* el archivo solo trae ese dia */
+      if (v) return v;
+    }
+  } catch(e){}
+
+  /* 2) el respaldo: si es de esta semana, el archivo todavia no lo tiene.
+     La prevision con past_days=7 si. Aqui SI hay que buscar por fecha, porque
+     vienen varios dias juntos. */
+  try {
+    const r = await fetch('https://api.open-meteo.com/v1/forecast'
+      + '?latitude=' + la + '&longitude=' + lo
+      + '&hourly=wind_speed_10m,wind_gusts_10m,wind_direction_10m'
+      + '&past_days=7&forecast_days=1&timezone=' + tz);
+    if (r.ok){
+      const d = await r.json();
+      return sacaViento(d, hora, dia);
+    }
+  } catch(e){}
+  return null;
 }
 
 /* ---------- el archivo IGC ---------- */
@@ -2193,6 +2393,10 @@ function leeIGC(texto){
     if (p.h < t0) t0 = p.h;
     if (p.h > t1) t1 = p.h;
   });
+  /* Si el vuelo cruza medianoche (despegue a las 23:40 y aterrizaje a las
+     00:20), t1 seria MENOR que t0 y la duracion saldria NEGATIVA. Se suma un
+     dia. Caso raro, pero un numero negativo en la ficha queda fatal. */
+  if (t1 < t0) t1 += 24;
   const medio = puntos[Math.floor(puntos.length / 2)];
   return { dia, horaInicio:t0, horaFin:t1, minutos:Math.round((t1 - t0) * 60),
            altMax, puntos:puntos.length, lat:medio.lat, lon:medio.lon };
@@ -2250,7 +2454,7 @@ function escucha(){
     $('zonasTop').innerHTML = top.length ? top.map((z, k) =>
       '<div class="zf"><span>' + (k + 1) + '. ' + escapa(z[0])
       + '</span><b>' + z[1] + '</b></div>').join('')
-      : '<div style="font-size:12px;color:var(--gris)">Aún no hay zonas con reportes.</div>';
+      : '<div style="font-size:12px;color:var(--gris)">' + t('zonasNada') + '</div>';
 
     pintaIncidentes();
     pintaPatrones();
@@ -2288,7 +2492,9 @@ async function envia(){
     $('txtEstado').textContent = t('mirandoViento');
     const hora = igc ? igc.horaInicio : horaDeFranja(sel.franja);
     const lat = sel.lat, lon = sel.lon;
-    viento = await vientoReal(lat, lon, dia, hora);
+    /* si la hora viene del IGC, esta en UTC (es el estandar del formato).
+       Si viene de la franja del dia, esta en hora local. */
+    viento = await vientoReal(lat, lon, dia, hora, !!igc);
   }
   $('txtEstado').textContent = t('enviando');
 
@@ -2316,7 +2522,7 @@ async function envia(){
       + '<br><br>' + t('graciasFin'));
 
     /* limpio el formulario */
-    sel = { tipo:null, gravedad:null, franja:null, aire:null, lat:null, lon:null };
+    sel = { sev:null, sit:null, cons:null, franja:null, aire:null, lat:null, lon:null };
     igc = null;
     $('relato').value = '';
     $('cuentaTxt').textContent = '0';
@@ -2328,11 +2534,10 @@ async function envia(){
     $('cajaFatalidad').classList.remove('on');
     $('ficheroIGC').value = '';
     $('bIGC').classList.remove('on');
-    $('bIGC').innerHTML = '<span class="mso">upload_file</span> Subir mi archivo IGC';
+    $('bIGC').innerHTML = '<span class="mso">upload_file</span> ' + t('igcBoton');
     $('igcInfo').classList.remove('on');
     $('txtEstado').textContent = '';
-    document.querySelectorAll('.ops button, .filtros button').forEach(b => {});
-    ['opSev','opSit','opCons','opFranja','opAire'].forEach(id => {
+        ['opSev','opSit','opCons','opFranja','opAire'].forEach(id => {
       $(id).querySelectorAll('button').forEach(b => b.classList.remove('on'));
     });
     if (marcaMia && mapaMarca){ mapaMarca.removeLayer(marcaMia); marcaMia = null; }
@@ -2402,7 +2607,6 @@ $('ficheroIGC').onchange = ev => {
    El boton de la cabecera, la memoria en el movil, y la deteccion automatica:
    si el navegador viene en ingles, entra en ingles sin que nadie toque nada.
    ========================================================================== */
-const IDIOMAS = { es: 'ES', en: 'EN' };
 
 function ponIdioma(l, guardar){
   if (!TXT[l]) l = 'es';
@@ -2787,7 +2991,7 @@ const ZONA_IDIOMA = {
   'America/Martinique':'fr', 'America/Cayenne':'fr',
   /* alemán */
   'Europe/Berlin':'de', 'Europe/Vienna':'de', 'Europe/Zurich':'de',
-  'Europe/Luxembourg ':'de', 'Africa/Windhoek':'de',
+  ''Africa/Windhoek':'de', ''Africa/Windhoek':'de',
   /* portugués */
   'Europe/Lisbon':'pt', 'Atlantic/Azores':'pt', 'Atlantic/Madeira':'pt',
   'America/Sao_Paulo':'pt', 'America/Manaus':'pt', 'America/Fortaleza':'pt',

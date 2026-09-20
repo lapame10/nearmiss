@@ -46,6 +46,21 @@ self.addEventListener('activate', ev => {
   );
 });
 
+/* Las teselas del mapa son MUCHAS y pueden llenar el telefono. Se quedan con
+   las 600 mas recientes y se tiran las viejas: sobra para los sitios de vuelo
+   habituales y no se come el almacenamiento. */
+const MAX_TESELAS = 600;
+async function limpiaTeselas(){
+  const c = await caches.open(CACHE);
+  const ks = await c.keys();
+  const teselas = ks.filter(r => /opentopomap|tile\.openstreetmap/.test(r.url));
+  if (teselas.length <= MAX_TESELAS) return;
+  for (const r of teselas.slice(0, teselas.length - MAX_TESELAS)) await c.delete(r);
+}
+self.addEventListener('message', ev => {
+  if (ev.data === 'limpia-teselas') limpiaTeselas();
+});
+
 /* ---------- ¿es un dato que hay que pedir siempre a la red? ---------- */
 function esDato(url){
   return url.hostname.indexOf('firebaseio') >= 0
@@ -60,7 +75,13 @@ function esFijo(url, req){
       || /\.(png|jpg|jpeg|svg|woff2?|ico)$/i.test(url.pathname)
       || url.hostname.indexOf('unpkg') >= 0
       || url.hostname.indexOf('gstatic') >= 0
-      || url.hostname.indexOf('fonts.googleapis') >= 0;
+      || url.hostname.indexOf('fonts.googleapis') >= 0
+      /* las TESELAS del mapa (OpenTopoMap). Van cache-first para que el mapa
+         se vea donde ya has estado, aunque no haya cobertura: es justo el caso
+         de reportar desde un despegue sin señal. Antes no se cacheaban y el
+         mapa se quedaba en blanco. */
+      || url.hostname.indexOf('opentopomap') >= 0
+      || url.hostname.indexOf('tile.openstreetmap') >= 0;
 }
 
 self.addEventListener('fetch', ev => {
