@@ -1707,16 +1707,7 @@ function ponIdioma(l, guardar){
   /* conservo lo que el usuario ya habia elegido y marcado */
   const antesFase = $('selFase').dataset.v || '';
   if (antesFase) $('selFase').value = antesFase;
-  /* el idioma: primero lo que eligio antes, si no el del navegador */
-ponIdioma((function(){
-  try {
-    const g = localStorage.getItem('sr_idioma');
-    if (g && TXT[g]) return g;
-  } catch(e){}
-  return (navigator.language || 'es').toLowerCase().indexOf('en') === 0 ? 'en' : 'es';
-})(), false);
-
-pintaOps('opSev', SEVERIDAD, 'sev');
+  pintaOps('opSev', SEVERIDAD, 'sev');
   pintaOps('opSit', SITUACION, 'sit');
   pintaOps('opCons', CONSEC, 'cons');
   pintaOps('opFranja', FRANJAS, 'franja');
@@ -1747,8 +1738,14 @@ $('bIdioma').onclick = () => ponIdioma(idioma === 'es' ? 'en' : 'es');
 /* ---------- arranque ---------- */
 firebase.initializeApp({ databaseURL: FIRE + '/' });
 
-/* el idioma: primero lo que eligio antes, si no el del navegador */
+/* el idioma, por orden: 1) el de la direccion (?lang=en)  2) el que ya
+   eligio antes  3) el del navegador. Asi se puede compartir un enlace en
+   ingles con un piloto de otro pais. */
 ponIdioma((function(){
+  try {
+    const q = new URLSearchParams(location.search).get('lang');
+    if (q && TXT[q.toLowerCase()]) return q.toLowerCase();
+  } catch(e){}
   try {
     const g = localStorage.getItem('sr_idioma');
     if (g && TXT[g]) return g;
@@ -1764,10 +1761,8 @@ pintaOps('opAire', AIRES, 'aire');
 
 $('bEnviar').onclick = envia;
 
-$('filtros').innerHTML = '<button class="on" data-f="todos">'
-  + '<span class="mso">apps</span>Todos</button>'
-  + SEVERIDAD.map(t => '<button data-f="' + t.id + '"><span class="mso">' + t.e + '</span>'
-      + t.n + '</button>').join('');
+/* los filtros los pinta ponIdioma, asi que aqui no hay que hacer nada:
+   estaba duplicado y ademas usaba t.n, que ya no existe (ahora es nb(x)) */
 $('filtros').onclick = ev => {
   const b = ev.target.closest('button');
   if (!b) return;
