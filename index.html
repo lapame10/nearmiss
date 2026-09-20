@@ -271,6 +271,84 @@
   .cabSeccion{display:flex;align-items:baseline;gap:12px;margin-bottom:2px}
   .cabSeccion h2{margin:0;font-size:21px;letter-spacing:-.5px}
   .cabSeccion .sub{font-size:12.5px;color:var(--gris)}
+
+  /* ==========================================================================
+     MOVIL — el diseno de Pam es de ordenador, asi que en el telefono hay que
+     apretarlo: menos huecos, letra mas pequeña y el nav con los 3 botones que
+     quepan. Pam: 'para celular no se ve tan bien'.
+     ========================================================================== */
+  @media(max-width:640px){
+    .cab{padding:0 12px;gap:9px;height:54px}
+    .marca{font-size:16.5px;gap:7px;letter-spacing:-.3px}
+    .marca .pico{width:20px;height:20px;border-radius:5px}
+    .marca .pico svg{width:13px;height:13px}
+    .nav{gap:2px}
+    .nav button{padding:8px 8px;font-size:11.5px;gap:5px;border-radius:8px}
+    .nav button .mso{font-size:17px}
+    .marcaTxt,.cabDer{display:none}
+
+    .hero{padding:20px 14px 18px}
+    .hero h1{font-size:23px;letter-spacing:-.7px;line-height:1.2}
+    .hero p{font-size:13.5px;line-height:1.55}
+    .hero .cita{font-size:13px;margin-top:14px;padding-left:13px;line-height:1.5}
+
+    .cuerpo{padding:12px 12px 34px;gap:12px}
+    .tarj{padding:15px 14px;border-radius:11px;margin-bottom:12px}
+    .tarj h2{font-size:17px}
+    .tarj .avisoTop{font-size:11.5px;margin-top:5px}
+
+    .rejilla{gap:14px;margin-top:15px !important}
+    .campoTit{gap:8px}
+    .campoTit h3{font-size:14.5px}
+    .num{width:21px;height:21px;font-size:11px}
+    .etq{font-size:9.5px;padding:2px 7px}
+    .campoAyuda{font-size:12px;margin-left:0;margin-bottom:9px}
+
+    .ops{gap:7px}
+    .ops button{padding:11px 10px;font-size:12.5px;gap:7px;border-radius:9px}
+    .ops button .mso{font-size:18px}
+    .mapaMarcar{height:195px}
+    #mapa{height:42vh;min-height:250px}
+    select,input[type=date],input[type=text]{font-size:16px;padding:12px}
+    textarea{font-size:15px;min-height:95px}
+
+    .stats{gap:7px}
+    .stat{padding:12px 4px;border-radius:10px}
+    .stat .mso{font-size:20px;margin-bottom:4px}
+    .stat .n{font-size:20px}
+    .stat .t{font-size:10.5px}
+    .miniTarj{padding:14px;border-radius:11px}
+    .miniTarj h3{font-size:13.5px}
+    .princ b{font-size:12.5px}
+    .princ span{font-size:11.5px}
+
+    .lista{grid-template-columns:1fr;gap:10px}
+    .patrones{grid-template-columns:1fr;gap:11px}
+    .inc{padding:14px;border-radius:11px}
+    .fila .nom{flex:0 0 44%}
+    .fila{font-size:12.5px}
+
+    /* el boton de enviar, ancho completo y comodo para el pulgar */
+    .enviarFila{margin-top:14px}
+    .btnEnviar{width:100%;justify-content:center;padding:17px;font-size:15.5px}
+
+    .privacidad{padding:12px;gap:9px}
+    .privacidad div{font-size:12px}
+
+    .alertaEmerg{padding:12px;gap:9px}
+    .alertaEmerg div{font-size:12px}
+
+    .filtros{gap:5px;margin:12px 0 2px}
+    .filtros button{padding:7px 11px;font-size:12px}
+    .filtros button .mso{font-size:16px}
+
+    .pie{flex-direction:column;gap:6px;text-align:center;font-size:11px;
+      padding:14px 16px}
+    .pie .lema{font-size:11.5px}
+
+    .cabSeccion{flex-direction:column;gap:3px}
+    .cabSeccion h2{font-size:19px}
+  }
 </style>
 </head>
 <body>
