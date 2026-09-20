@@ -80,6 +80,11 @@
   .avisoPii{background:#fdf6e8;border-left:4px solid var(--leve);border-radius:8px;
     padding:10px 12px;font-size:12px;line-height:1.55;margin-top:12px;color:#6b5220}
 
+  /* cuando eliges "otro", te pido que digas cual: si no, no hay dato */
+  .cajaOtro{display:none;background:#f1f8fa;border-radius:11px;padding:12px;
+    margin-top:10px;border-left:4px solid var(--mar2)}
+  .cajaOtro.on{display:block}
+
   /* el mapa pequeño para marcar el sitio */
   #mapaMarca{height:210px;border-radius:11px;margin-top:6px;overflow:hidden}
 
@@ -147,6 +152,14 @@
 
     <label>1 · Qué tipo de incidente</label>
     <div class="opciones" id="opTipos"></div>
+    <div id="cajaOtro" class="cajaOtro">
+      <label style="margin-top:10px">¿Cuál? Cuéntalo en una línea</label>
+      <input type="text" id="otroTexto" maxlength="70"
+        placeholder="Ej: enganche con el arnés al despegar · objetivo en el aire · nudo en el freno">
+      <div class="ayuda" style="margin:6px 0 0">
+        Los «otro» son los que más enseñan: lo raro es lo que nadie conoce todavía.
+      </div>
+    </div>
 
     <label>2 · ¿Cómo acabó?</label>
     <div class="opciones grav" id="opGrav"></div>
@@ -296,6 +309,11 @@ function pintaOpciones(idDiv, lista, campo){
     div.querySelectorAll('button').forEach(x => x.classList.remove('on'));
     b.classList.add('on');
     sel[campo] = b.dataset.id;
+    /* si elige "otro", le pido que diga cual: si no, ese reporte no enseña nada */
+    if (campo === 'tipo'){
+      $('cajaOtro').classList.toggle('on', sel.tipo === 'otro');
+      if (sel.tipo === 'otro') setTimeout(() => $('otroTexto').focus(), 120);
+    }
   };
 }
 
@@ -337,8 +355,11 @@ function pintaIncidentes(){
 
   $('listaInc').innerHTML = vis.length ? vis.map(i => {
     const t = tipoDe(i.tipo);
+    const titulo = (i.tipo === 'otro' && i.otro)
+      ? t.e + ' ' + escapa(i.otro)
+      : t.e + ' ' + t.n;
     return `<div class="inc ${i.gravedad || ''}">
-      <div class="tit">${t.e} ${t.n}</div>
+      <div class="tit">${titulo}</div>
       <div class="meta">
         <span class="sitio">${i.lat != null && i.lon != null ? i.lat.toFixed(2) + ', ' + i.lon.toFixed(2) : 'zona no marcada'}</span>
         · ${i.mes ? nombreMes(i.mes) : 'sin fecha'}
@@ -395,7 +416,14 @@ function pintaPatrones(){
 
   /* 1) por tipo */
   const porTipo = {};
-  incidentes.forEach(i => { porTipo[i.tipo] = (porTipo[i.tipo] || 0) + 1; });
+  incidentes.forEach(i => {
+    /* los "otro" no se juntan todos en una bolsa: se agrupan por lo que
+       escribio la gente, para que un tipo raro repetido salga a la luz */
+    const clave = (i.tipo === 'otro' && i.otro)
+      ? 'otro::' + i.otro.trim().toLowerCase()
+      : i.tipo;
+    porTipo[clave] = (porTipo[clave] || 0) + 1;
+  });
   const tipos = Object.entries(porTipo).sort((a, b) => b[1] - a[1]);
 
   /* 2) por sitio (cuadricula de ~2 km, para no señalar un punto exacto) */
@@ -448,7 +476,10 @@ function pintaPatrones(){
   }
 
   if (tipos.length) html += bloque('Qué pasa más', total + ' reportes en total',
-    tipos.map(t => [tipoDe(t[0]).e + ' ' + tipoDe(t[0]).n, t[1]]));
+    tipos.map(t => {
+      if (t[0].indexOf('otro::') === 0) return ['❓ ' + t[0].slice(6), t[1]];
+      return [tipoDe(t[0]).e + ' ' + tipoDe(t[0]).n, t[1]];
+    }));
   if (meses.length > 1) html += bloque('En qué meses',
     'cuándo se acumulan los sustos', meses.map(m => [nombreMes(m[0]), m[1]]));
   if (Object.keys(porFase).length) html += bloque('En qué fase del vuelo',
@@ -482,6 +513,8 @@ async function envia(){
   if (!sel.fase) falta.push('la fase del vuelo');
   if (sel.lat == null) falta.push('el sitio en el mapa');
   if (!sel.mes) falta.push('el mes');
+  const otro = $('otroTexto').value.trim();
+  if (sel.tipo === 'otro' && !otro) falta.push('qué tipo era (el «otro» hay que decir cuál)');
   if (falta.length){
     aviso('Falta algo', 'Necesito ' + falta.join(', ') + '.<br><br>'
       + 'Son 40 segundos y con eso ya sirve.', 5000);
@@ -496,6 +529,7 @@ async function envia(){
     tipo: sel.tipo, gravedad: sel.gravedad, fase: sel.fase,
     lat: sel.lat, lon: sel.lon, mes: sel.mes, franja: sel.franja,
     viento: sel.viento, relato: relato.slice(0, 900),
+    otro: (sel.tipo === 'otro') ? otro : null,
     creado: Date.now(),
     v: 1
   };
@@ -517,6 +551,8 @@ async function envia(){
     ['opTipos','opGrav','opFase','opMes','opFranja','opViento'].forEach(id => {
       $(id).querySelectorAll('button').forEach(b => b.classList.remove('on'));
     });
+    $('otroTexto').value = '';
+    $('cajaOtro').classList.remove('on');
     $('txtSitio').textContent = 'Toca el sitio aproximado. No hace falta que sea exacto: solo queremos saber la zona.';
     if (marcaMia && mapaMarca){ mapaMarca.removeLayer(marcaMia); marcaMia = null; }
     ponPestana('tMapa');
