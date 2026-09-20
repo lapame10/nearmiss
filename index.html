@@ -37,8 +37,9 @@
     display:flex;align-items:center;gap:26px;height:60px;position:sticky;top:0;z-index:1500}
   .marca{display:flex;align-items:center;gap:9px;font-weight:900;font-size:20px;
     letter-spacing:-.5px;flex-shrink:1;min-width:0}
-  .marca .pico{width:31px;height:31px;border-radius:8px;flex-shrink:0;
-    display:block;object-fit:contain}
+  /* el logo es una gota mas alta que ancha, asi que fijo el ALTO y dejo el
+     ancho automatico para que no se deforme */
+  .marca .pico{height:34px;width:auto;flex-shrink:0;display:block}
   .marcaTxt{font-size:11.5px;opacity:.72;font-weight:500;margin-left:6px;
     border-left:1px solid rgba(255,255,255,.25);padding-left:16px;
     display:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
@@ -357,7 +358,7 @@
   @media(max-width:640px){
     .cab{padding:0 12px;gap:9px;height:54px}
     .marca{font-size:16.5px;gap:7px;letter-spacing:-.3px}
-    .marca .pico{width:27px;height:27px;border-radius:7px}
+    .marca .pico{height:29px}
     .nav{gap:2px}
     .nav button{padding:8px 8px;font-size:11.5px;gap:5px;border-radius:8px}
     .nav button .mso{font-size:17px}
