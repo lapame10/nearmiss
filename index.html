@@ -57,6 +57,13 @@
   .inc .relato{font-size:13px;margin-top:8px;line-height:1.55;color:#2b4750;
     border-left:3px solid var(--linea);padding-left:10px}
   .inc .sitio{font-weight:700;color:var(--mar)}
+  /* los datos del viento y del vuelo, en su linea */
+  .inc .datoViento,.inc .datoVuelo{font-size:12px;color:#2b4750;margin-top:7px;
+    padding:7px 10px;background:#f6fafb;border-radius:8px;font-weight:600;
+    line-height:1.5}
+  .inc .datoViento b,.inc .datoVuelo b{font-weight:800}
+  .marcoRacha{background:#fdf1e0;color:#8a4d00;font-size:10.5px;font-weight:800;
+    padding:2px 7px;border-radius:20px;margin-left:4px;letter-spacing:.2px}
 
   /* ===== FORMULARIO ===== */
   .caja{background:var(--papel);border-radius:14px;padding:16px;margin:11px;
@@ -411,6 +418,36 @@ function creaMapaMarca(){
   setTimeout(() => mapaMarca.invalidateSize(), 300);
 }
 
+/* ==========================================================================
+   EL VIENTO, EN DATOS (idea de Pam)
+   Nada de "estaba moderado": eso cada uno lo entiende a su manera.
+   Mejor los numeros: 14 km/h con rachas de 35 del Oeste. Eso no se discute
+   y sirve para que quien lo lea sepa exactamente que habia ese dia.
+   ========================================================================== */
+const CARDINALES = ['Norte','Noreste','Este','Sureste','Sur','Suroeste','Oeste','Noroeste'];
+
+/* la direccion del viento: de donde VIENE (como se dice en meteorologia) */
+function deDonde(grados){
+  if (grados == null) return '';
+  const i = Math.round(((grados % 360) + 360) % 360 / 45) % 8;
+  return 'del ' + CARDINALES[i];
+}
+
+/* cuanto soplaba, en numeros. Y aviso cuando las rachas son muy superiores */
+function textoViento(v){
+  if (!v || v.kmh == null) return '';
+  let t = v.kmh + ' km/h';
+  if (v.racha != null && v.racha > v.kmh + 8)
+    t += ' · rachas ' + v.racha + ' km/h';
+  if (v.dir != null) t += ' · ' + deDonde(v.dir) + ' (' + v.dir + '°)';
+  return t;
+}
+
+/* si las rachas pasan mucho del viento medio, es que estaba racheado */
+function eraRacheado(v){
+  return !!(v && v.kmh != null && v.racha != null && v.racha > v.kmh + 12);
+}
+
 /* ---------- PINTAR LOS INCIDENTES ---------- */
 function pintaIncidentes(){
   const vis = incidentes.filter(i => filtro === 'todos' || i.tipo === filtro);
@@ -428,8 +465,11 @@ function pintaIncidentes(){
         · ${i.mes ? nombreMes(i.mes) : 'sin fecha'}
         · ${(FRANJAS.find(f => f.id === i.franja) || {}).n || ''}
         · ${(FASES.find(f => f.id === i.fase) || {}).n || ''}
-        ${(i.viento && i.viento.kmh != null) ? '· viento ' + i.viento.kmh + ' km/h' + (i.viento.racha && i.viento.racha > i.viento.kmh + 12 ? ' (rachas ' + i.viento.racha + ')' : '') : ''}
       </div>
+      ${textoViento(i.viento) ? '<div class="datoViento">💨 <b>' + textoViento(i.viento) + '</b>'
+        + (eraRacheado(i.viento) ? ' <span class="marcoRacha">racheado</span>' : '') + '</div>' : ''}
+      ${i.igcMin ? '<div class="datoVuelo">🛫 Vuelo de <b>' + i.igcMin + ' min</b>'
+        + (i.igcAltMax ? ' · techo <b>' + i.igcAltMax + ' m</b>' : '') + '</div>' : ''}
       ${i.relato ? '<div class="relato">' + escapa(i.relato) + '</div>' : ''}
     </div>`;
   }).join('') : '<div style="text-align:center;color:var(--gris);padding:28px 20px;line-height:1.6">Todavía no hay reportes.<br>Sé el primero en contar uno.</div>';
@@ -449,6 +489,8 @@ function pintaIncidentes(){
       .bindPopup('<b>' + t.e + ' ' + t.n + '</b><br>' +
         (i.mes ? nombreMes(i.mes) : '') + ' · ' +
         ((FASES.find(f => f.id === i.fase) || {}).n || '') +
+        (textoViento(i.viento) ? '<br><b>💨 ' + textoViento(i.viento) + '</b>' : '') +
+        (i.igcMin ? '<br>🛫 ' + i.igcMin + ' min de vuelo' + (i.igcAltMax ? ', techo ' + i.igcAltMax + ' m' : '') : '') +
         (i.relato ? '<br><span style="font-size:12px">' + escapa(i.relato).slice(0, 180) + '</span>' : ''))
       .addTo(capaPuntos);
   });
@@ -553,6 +595,47 @@ function pintaPatrones(){
       .map(f => [(FRANJAS.find(x => x.id === f[0]) || {}).n || f[0], f[1]]));
   if (zonas.length) html += bloque('Dónde (por zona de ~2 km)',
     'sin señalar puntos exactos', zonas.map(z => [z[0], z[1].n]));
+
+  /* el viento: aqui estan los numeros, que es lo que pidio Pam */
+  const conViento = incidentes.filter(i => i.viento && i.viento.kmh != null);
+  if (conViento.length >= 3){
+    const med = Math.round(conViento.reduce((a, i) => a + i.viento.kmh, 0) / conViento.length);
+    const rach = conViento.filter(i => i.viento.racha != null);
+    const medRach = rach.length ? Math.round(rach.reduce((a, i) => a + i.viento.racha, 0) / rach.length) : null;
+    const nRach = conViento.filter(i => eraRacheado(i.viento)).length;
+    const fuertes = conViento.filter(i => i.viento.kmh >= 25).length;
+
+    /* reparto por direccion */
+    const dirs = {};
+    conViento.forEach(i => {
+      if (i.viento.dir == null) return;
+      const d = deDonde(i.viento.dir).replace('del ', '');
+      dirs[d] = (dirs[d] || 0) + 1;
+    });
+    const listaDirs = Object.entries(dirs).sort((a, b) => b[1] - a[1]);
+
+    let t = '<div class="patron"><h3>💨 El viento de esos días (datos reales)</h3>'
+      + '<div class="cuantos">' + conViento.length + ' de ' + total
+      + ' reportes traen el viento del clima de ese día</div>'
+      + '<div style="font-size:13.5px;line-height:1.75">'
+      + 'Viento medio: <b>' + med + ' km/h</b>'
+      + (medRach != null ? ' · rachas medias: <b>' + medRach + ' km/h</b>' : '')
+      + '<br>' + nRach + ' de ' + conViento.length + ' tenían <b>rachas muy por encima del viento medio</b>'
+      + (nRach > conViento.length / 2 ? ' — o sea, la mayoría fueron con aire <b>racheado</b>' : '')
+      + '<br>' + fuertes + ' fueron con viento sostenido de <b>25 km/h o más</b>'
+      + '</div>';
+
+    if (listaDirs.length){
+      const maxD = listaDirs[0][1];
+      t += '<div style="margin-top:12px">'
+        + listaDirs.map(d => '<div class="barra"><span class="nom">del ' + d[0] + '</span>'
+          + '<span class="pista"><i style="width:' + (d[1] / maxD * 100).toFixed(0) + '%"></i></span>'
+          + '<span class="n">' + d[1] + '</span></div>').join('')
+        + '</div>';
+    }
+    t += '</div>';
+    html += t;
+  }
 
   caja.innerHTML = html;
 }
