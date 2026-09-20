@@ -820,7 +820,7 @@ function pintaPatrones(){
   const porZona = {};
   incidentes.forEach(i => {
     if (i.lat == null) return;
-    const clave = i.lat.toFixed(1) + ', ' + i.lon.toFixed(1);
+    const clave = nombreSitio(i.lat, i.lon);   /* por nombre, no por cuadricula */
     porZona[clave] = porZona[clave] || { n:0, tipos:{} };
     porZona[clave].n++;
     porZona[clave].tipos[i.tipo] = (porZona[clave].tipos[i.tipo] || 0) + 1;
@@ -842,8 +842,7 @@ function pintaPatrones(){
     const tTop = Object.entries(zTop[1].tipos).sort((a, b) => b[1] - a[1])[0];
     html += '<div class="patron destaca">'
       + '<h3><span class="mso">lightbulb</span>El patrón más claro hasta ahora</h3>'
-      + '<div style="font-size:14.5px;line-height:1.7">En <b>'
-      + escapa(nombreSitio(parseFloat(zTop[0].split(',')[0]), parseFloat(zTop[0].split(',')[1])))
+      + '<div style="font-size:14.5px;line-height:1.7">En <b>' + escapa(zTop[0])
       + '</b> hay <b>' + zTop[1].n + ' reportes</b>, y de ellos <b>' + tTop[1]
       + '</b> son de tipo <b>' + tipoDe(tTop[0]).n.toLowerCase() + '</b>.</div>'
       + '<div class="cuantos" style="margin:10px 0 0">Con más datos esto dirá cosas como '
@@ -901,11 +900,7 @@ function pintaPatrones(){
       .map(f => [(FRANJAS.find(x => x.id === f[0]) || {}).n || f[0], f[1]]));
 
   if (zonas.length) html += bloque('Dónde', 'place',
-    'por zona, sin señalar puntos exactos',
-    zonas.map(z => {
-      const p = z[0].split(',');
-      return [escapa(nombreSitio(parseFloat(p[0]), parseFloat(p[1]))), z[1].n];
-    }));
+    'por sitio, sin señalar puntos exactos', zonas.map(z => [escapa(z[0]), z[1].n]));
 
   caja.innerHTML = html;
 }
@@ -991,16 +986,13 @@ function escucha(){
     const zonas = {};
     incidentes.forEach(i => {
       if (i.lat == null) return;
-      const k = i.lat.toFixed(1) + ',' + i.lon.toFixed(1);
+      const k = nombreSitio(i.lat, i.lon);   /* por NOMBRE, asi no se repite */
       zonas[k] = (zonas[k] || 0) + 1;
     });
     const top = Object.entries(zonas).sort((a, b) => b[1] - a[1]).slice(0, 5);
-    $('zonasTop').innerHTML = top.length ? top.map((z, k) => {
-      const p = z[0].split(',');
-      return '<div class="zf"><span>' + (k + 1) + '. '
-        + escapa(nombreSitio(parseFloat(p[0]), parseFloat(p[1])))
-        + '</span><b>' + z[1] + '</b></div>';
-    }).join('')
+    $('zonasTop').innerHTML = top.length ? top.map((z, k) =>
+      '<div class="zf"><span>' + (k + 1) + '. ' + escapa(z[0])
+      + '</span><b>' + z[1] + '</b></div>').join('')
       : '<div style="font-size:12px;color:var(--gris)">Aún no hay zonas con reportes.</div>';
 
     pintaIncidentes();
