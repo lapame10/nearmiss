@@ -245,6 +245,19 @@
   .marcaRacha{background:var(--casiBg);color:#8a5a10;font-size:10px;font-weight:800;
     padding:2px 7px;border-radius:20px;margin-left:5px}
 
+  /* ===== EL PUNTO QUE HAS TOCADO =====
+     Con muchos puntos en el mapa no sabes cual es el tuyo. Este pin oscuro con
+     el aro que late no se puede confundir. */
+  .pinAqui{width:38px;height:38px;border-radius:50%;background:#16323b;
+    display:flex;align-items:center;justify-content:center;color:#fff;
+    box-shadow:0 0 0 5px rgba(22,50,59,.22),0 3px 12px rgba(0,0,0,.35);
+    animation:latePin 1.5s ease-in-out infinite;pointer-events:none}
+  .pinAqui .mso{font-size:21px}
+  @keyframes latePin{
+    0%,100%{transform:scale(1);box-shadow:0 0 0 5px rgba(22,50,59,.22),0 3px 12px rgba(0,0,0,.35)}
+    50%{transform:scale(1.1);box-shadow:0 0 0 12px rgba(22,50,59,.07),0 3px 12px rgba(0,0,0,.35)}
+  }
+
   /* ===================== PATRONES ===================== */
   .patrones{display:grid;grid-template-columns:1fr;gap:14px}
   @media(min-width:760px){.patrones{grid-template-columns:1fr 1fr}}
@@ -646,6 +659,7 @@ const MESES = ['enero','febrero','marzo','abril','mayo','junio',
 
 let incidentes = [];
 let marcasInc = {};      /* id del reporte -> su marca en el mapa */
+let idSenalado = null;   /* el reporte que has tocado: ese se resalta */
 let mapaPrincipal = null, mapaMarca = null, mapaCalorMini = null;
 let marcaMia = null, capaPuntos = null, capaCalor = null, capaCalorMini = null;
 let filtro = 'todos';
@@ -825,8 +839,9 @@ function irAlPunto(id){
       + 'obligó, así que no hay sitio al que llevarte.');
     return;
   }
+  idSenalado = id;            /* <- esto hace que SU punto se resalte */
   ponPestana('tMapa');
-  pintaIncidentes();          /* por si acaso, me aseguro de que las marcas existen */
+  pintaIncidentes();          /* repinto para que se vea el resalte */
   setTimeout(() => {
     if (!mapaPrincipal) return;
     mapaPrincipal.setView([i.lat, i.lon], 14, { animate:true });
@@ -882,8 +897,14 @@ function pintaIncidentes(){
       const t = tipoDe(i.tipo);
       const col = i.gravedad === 'graves' ? '#b5544a'
                 : (i.gravedad === 'sin' ? '#2f7d4f' : '#c98a24');
+      /* el elegido se agranda y se pone oscuro; los demas se atenuan */
+      const elegido = (i.id === idSenalado);
       marcasInc[i.id] = L.circleMarker([i.lat, i.lon],
-        { radius:8, color:'#fff', weight:2.5, fillColor:col, fillOpacity:.92 })
+        { radius: elegido ? 14 : 8,
+          color:'#fff',
+          weight: elegido ? 5 : 2.5,
+          fillColor: elegido ? '#16323b' : col,
+          fillOpacity: elegido ? 1 : (idSenalado ? 0.38 : 0.92) })
         .bindPopup('<b>' + t.n + '</b><br>'
           + (i.mes ? nombreMes(i.mes) : '') + ' · '
           + ((FASES.find(f => f.id === i.fase) || {}).n || '')
@@ -893,6 +914,15 @@ function pintaIncidentes(){
           + (i.relato ? '<br><span style="font-size:12px">'
               + escapa(i.relato).slice(0, 170) + '</span>' : ''))
         .addTo(capaPuntos);
+      /* y encima un pin grande: con muchos puntos, esto no se puede confundir */
+      if (elegido){
+        L.marker([i.lat, i.lon], {
+          icon: L.divIcon({ className:'',
+            html:'<div class="pinAqui"><span class="mso">my_location</span></div>',
+            iconSize:[38,38], iconAnchor:[19,19] }),
+          zIndexOffset: 3000, interactive:false
+        }).addTo(capaPuntos);
+      }
     });
     if (pts.length >= 3 && L.heatLayer){
       capaCalor = L.heatLayer(pts.map(p => [p[0], p[1], 1]), {
