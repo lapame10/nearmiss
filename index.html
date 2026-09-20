@@ -267,6 +267,33 @@
   .marcaRacha{background:var(--casiBg);color:#8a5a10;font-size:10px;font-weight:800;
     padding:2px 7px;border-radius:20px;margin-left:5px}
 
+  /* ===== LA GRAVEDAD EN LA TARJETA =====
+     Pam: 'naranja solo para advertencias importantes, rojo solo para accidente
+     grave o fatalidad'. Asi que el color sube con la gravedad, sin gritar. */
+  .etq.sevEtq{background:#eef3f6;color:#5f7a86;text-transform:none;
+    letter-spacing:0;font-size:10.5px;margin-left:auto;white-space:nowrap}
+  .inc.sevincidente .etq.sevEtq{background:#eef2f4;color:#4a6470}
+  .inc.sevaccidente .etq.sevEtq{background:#fdf1e0;color:#8a5a10}
+  .inc.sevgrave .etq.sevEtq{background:#fbeeec;color:#8f3f36}
+  .inc.sevfatal .etq.sevEtq{background:#e4e9eb;color:#26343b}
+  .inc.sevnear{border-left-color:#8ba3ad}
+  .inc.sevincidente{border-left-color:#5f7a86}
+  .inc.sevaccidente{border-left-color:#d9782f}
+  .inc.sevgrave{border-left-color:#b5544a}
+  .inc.sevfatal{border-left-color:#33424a}
+
+  /* pendiente de verificacion: se ve, pero se nota que no esta confirmado */
+  .etq.pendEtq{background:#fdf6e8;color:#8a6420;display:inline-flex;
+    align-items:center;gap:3px;text-transform:none;letter-spacing:0;font-size:10px}
+  .etq.pendEtq .mso{font-size:13px}
+  .inc.pendiente{background:#fcfcfa}
+
+  /* el check del IGC */
+  .marcaCheck{display:flex;align-items:center;gap:9px;margin-top:11px;
+    font-size:12.5px;color:#2b4750;cursor:pointer;line-height:1.4}
+  .marcaCheck input{width:18px;height:18px;accent-color:var(--mar);flex-shrink:0}
+  .marcaCheck span{font-weight:600}
+
   /* ===== EL PUNTO QUE HAS TOCADO =====
      Con muchos puntos en el mapa no sabes cual es el tuyo. Este pin oscuro con
      el aro que late no se puede confundir. */
@@ -435,17 +462,24 @@
     <div>
       <div class="tarj">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap">
-          <h2>Reportar un incidente o accidente</h2>
-          <span class="avisoTop">Todos los campos son anónimos y opcionales, excepto los indicados.</span>
+          <h2>Reportar un evento</h2>
+          <span class="avisoTop">Todo es anónimo. Los campos marcados son obligatorios.</span>
         </div>
 
-        <div class="rejilla dos" style="margin-top:20px">
+        <div class="rejilla dos" style="margin-top:22px">
 
           <div class="campo">
-            <div class="campoTit"><span class="num">1</span><h3>Qué tipo de incidente</h3>
+            <div class="campoTit"><span class="num">1</span><h3>¿Qué ocurrió?</h3>
               <span class="etq req">obligatorio</span></div>
-            <p class="campoAyuda">Selecciona la opción que mejor describa lo ocurrido.</p>
-            <div class="ops" id="opTipos"></div>
+            <p class="campoAyuda">De un susto a lo peor. Esto clasifica el evento.</p>
+            <div class="ops sev" id="opSev"></div>
+          </div>
+
+          <div class="campo">
+            <div class="campoTit"><span class="num">2</span><h3>¿Qué pasó?</h3>
+              <span class="etq req">obligatorio</span></div>
+            <p class="campoAyuda">La situación concreta. Es lo que permite ver patrones después.</p>
+            <div class="ops" id="opSit"></div>
             <div class="cajaOtro" id="cajaOtro">
               <label>¿Cuál? Cuéntalo en una línea</label>
               <input type="text" id="otroTexto" maxlength="70"
@@ -454,71 +488,81 @@
           </div>
 
           <div class="campo">
-            <div class="campoTit"><span class="num">2</span><h3>Cómo acabó</h3>
+            <div class="campoTit"><span class="num">3</span><h3>Consecuencias</h3>
               <span class="etq req">obligatorio</span></div>
-            <p class="campoAyuda">Selecciona el resultado del incidente.</p>
-            <div class="ops gravedad" id="opGrav"></div>
+            <p class="campoAyuda">El resultado concreto.</p>
+            <div class="ops cons" id="opCons"></div>
             <div class="cajaFatalidad" id="cajaFatalidad">
               <span class="mso">volunteer_activism</span>
               <div>Gracias por contarlo. <b>Es el dato que más ayuda</b> a que no
               vuelva a pasar.<br><br>
               Cuéntalo <b>sin nombres</b> y sin detalles que no aporten aprendizaje.
-              Lo que importa es qué pasó y en qué condiciones, no quién.</div>
+              Lo que importa es qué pasó y en qué condiciones, no quién.
+              <br><br>
+              <b>Las fatalidades no se publican al momento:</b> quedan pendientes de
+              verificación para que un error o un rumor no se convierta en un dato.</div>
             </div>
           </div>
 
           <div class="campo">
-            <div class="campoTit"><span class="num">3</span><h3>Fase del vuelo</h3>
+            <div class="campoTit"><span class="num">4</span><h3>Fase del vuelo</h3>
               <span class="etq req">obligatorio</span></div>
-            <p class="campoAyuda">¿En qué fase del vuelo ocurrió?</p>
+            <p class="campoAyuda">¿En qué momento del vuelo?</p>
             <select id="selFase"><option value="">Selecciona una fase…</option></select>
           </div>
 
           <div class="campo">
-            <div class="campoTit"><span class="num">4</span><h3>Dónde</h3>
-              <span class="etq opc">opcional</span></div>
-            <p class="campoAyuda">Marca el lugar aproximado en el mapa (no es necesario ser exacto).</p>
+            <div class="campoTit"><span class="num">5</span><h3>Dónde</h3>
+              <span class="etq req">obligatorio</span></div>
+            <p class="campoAyuda">Toca la zona en el mapa. Se guarda redondeado a ~100 m:
+            suficiente para ver patrones, poco para señalar a nadie.</p>
             <div class="mapaMarcar" id="mapaMarca"></div>
           </div>
 
           <div class="campo">
-            <div class="campoTit"><span class="num">5</span><h3>Cuándo</h3>
+            <div class="campoTit"><span class="num">6</span><h3>Cuándo</h3>
               <span class="etq opc">opcional</span></div>
-            <p class="campoAyuda">Con el día saco el viento real que hacía ese día ahí.</p>
+            <p class="campoAyuda">Con el día saco el viento real que hacía ahí.
+            <b>El día no se publica</b>: se guarda el mes y el año.</p>
             <input type="date" id="fecha">
           </div>
 
           <div class="campo">
-            <div class="campoTit"><span class="num">6</span><h3>Franja del día</h3>
+            <div class="campoTit"><span class="num">7</span><h3>Franja del día</h3>
               <span class="etq req">obligatorio</span></div>
-            <p class="campoAyuda">¿En qué franja del día ocurrió?</p>
+            <p class="campoAyuda">Se publica la franja, nunca la hora.</p>
             <div class="ops" id="opFranja" style="grid-template-columns:repeat(2,1fr)"></div>
           </div>
 
           <div class="campo">
-            <div class="campoTit"><span class="num">7</span><h3>Cómo estaba el aire</h3>
+            <div class="campoTit"><span class="num">8</span><h3>Cómo estaba el aire</h3>
               <span class="etq opc">opcional</span></div>
             <p class="campoAyuda">Lo que tú sentiste. El dato real del viento lo saco yo.</p>
             <div class="ops" id="opAire"></div>
           </div>
 
           <div class="campo">
-            <div class="campoTit"><span class="num">8</span><h3>Tu archivo de vuelo</h3>
+            <div class="campoTit"><span class="num">9</span><h3>Tu archivo de vuelo</h3>
               <span class="etq opc">opcional</span></div>
-            <p class="campoAyuda">Si subes el IGC del vario, saco la hora exacta del vuelo.</p>
+            <p class="campoAyuda">Un IGC identifica un vuelo concreto. Lee esto antes.</p>
             <div class="igcBox">
               <button class="btnIgc" id="bIGC"><span class="mso">upload_file</span> Subir mi archivo IGC</button>
               <input type="file" id="ficheroIGC" accept=".igc,text/plain" style="display:none">
               <div class="igcInfo" id="igcInfo"></div>
+              <label class="marcaCheck">
+                <input type="checkbox" id="borrarTrack" checked>
+                <span>Borrar el track después de procesarlo</span>
+              </label>
             </div>
           </div>
 
         </div>
 
-        <div style="margin-top:20px">
-          <div class="campoTit"><span class="num">9</span><h3>Cuéntalo</h3>
+        <div style="margin-top:22px">
+          <div class="campoTit"><span class="num">10</span><h3>Cuéntalo</h3>
             <span class="etq opc">opcional</span></div>
-          <p class="campoAyuda">Describe brevemente qué pasó. Cualquier detalle puede ser útil para la comunidad.</p>
+          <p class="campoAyuda">Sin nombres. El detalle que identifica a alguien, fuera;
+          el que explica lo que pasó, dentro.</p>
           <textarea id="relato" maxlength="1000"
             placeholder="Escribe aquí tu relato (opcional)..."></textarea>
           <div class="contador"><span id="cuentaTxt">0</span> / 1000</div>
@@ -526,9 +570,12 @@
 
         <div class="privacidad">
           <span class="mso">lock</span>
-          <div><b>Tu privacidad está protegida.</b> Este reporte se envía de forma
-          completamente anónima. No pedimos tu nombre ni nada que te identifique,
-          y la ubicación se redondea a ~100 m.</div>
+          <div><b>Qué se publica y qué no.</b><br>
+          <b>Se publica:</b> el mes y el año, la zona redondeada, la franja del día,
+          la situación y las consecuencias.<br>
+          <b>No se publica nunca:</b> tu nombre, el día exacto, la hora exacta, tu
+          posición precisa, ni el archivo IGC. El archivo se usa solo para leer las
+          condiciones del vuelo y no se queda.</div>
         </div>
 
         <div class="enviarFila">
@@ -612,8 +659,8 @@
 <div class="vista" id="vPatrones">
   <div class="cuerpo" style="grid-template-columns:1fr">
     <div>
-      <div class="cabSeccion"><h2>Patrones y análisis</h2>
-        <span class="sub">Lo que sale cuando muchos pilotos reportan.</span></div>
+      <div class="cabSeccion"><h2>Patrones</h2>
+        <span class="sub">Los eventos aislados cuentan historias. Juntos revelan patrones.</span></div>
       <div class="patrones" id="patrones" style="margin-top:16px"></div>
     </div>
   </div>
@@ -648,25 +695,52 @@ const FIRE = 'https://plan-gym-8aff7-default-rtdb.firebaseio.com';
 const $ = id => document.getElementById(id);
 
 /* ---------- las opciones ---------- */
-const TIPOS = [
-  { id:'casi',     e:'warning',            n:'Casi accidente' },
-  { id:'perdida',  e:'airwave',            n:'Pérdida de control' },
-  { id:'colision', e:'merge',              n:'Colisión' },
-  { id:'equipo',   e:'handyman',           n:'Problema de equipo' },
-  { id:'meteo',    e:'cloud',              n:'Condiciones meteorológicas' },
-  { id:'otro',     e:'more_horiz',         n:'Otro' },
+/* ==========================================================================
+   LA CLASIFICACIÓN (revisión de Pam)
+   --------------------------------------------------------------------------
+   Pam: 'dejar de llamar a todo incidente'. SkyReport tiene que ser el PARABUAS
+   de todo lo que pasa volando, de un susto a una fatalidad. Así que ahora hay
+   TRES preguntas distintas que antes estaban mezcladas en una:
+
+     1. ¿Qué ocurrió?   -> la GRAVEDAD del evento (near miss ... fatalidad)
+     2. ¿Qué pasó?      -> la SITUACIÓN concreta (plegada, sotavento...) que es
+                           lo que luego genera los patrones
+     3. Consecuencias   -> el RESULTADO (sin lesiones ... fatalidad)
+   ========================================================================== */
+
+/* 1 · la gravedad. Esto es lo que hace que SkyReport sea el paraguas */
+const SEVERIDAD = [
+  { id:'near',      e:'warning',         n:'Near miss / casi accidente' },
+  { id:'incidente', e:'error_outline',   n:'Incidente' },
+  { id:'accidente', e:'report_problem',  n:'Accidente' },
+  { id:'grave',     e:'personal_injury', n:'Accidente grave' },
+  { id:'fatal',     e:'emergency',       n:'Fatalidad' },
 ];
-/* La gravedad, de menos a mas. La fatalidad esta aqui a proposito: sin ella
-   los datos estarian SESGADOS (solo analizarias a los que tuvieron suerte).
-   En aviacion comercial los accidentes mortales son los que mas cambiaron los
-   procedimientos. Pero se pide con respeto: sin nombres y sin detalles morbosos. */
-const GRAV = [
-  { id:'sin',       e:'check_circle',    n:'Sin lesiones' },
-  { id:'leves',     e:'healing',         n:'Lesiones leves' },
-  { id:'danos',     e:'car_crash',       n:'Daños materiales' },
-  { id:'graves',    e:'personal_injury', n:'Lesiones graves' },
-  { id:'fatalidad', e:'emergency',       n:'Fatalidad' },
+
+/* 2 · la situación. Aquí está el valor: es lo que permite decir
+   '17 eventos con sotavento' o '8 proximidades entre pilotos' */
+const SITUACION = [
+  { id:'plegada',    e:'air',            n:'Plegada o cierre' },
+  { id:'proximidad', e:'groups',         n:'Proximidad entre pilotos' },
+  { id:'sotavento',  e:'landscape',      n:'Sotavento' },
+  { id:'rotor',      e:'storm',          n:'Rotor o turbulencia' },
+  { id:'cable',      e:'cable',          n:'Cable o tendido' },
+  { id:'arbol',      e:'forest',         n:'Árbol o zona arbolada' },
+  { id:'despegue',   e:'flight_takeoff', n:'Despegue' },
+  { id:'aterrizaje', e:'flight_land',    n:'Aterrizaje' },
+  { id:'bajo',       e:'trending_down',  n:'Quedarse bajo' },
+  { id:'otro',       e:'more_horiz',     n:'Otro' },
 ];
+
+/* 3 · las consecuencias. '¿Cómo acabó?' sonaba feo para una muerte. */
+const CONSEC = [
+  { id:'sin',    e:'check_circle',    n:'Sin lesiones' },
+  { id:'leves',  e:'healing',         n:'Lesiones leves' },
+  { id:'graves', e:'personal_injury', n:'Lesiones graves' },
+  { id:'danos',  e:'car_crash',       n:'Daños materiales' },
+  { id:'fatal',  e:'emergency',       n:'Fatalidad' },
+];
+
 const FASES = [
   { id:'despegue',     n:'Despegue' },
   { id:'termica',      n:'Térmica / ascenso' },
@@ -711,7 +785,18 @@ function escapa(s){
   return String(s).replace(/[&<>"']/g, c =>
     ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
-function tipoDe(id){ return TIPOS.find(t => t.id === id) || TIPOS[TIPOS.length - 1]; }
+function sevDe(id){ return SEVERIDAD.find(t => t.id === id) || SEVERIDAD[0]; }
+function sitDe(id){ return SITUACION.find(t => t.id === id) || SITUACION[SITUACION.length - 1]; }
+function consDe(id){ return CONSEC.find(t => t.id === id) || { n: id || '', e:'help' }; }
+/* el color, segun Pam: gris para lo leve, naranja para lo que avisa,
+   y rojo SOLO para accidente grave o fatalidad */
+function colorDe(id){
+  return id === 'fatal' ? '#33424a'
+       : id === 'grave' ? '#b5544a'
+       : id === 'accidente' ? '#d9782f'
+       : id === 'incidente' ? '#5f7a86'
+       : '#8ba3ad';
+}
 function nombreMes(m){
   const p = String(m).split('-');
   return MESES[parseInt(p[1], 10) - 1] + ' ' + p[0];
@@ -796,13 +881,16 @@ function pintaOps(idDiv, lista, campo, unacol){
     div.querySelectorAll('button').forEach(x => x.classList.remove('on'));
     b.classList.add('on');
     sel[campo] = b.dataset.id;
-    if (campo === 'tipo'){
-      $('cajaOtro').classList.toggle('on', sel.tipo === 'otro');
-      if (sel.tipo === 'otro') setTimeout(() => $('otroTexto').focus(), 120);
+    /* si la situación es "otro", le pido que diga cuál */
+    if (campo === 'sit'){
+      $('cajaOtro').classList.toggle('on', sel.sit === 'otro');
+      if (sel.sit === 'otro') setTimeout(() => $('otroTexto').focus(), 120);
     }
-    /* si marca una fatalidad, sale el texto de respeto */
-    if (campo === 'gravedad' && $('cajaFatalidad')){
-      $('cajaFatalidad').classList.toggle('on', sel.gravedad === 'fatalidad');
+    /* si hay una fatalidad (en la gravedad o en las consecuencias), sale el
+       texto de respeto y el aviso de que queda pendiente de verificación */
+    if (campo === 'cons' || campo === 'sev'){
+      const hayFatal = (sel.cons === 'fatal' || sel.sev === 'fatal');
+      if ($('cajaFatalidad')) $('cajaFatalidad').classList.toggle('on', hayFatal);
     }
   };
 }
@@ -851,9 +939,7 @@ function pintaCalorMini(){
   incidentes.forEach(i => {
     if (i.lat == null) return;
     pts.push([i.lat, i.lon]);
-    const col = i.gravedad === 'fatalidad' ? '#33424a'
-              : (i.gravedad === 'graves' ? '#b5544a'
-              : (i.gravedad === 'sin' ? '#2f7d4f' : '#c98a24'));
+    const col = colorDe(i.sev);
     L.circleMarker([i.lat, i.lon], { radius:6, color:'#fff', weight:2,
       fillColor:col, fillOpacity:.92 }).addTo(capaCalorMini);
   });
@@ -898,15 +984,21 @@ function irAlPunto(id){
 
 /* ---------- la lista ---------- */
 function pintaIncidentes(){
-  const vis = incidentes.filter(i => filtro === 'todos' || i.tipo === filtro);
+  const vis = incidentes.filter(i => filtro === 'todos' || i.sev === filtro);
   vis.sort((a, b) => (b.mes || '').localeCompare(a.mes || ''));
 
   $('listaInc').innerHTML = vis.length ? vis.map(i => {
-    const t = tipoDe(i.tipo);
-    const titulo = (i.tipo === 'otro' && i.otro) ? escapa(i.otro) : t.n;
-    return '<div class="inc ' + (i.gravedad || '') + '" data-id="' + i.id
+    const t = sevDe(i.sev);
+    const sit = sitDe(i.sit);
+    const titulo = (i.sit === 'otro' && i.otro) ? escapa(i.otro) : sit.n;
+    const pend = (i.verif === 'pendiente');
+    return '<div class="inc ' + (i.cons || '') + ' sev' + (i.sev || 'near')
+      + (pend ? ' pendiente' : '') + '" data-id="' + i.id
       + '" onclick="irAlPunto(\'' + i.id + '\')">'
-      + '<div class="tipo"><span class="mso">' + t.e + '</span>' + titulo + '</div>'
+      + '<div class="tipo"><span class="mso">' + sit.e + '</span>' + titulo
+      + '<span class="etq sevEtq">' + t.n + '</span>'
+      + (pend ? '<span class="etq pendEtq"><span class="mso">pending</span>pendiente de verificación</span>' : '')
+      + '</div>'
       + '<div class="meta">'
       + (i.lat != null ? '<b>' + escapa(nombreSitio(i.lat, i.lon)) + '</b> · ' : '')
       + (i.mes ? nombreMes(i.mes) : 'sin fecha')
@@ -933,10 +1025,8 @@ function pintaIncidentes(){
     vis.forEach(i => {
       if (i.lat == null) return;
       pts.push([i.lat, i.lon]);
-      const t = tipoDe(i.tipo);
-      const col = i.gravedad === 'fatalidad' ? '#33424a'
-                : (i.gravedad === 'graves' ? '#b5544a'
-                : (i.gravedad === 'sin' ? '#2f7d4f' : '#c98a24'));
+      const t = sevDe(i.sev);
+      const col = colorDe(i.sev);
       /* el elegido se agranda y se pone oscuro; los demas se atenuan */
       const elegido = (i.id === idSenalado);
       marcasInc[i.id] = L.circleMarker([i.lat, i.lon],
@@ -945,7 +1035,7 @@ function pintaIncidentes(){
           weight: elegido ? 5 : 2.5,
           fillColor: elegido ? '#16323b' : col,
           fillOpacity: elegido ? 1 : (idSenalado ? 0.38 : 0.92) })
-        .bindPopup('<b>' + t.n + '</b><br>'
+        .bindPopup('<b>' + sitDe(i.sit).n + '</b> · ' + t.n + '<br>'
           + (i.mes ? nombreMes(i.mes) : '') + ' · '
           + ((FASES.find(f => f.id === i.fase) || {}).n || '')
           + (textoViento(i.viento) ? '<br><b>💨 ' + textoViento(i.viento) + '</b>' : '')
@@ -990,7 +1080,7 @@ function pintaPatrones(){
   if (incidentes.length < 3){
     caja.innerHTML = '<div class="patron" style="grid-column:1/-1">'
       + '<h3><span class="mso">hourglass_empty</span>Todavía no hay suficientes datos</h3>'
-      + '<div class="cuantos">Los patrones salen cuando hay al menos 3 reportes. '
+      + '<div class="cuantos">Los patrones salen cuando hay al menos 3 eventos. '
       + 'Ahora hay ' + incidentes.length + '.</div>'
       + '<div style="font-size:13px;line-height:1.65;color:var(--gris)">'
       + 'Por eso lo importante ahora es que la gente reporte: <b>cada susto cuenta</b>. '
@@ -1000,8 +1090,8 @@ function pintaPatrones(){
 
   const porTipo = {};
   incidentes.forEach(i => {
-    const clave = (i.tipo === 'otro' && i.otro)
-      ? 'otro::' + i.otro.trim().toLowerCase() : i.tipo;
+    const clave = (i.sit === 'otro' && i.otro)
+      ? 'otro::' + i.otro.trim().toLowerCase() : (i.sit || 'otro');
     porTipo[clave] = (porTipo[clave] || 0) + 1;
   });
   const tipos = Object.entries(porTipo).sort((a, b) => b[1] - a[1]);
@@ -1012,7 +1102,7 @@ function pintaPatrones(){
     const clave = nombreSitio(i.lat, i.lon);   /* por nombre, no por cuadricula */
     porZona[clave] = porZona[clave] || { n:0, tipos:{} };
     porZona[clave].n++;
-    porZona[clave].tipos[i.tipo] = (porZona[clave].tipos[i.tipo] || 0) + 1;
+    porZona[clave].tipos[i.sit] = (porZona[clave].tipos[i.sit] || 0) + 1;
   });
   const zonas = Object.entries(porZona).sort((a, b) => b[1].n - a[1].n).slice(0, 8);
 
@@ -1032,16 +1122,16 @@ function pintaPatrones(){
     html += '<div class="patron destaca">'
       + '<h3><span class="mso">lightbulb</span>El patrón más claro hasta ahora</h3>'
       + '<div style="font-size:14.5px;line-height:1.7">En <b>' + escapa(zTop[0])
-      + '</b> hay <b>' + zTop[1].n + ' reportes</b>, y de ellos <b>' + tTop[1]
-      + '</b> son de tipo <b>' + tipoDe(tTop[0]).n.toLowerCase() + '</b>.</div>'
+      + '</b> hay <b>' + zTop[1].n + ' eventos</b>, y de ellos <b>' + tTop[1]
+      + '</b> son de <b>' + sitDe(tTop[0]).n.toLowerCase() + '</b>.</div>'
       + '<div class="cuantos" style="margin:10px 0 0">Con más datos esto dirá cosas como '
       + '«aquí, en esta época, pasa esto». Ese es el objetivo.</div></div>';
   }
 
-  if (tipos.length) html += bloque('Qué pasa más', 'pie_chart', total + ' reportes en total',
+  if (tipos.length) html += bloque('Qué pasa más', 'pie_chart', total + ' eventos en total',
     tipos.map(t => t[0].indexOf('otro::') === 0
       ? ['Otro: ' + t[0].slice(6), t[1]]
-      : [tipoDe(t[0]).n, t[1]]));
+      : [sitDe(t[0]).n, t[1]]));
 
   if (Object.keys(porFase).length) html += bloque('En qué fase del vuelo', 'flight',
     'dónde se complica', Object.entries(porFase).sort((a, b) => b[1] - a[1])
@@ -1066,7 +1156,7 @@ function pintaPatrones(){
 
     let t = '<div class="patron"><h3><span class="mso">air</span>El viento de esos días</h3>'
       + '<div class="cuantos">' + conViento.length + ' de ' + total
-      + ' reportes traen el viento real del clima de ese día</div>'
+      + ' eventos traen el viento real del clima de ese día</div>'
       + '<div style="font-size:13.5px;line-height:1.8">'
       + 'Viento medio: <b>' + med + ' km/h</b>'
       + (medRach != null ? ' · rachas medias: <b>' + medRach + ' km/h</b>' : '')
@@ -1086,13 +1176,20 @@ function pintaPatrones(){
 
   /* la gravedad: aqui se ve si los incidentes son sustos o algo peor.
      Es el dato que mas enseña, y el que hay que mirar sin morbo. */
-  const porGrav = {};
-  incidentes.forEach(i => { if (i.gravedad) porGrav[i.gravedad] = (porGrav[i.gravedad] || 0) + 1; });
-  if (Object.keys(porGrav).length) html += bloque('Cómo acabaron', 'monitor_heart',
+  /* la gravedad y las consecuencias: de menos a mas, sin morbo */
+  const porSev = {};
+  incidentes.forEach(i => { if (i.sev) porSev[i.sev] = (porSev[i.sev] || 0) + 1; });
+  if (Object.keys(porSev).length) html += bloque('Gravedad de los eventos', 'monitor_heart',
     'del susto a lo peor: mirarlo sin morbo, para aprender',
-    ['sin','leves','danos','graves','fatalidad']
-      .filter(k => porGrav[k])
-      .map(k => [(GRAV.find(g => g.id === k) || {}).n || k, porGrav[k]]));
+    ['near','incidente','accidente','grave','fatal']
+      .filter(k => porSev[k]).map(k => [sevDe(k).n, porSev[k]]));
+
+  const porCons = {};
+  incidentes.forEach(i => { if (i.cons) porCons[i.cons] = (porCons[i.cons] || 0) + 1; });
+  if (Object.keys(porCons).length) html += bloque('Consecuencias', 'healing',
+    'el resultado, en datos',
+    ['sin','leves','graves','danos','fatal']
+      .filter(k => porCons[k]).map(k => [consDe(k).n, porCons[k]]));
 
   if (Object.keys(porFranja).length) html += bloque('A qué hora del día', 'schedule',
     'franja del día', Object.entries(porFranja).sort((a, b) => b[1] - a[1])
@@ -1182,7 +1279,7 @@ function escucha(){
 
     /* patrones recurrentes: tipos que aparecen 3 veces o más */
     const cuenta = {};
-    incidentes.forEach(i => { cuenta[i.tipo] = (cuenta[i.tipo] || 0) + 1; });
+    incidentes.forEach(i => { if (i.sit) cuenta[i.sit] = (cuenta[i.sit] || 0) + 1; });
     const nPat = Object.values(cuenta).filter(n => n >= 3).length;
     $('nPatrones').textContent = nPat;
     $('tPatrones').textContent = uno(nPat) ? 'patrón' : 'patrones';
@@ -1209,14 +1306,15 @@ function escucha(){
 /* ---------- enviar ---------- */
 async function envia(){
   const falta = [];
-  if (!sel.tipo) falta.push('el tipo de incidente');
-  if (!sel.gravedad) falta.push('cómo acabó');
+  if (!sel.sev) falta.push('qué ocurrió');
+  if (!sel.sit) falta.push('qué pasó');
+  if (!sel.cons) falta.push('las consecuencias');
   const fase = $('selFase').value;
   if (!fase) falta.push('la fase del vuelo');
   if (sel.lat == null) falta.push('el sitio en el mapa');
   if (!sel.franja) falta.push('la franja del día');
   const otro = $('otroTexto').value.trim();
-  if (sel.tipo === 'otro' && !otro) falta.push('cuál era el «otro»');
+  if (sel.sit === 'otro' && !otro) falta.push('cuál era el «otro»');
 
   if (falta.length){
     aviso('Falta algún dato', 'Necesito: <b>' + falta.join(', ') + '</b>.<br><br>'
@@ -1240,14 +1338,18 @@ async function envia(){
   $('txtEstado').textContent = 'Enviando…';
 
   const dato = {
-    tipo: sel.tipo, gravedad: sel.gravedad, fase: fase,
+    sev: sel.sev, sit: sel.sit, cons: sel.cons, fase: fase,
     lat: sel.lat, lon: sel.lon, mes: mes, franja: sel.franja,
     aire: sel.aire || null,          /* lo que sintio el piloto */
     viento: viento,                  /* lo que habia de verdad (clima) */
     igcMin: igc ? igc.minutos : null,
     igcAltMax: igc ? igc.altMax : null,
     relato: relato.slice(0, 1000),
-    otro: (sel.tipo === 'otro') ? otro : null,
+    otro: (sel.sit === 'otro') ? otro : null,
+    /* una fatalidad NO se publica al momento: queda pendiente de verificacion
+       (idea de Pam: alguien puede equivocarse de fecha, sitio o incluso
+       reportar un rumor). Los near miss entran directos. */
+    verif: (sel.sev === 'fatal' || sel.cons === 'fatal') ? 'pendiente' : 'ok',
     creado: Date.now(), v: 3
   };
 
@@ -1275,7 +1377,7 @@ async function envia(){
     $('igcInfo').classList.remove('on');
     $('txtEstado').textContent = '';
     document.querySelectorAll('.ops button, .filtros button').forEach(b => {});
-    ['opTipos','opGrav','opFranja','opAire'].forEach(id => {
+    ['opSev','opSit','opCons','opFranja','opAire'].forEach(id => {
       $(id).querySelectorAll('button').forEach(b => b.classList.remove('on'));
     });
     if (marcaMia && mapaMarca){ mapaMarca.removeLayer(marcaMia); marcaMia = null; }
@@ -1347,8 +1449,9 @@ $('ficheroIGC').onchange = ev => {
 /* ---------- arranque ---------- */
 firebase.initializeApp({ databaseURL: FIRE + '/' });
 
-pintaOps('opTipos', TIPOS, 'tipo');
-pintaOps('opGrav', GRAV, 'gravedad');
+pintaOps('opSev', SEVERIDAD, 'sev');
+pintaOps('opSit', SITUACION, 'sit');
+pintaOps('opCons', CONSEC, 'cons');
 pintaOps('opFranja', FRANJAS, 'franja');
 pintaOps('opAire', AIRES, 'aire');
 
@@ -1360,7 +1463,7 @@ $('bEnviar').onclick = envia;
 
 $('filtros').innerHTML = '<button class="on" data-f="todos">'
   + '<span class="mso">apps</span>Todos</button>'
-  + TIPOS.map(t => '<button data-f="' + t.id + '"><span class="mso">' + t.e + '</span>'
+  + SEVERIDAD.map(t => '<button data-f="' + t.id + '"><span class="mso">' + t.e + '</span>'
       + t.n + '</button>').join('');
 $('filtros').onclick = ev => {
   const b = ev.target.closest('button');
