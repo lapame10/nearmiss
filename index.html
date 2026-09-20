@@ -19,7 +19,9 @@
     --grave:#b5544a; --graveBg:#fbeeec;
   }
   *{box-sizing:border-box}
-  html,body{margin:0;padding:0}
+/* seguro: que NUNCA aparezca scroll horizontal en el movil */
+  html,body{margin:0;padding:0;overflow-x:hidden;max-width:100%}
+  *,*::before,*::after{min-width:0}
   body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,Roboto,sans-serif;
     background:var(--fondo);color:var(--tinta);font-size:15px;line-height:1.5}
   .mso{font-family:'Material Symbols Outlined';font-weight:normal;font-style:normal;
@@ -51,7 +53,8 @@
   /* ===================== PORTADA (hero) ===================== */
   .hero{background:linear-gradient(180deg,#dbe7ec 0%,#eef1f3 100%);
     padding:30px 24px 26px;border-bottom:1px solid var(--linea)}
-  .hero h1{margin:0 0 9px;font-size:31px;letter-spacing:-1px;font-weight:900;color:#12313d}
+  .hero h1{margin:0 0 9px;font-size:clamp(21px,5.6vw,31px);letter-spacing:-.8px;
+    font-weight:900;color:#12313d;overflow-wrap:break-word}
   .hero p{margin:0;font-size:15px;color:#3b5560;max-width:640px;line-height:1.6}
   /* la cita va debajo del texto, con su barra. Antes estaba encima del dibujo
      del parapente y se leia fatal. */
@@ -100,7 +103,9 @@
   .ops button{display:flex;align-items:center;gap:9px;text-align:left;
     border:1.5px solid var(--borde);background:#fff;color:var(--tinta);
     border-radius:10px;padding:12px 12px;font-family:inherit;font-size:13.5px;
-    font-weight:700;cursor:pointer;line-height:1.25;transition:all .13s}
+    font-weight:700;cursor:pointer;line-height:1.25;transition:all .13s;
+    min-width:0;overflow-wrap:break-word;word-break:break-word}
+  .ops button span{min-width:0}
   .ops button .mso{font-size:20px;color:var(--gris);flex-shrink:0}
   .ops button:hover{border-color:var(--mar);background:#fafcfd}
   .ops button.on{border-color:var(--mar);background:#eef6f9;
@@ -191,8 +196,11 @@
 
   #mapaCalor{height:150px;border-radius:9px;overflow:hidden;margin-bottom:12px}
   .zonas{font-size:12.5px}
-  .zonas .zf{display:flex;justify-content:space-between;padding:5px 0;
+  .zonas .zf{display:flex;justify-content:space-between;gap:8px;padding:5px 0;
     border-bottom:1px solid #f0f3f5}
+  .zonas .zf span{min-width:0;overflow:hidden;text-overflow:ellipsis;
+    white-space:nowrap}
+  .zonas .zf b{flex-shrink:0}
   .zonas .zf:last-child{border:none}
   .zonas .zf b{font-weight:800;color:var(--mar)}
 
