@@ -1157,7 +1157,7 @@ function leeIGC(texto){
 
 /* ---------- los datos en vivo ---------- */
 function escucha(){
-  firebase.database().ref('nearmiss/incidentes').on('value', snap => {
+  firebase.database().ref('skyreport/incidentes').on('value', snap => {
     const d = snap.val() || {};
     incidentes = Object.entries(d).map(([id, v]) => Object.assign({ id }, v));
     /* singular o plural, que '1 patrones' se ve muy mal */
@@ -1243,7 +1243,7 @@ async function envia(){
   };
 
   try{
-    await firebase.database().ref('nearmiss/incidentes').push(dato);
+    await firebase.database().ref('skyreport/incidentes').push(dato);
     aviso('Gracias. Ya está dentro.',
       'Lo que has contado puede evitar que otro pase por lo mismo.'
       + (viento ? '<br><br>Y he guardado el viento real de ese día: <b>'
