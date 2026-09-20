@@ -49,6 +49,9 @@
     font-size:13.5px;font-weight:700;padding:9px 15px;border-radius:9px;cursor:pointer;
     display:flex;align-items:center;gap:7px;white-space:nowrap}
   .nav button .mso{font-size:19px}
+  /* el nav NUNCA se encoge: si no cabe, se quitan los textos (abajo), no se
+     aplastan los botones uno contra otro */
+  .nav button>span:not(.mso){white-space:nowrap}
   .nav button.on{opacity:1;background:rgba(255,255,255,.13)}
   /* el boton de idioma: discreto, a la derecha del todo */
   /* el selector de idioma: 5 idiomas, discreto, a la derecha del todo */
@@ -87,11 +90,14 @@
     .marcaTxt{display:inline}
     .cabDer{display:block}
   }
-  /* por debajo de 1180 el subtítulo de la cabecera ya no cabe con el nav:
-     se quita el subtítulo (el hero ya explica lo mismo) antes que cortar
-     los botones del nav. */
-  @media(max-width:1179px){
+  /* El subtítulo de la cabecera es lo primero que sobra: el hero ya dice lo
+     mismo. Y con los idiomas largos (Signaler, Tendances) hace falta el sitio
+     antes. Por eso se quita ya a los 1400px. */
+  @media(max-width:1400px){
     .marcaTxt{display:none}
+  }
+  @media(max-width:1150px){
+    .cabDer{display:none}
   }
 
   /* ===================== TARJETAS ===================== */
