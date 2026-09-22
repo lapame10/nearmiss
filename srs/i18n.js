@@ -455,6 +455,7 @@ const EN = {
   'igc.fromPilot': 'You',
   'home.howItWorks': 'How SkyReport works',
   'common.site': 'Site',
+  'site.zonesDemo': 'Example zones, not verified. In production these will come from SkyReport.',
 };
 
 const ES = {
@@ -885,6 +886,7 @@ const ES = {
   'igc.fromPilot': 'Tú',
   'home.howItWorks': 'Cómo funciona SkyReport',
   'common.site': 'Sitio',
+  'site.zonesDemo': 'Zonas de ejemplo, no verificadas. En producción vendrán de SkyReport.',
 };
 
 const FR = {
@@ -1372,6 +1374,7 @@ const FR = {
   'igc.fromPilot': 'Toi',
   'home.howItWorks': 'Comment fonctionne SkyReport',
   'common.site': 'Site',
+  'site.zonesDemo': 'Zones d’exemple, non vérifiées. En production elles viendront de SkyReport.',
 };
 
 const DE = {
@@ -1859,6 +1862,7 @@ const DE = {
   'igc.fromPilot': 'Du',
   'home.howItWorks': 'Wie SkyReport funktioniert',
   'common.site': 'Gebiet',
+  'site.zonesDemo': 'Beispielzonen, nicht geprüft. Im Produktivbetrieb kommen sie von SkyReport.',
 };
 
 const PT = {
@@ -2346,6 +2350,7 @@ const PT = {
   'igc.fromPilot': 'Tu',
   'home.howItWorks': 'Como funciona o SkyReport',
   'common.site': 'Local',
+  'site.zonesDemo': 'Zonas de exemplo, não verificadas. Em produção virão do SkyReport.',
 };
 
 /* ============================================================

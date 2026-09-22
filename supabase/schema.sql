@@ -16,6 +16,8 @@
 --
 --  Qué se permite exactamente:
 --    · leer        → solo los reportes con status = 'approved'
+--    · sitios      → se leen los 'approved'; los 'proposed' solo los ve quien
+--                    los propuso y el equipo de moderacion
 --    · añadir      → cualquiera, pero SIN poder marcar 'approved'
 --    · cambiar     → nadie desde el navegador
 --    · borrar      → nadie desde el navegador
@@ -37,8 +39,33 @@ create table if not exists public.sites (
   altitude    integer,
   description text,
   active      boolean not null default true,
+
+  /* ===== DE DONDE SALE ESTE SITIO =====
+     Hoy los sitios los mete el equipo desde el panel. Esta columna deja la
+     puerta abierta a que un piloto proponga uno: su reporte se guarda ya con
+     el sitio propuesto, y queda marcado como 'proposed' hasta que alguien lo
+     revise. Asi nadie se queda sin reportar por volar en un sitio que aun no
+     esta en la lista.
+
+     El flujo no esta activado en el formulario todavia: es solo la columna,
+     para no tener que migrar la tabla despues. */
+  status      text not null default 'approved'
+              check (status in ('proposed', 'approved', 'rejected')),
+  proposed_by uuid,                    /* quien lo propuso, si fue un piloto */
+
+  /* ===== EL PUNTO ES LO QUE IDENTIFICA EL SITIO =====
+     El nombre es texto libre, y el mismo sitio puede llegar como 'Valle',
+     'Valle de Bravo' o 'valle bravo'. Lo que de verdad identifica un sitio son
+     sus coordenadas. Guardamos el punto en una columna aparte, para poder
+     detectar despues que dos propuestas distintas son el mismo sitio y unirlas
+     sin perder los reportes de ninguna de las dos. */
+  name_raw    text,                    /* el nombre tal como lo escribio el piloto */
+
   created_at  timestamptz not null default now()
 );
+
+create index if not exists sites_status_idx on public.sites (status);
+create index if not exists sites_geo_idx    on public.sites (latitude, longitude);
 
 comment on table public.sites is
   'Sitios de vuelo. Las coordenadas son del punto de referencia del sitio, no de un incidente.';

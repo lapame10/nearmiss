@@ -601,7 +601,9 @@ function vistaSitio(id, tab = 'overview') {
 
   if (tab === 'map') {
     cuerpo = `<div id="mapaSitio" style="height:380px;border-radius:12px;overflow:hidden;border:1px solid var(--line)"></div>
+      <p class="mini mt" id="avisoZonas" style="color:var(--amber,#a8742c)"></p>
       <div class="card mt"><b>${escapa(t('site.zones'))}</b>
+        <p class="mini" style="color:var(--amber,#a8742c)">${escapa(t('site.zonesDemo'))}</p>
         <div class="fila-etq mt">${(s.zonas || []).map(z => {
           const n = st.reps.filter(r => r.zona === z.id).length;
           const tt = (TIPOS_ZONA.find(x => x.id === z.t) || {}).n || z.t;
@@ -818,7 +820,13 @@ export function pinta(vista, arg) {
      encuentra su contenedor y el mapa sale en blanco. */
   import('./mapa.js').then(m => {
     if (vista === 'senal' && arg) m.mapaSenal(est.senales.find(x => x.id === arg), 'mapaSenal');
-    if (vista === 'sitio' && est.tabSitio === 'map' && arg) m.mapaSitio(arg, 'mapaSitio');
+    if (vista === 'sitio' && est.tabSitio === 'map' && arg) {
+      m.mapaSitio(arg, 'mapaSitio');
+      /* Las zonas que se dibujan son de ejemplo, no verificadas. Se dice aqui
+         tambien, porque el mapa es donde mas facil es creer que si lo son. */
+      const av = document.getElementById('avisoZonas');
+      if (av) av.textContent = t('site.zonesDemo');
+    }
     if (vista === 'reporte' && arg) {
       const rep = est.reps.find(r => r.id === arg);
       /* ============================================================
