@@ -197,7 +197,7 @@ function pintaFiltros() {
       <input type="date" data-f="hasta" value="${escapa(f.hasta)}"></div>
   </div>
   <div class="row mt"><button class="btn sec" id="fLimpiar">${escapa(t('common.clearFilters'))}</button>
-    <button class="btn pri" id="fAplicar">Apply</button></div>`;
+    <button class="btn pri" id="fAplicar">${escapa(t('common.apply'))}</button></div>`;
 
   p.querySelectorAll('[data-f]').forEach(e => e.addEventListener('change', () => {
     est.filtros[e.dataset.f] = e.value;
@@ -297,9 +297,48 @@ function pintaCalor(L, capa, lista) {
   }
 }
 
+/* Cuantos filtros hay puestos ahora mismo. Sirve para no decir '2 de 10' cuando
+   en realidad no hay ningun filtro y simplemente la senal tiene 2 reportes. */
+function numeroDeFiltros() {
+  const f = est.filtros || {};
+  return Object.keys(f).filter(k => f[k] !== '' && f[k] != null).length;
+}
+
+/* ============================================================
+   LAS SENALES QUE PASAN EL FILTRO
+   ============================================================
+   Una senal se construyo a partir de unos reportes (s.reps guarda sus id).
+   Aqui se mira si ALGUNO de esos reportes pasa los filtros que hay puestos.
+
+   Por que 'alguno' y no 'todos': porque lo util es encontrar senales donde
+   haya al menos un caso de lo que buscas. Si pidieras que TODOS los reportes
+   de la senal cumplieran el filtro, casi nunca saldria nada, y menos cuanto
+   mas filtros pongas.
+
+   Devuelve la senal junto con cuantos de sus reportes pasan, para poder
+   decirlo en el popup. */
+function senalesFiltradas() {
+  const pasan = new Set(filtra(est.reps).map(r => r.id));
+  const salida = [];
+  est.senales.forEach(s => {
+    const suyos = (s.reps || []).filter(id => pasan.has(id));
+    if (!suyos.length) return;
+    /* si no hay filtros puestos, se cuentan todos */
+    const hayFiltro = numeroDeFiltros() > 0;
+    salida.push({
+      s,
+      dentro: hayFiltro ? suyos.length : (s.reps || []).length,
+      total: (s.reps || []).length,
+      filtrada: hayFiltro && suyos.length < (s.reps || []).length,
+    });
+  });
+  return salida;
+}
+
 function pintaSenales(L, capa) {
-  const sigs = (est.filtros.site ? est.senales.filter(s => s.site === est.filtros.site) : est.senales);
-  sigs.forEach(s => {
+  const lista = senalesFiltradas();
+  const sigs = lista.map(x => x.s);
+  lista.forEach(({ s, dentro, total, filtrada }) => {
     /* el color describe la EVIDENCIA, no el peligro: azul para lo
        repetido, ámbar para lo fuerte. Nunca rojo, que asusta. */
     const fr = s.fuerza || s.nivel;
@@ -310,7 +349,9 @@ function pintaSenales(L, capa) {
       color: '#fff', weight: 2 }).addTo(capa)
       .bindPopup(`<div style="font:13px/1.5 var(--f);min-width:220px">
         <b>${escapa(s.titulo)}</b><br>
-        <span style="color:#8c939b;font-size:12px">${s.n} reports ·
+        <span style="color:#8c939b;font-size:12px">${escapa(
+          filtrada ? t('signals.relatedFiltered', { n: dentro, t: total })
+                   : t('signals.relatedShort', { n: total }))} ·
         ${escapa(fechaLarga(s.desde))} – ${escapa(fechaLarga(s.hasta))}</span><br>
         ${escapa(s.explicacion)}<br>
         <a href="#senal/${escapa(s.id)}" style="font-weight:650">${escapa(t('common.viewSignal'))} →</a>
@@ -394,7 +435,7 @@ export async function mapaTrack(track, idCont) {
   /* el evento */
   const ev = track.find(p => p.t === 0) || track[0];
   L.circleMarker([ev.lat, ev.lon], { radius: 9, fillColor: '#98372f', fillOpacity: .95,
-    color: '#fff', weight: 2.5 }).addTo(m).bindTooltip('EVENT', { permanent: true, direction: 'top' });
+    color: '#fff', weight: 2.5 }).addTo(m).bindTooltip(t('box.eventMark'), { permanent: true, direction: 'top' });
   /* las marcas de tiempo */
   /* el parametro se llama 'seg' y no 't', para no tapar la funcion de traducir */
   [-120, -60, -30, 30, 60].forEach(seg => {

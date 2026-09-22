@@ -78,7 +78,10 @@ let _avisoT = null;
 export function aviso(txt, ms = 3200) {
   const a = $('#aviso');
   if (!a) return;
-  a.innerHTML = txt;
+  /* textContent, no innerHTML: los avisos solo llevan texto. Con innerHTML
+     cualquier cosa que acabe dentro de un mensaje se interpreta como HTML, y
+     eso es una via de inyeccion que no hace falta tener abierta. */
+  a.textContent = txt;
   a.classList.add('on');
   clearTimeout(_avisoT);
   _avisoT = setTimeout(() => {
@@ -90,7 +93,7 @@ export function aviso(txt, ms = 3200) {
        Vaciandolo, el CSS `#aviso:empty{display:none}` hace el resto.
        El retardo es para que no desaparezca de golpe: primero se va (0.22 s de
        transicion) y luego se vacia. */
-    setTimeout(() => { a.innerHTML = ''; }, 260);
+    setTimeout(() => { a.textContent = ''; }, 260);
   }, ms);
 }
 
@@ -176,7 +179,7 @@ export function DataCompleteness({ rep, corto = false }) {
 /** Tarjeta de reporte. */
 export function ReportCard({ rep, chico = false }) {
   const s = sitio(rep.site), z = zonaDe(rep);
-  return `<article class="card clic" data-rep="${escapa(rep.id)}">
+  return `<a class="card clic" href="#reporte/${escapa(rep.id)}" data-rep="${escapa(rep.id)}">
     <div class="entre">
       <span class="eyebrow">${escapa(fechaLarga(rep.fecha))}${rep.hora ? ' · ' + escapa(rep.hora) : ''}</span>
       <span class="etq${rep.tipo === 'near_miss' ? ' info' : ''}">${escapa(nombreTipo(rep.tipo))}</span>
@@ -191,7 +194,7 @@ export function ReportCard({ rep, chico = false }) {
       ${rep.igc ? `<span class="etq ok">${escapa(t('snapshot.igc'))}</span>` : ''}
     </div>
     ${chico ? '' : `<div class="mt">${DataCompleteness({ rep, corto: true })}</div>`}
-  </article>`;
+  </a>`;
 }
 
 /** Tarjeta de senal. NUNCA dice que algo sea peligroso. */
@@ -207,7 +210,7 @@ export function SignalCard({ sig }) {
   const s = sitio(sig.site);
   const ctx = contextoExposicion(sig, est.reps, est.vuelos, AJUSTES.minVuelosParaTasa);
   const fr = sig.fuerza || sig.nivel || 'limited';
-  return `<article class="card clic" data-sig="${escapa(sig.id)}">
+  return `<a class="card clic" href="#senal/${escapa(sig.id)}" data-sig="${escapa(sig.id)}">
     <div class="entre">
       <span class="etq ${fr === 'strong' ? 'watch' : fr === 'repeated' ? 'info' : ''}">
         ${escapa(t('strength.' + fr))}</span>
@@ -233,14 +236,14 @@ export function SignalCard({ sig }) {
            <dd class="mini">${escapa(t('signals.exposureLimited'))}</dd>`}
     </dl>
     <div class="mt2"><span class="btn gh">${escapa(t('signals.viewRelated'))} →</span></div>
-  </article>`;
+  </a>`;
 }
 
 /** Tarjeta de sitio. */
 export function SiteCard({ s }) {
   const st = statsSite(s.id, est.reps, est.vuelos);
   const sigs = est.senales.filter(x => x.site === s.id).length;
-  return `<article class="card clic" data-site="${escapa(s.id)}">
+  return `<a class="card clic" href="#sitio/${escapa(s.id)}" data-site="${escapa(s.id)}">
     <div class="entre">
       <div>
         <h3>${escapa(s.n)}</h3>
@@ -254,7 +257,7 @@ export function SiteCard({ s }) {
       <div class="met"><b>${st.masEvento ? escapa(nombreEv(st.masEvento.id)) : '—'}</b><span>${escapa(t('common.mostReported'))}</span></div>
     </div>
     <p class="mini mt">${escapa(t('common.lastReport'))}: ${st.ultimo ? escapa(hace(st.ultimo.fecha)) : '—'}</p>
-  </article>`;
+  </a>`;
 }
 
 /** Event Snapshot. Aparece en el formulario y en la ficha del evento. */
@@ -645,10 +648,23 @@ function vistaReporte(id) {
   <section class="bloque">
     <div class="cab"><h2>${escapa(t('detail.track'))}</h2>
       <span class="mini">${escapa(t('rep.igcAvailable'))}</span></div>
+
+    <!-- ===== SOLO SI HAY TRACK DE VERDAD =====
+         Si el reporte dice tener IGC pero no se guardaron los puntos, aqui no
+         se pinta nada inventado: sale el aviso de abajo y ya esta. -->
     <div id="mapaTrack" style="height:320px;border-radius:12px;overflow:hidden;border:1px solid var(--line)"></div>
+
+    <div class="card mt oculto" id="trackNoGuardado"
+         style="background:var(--amber-bg);border-color:#e8d7b0">
+      <p class="sub">${escapa(t('igc.noTrackStored'))}</p>
+      <p class="mini mt">${escapa(t('igc.noTrackStoredHelp'))}</p>
+    </div>
+
+    <p class="mini mt oculto" id="avisoTrack"></p>
+
     <div class="card mt">
       <div class="cab"><h3>${escapa(t('box.title'))}</h3>
-        <span class="mini">T-120 s → T+60 s</span></div>
+        <span class="mini">${escapa(t('box.window'))}</span></div>
       <div id="timeline"></div>
       <div id="excepciones" class="mt"></div>
     </div>
@@ -797,14 +813,54 @@ export function pinta(vista, arg) {
     if (vista === 'sitio' && est.tabSitio === 'map' && arg) m.mapaSitio(arg, 'mapaSitio');
     if (vista === 'reporte' && arg) {
       const rep = est.reps.find(r => r.id === arg);
-      /* ===== EL "BLACK BOX" =====
-         Con el IGC, reconstruyo que hacia el ala alrededor del evento:
-         posicion, velocidad, ascenso/caida y rumbo. No es solo pintar un
-         track: es una reconstruccion con marcas de tiempo T-120 ... T+60. */
+      /* ============================================================
+         LA BLACK BOX — SOLO CON DATOS DEL REPORTE
+         ============================================================
+         Aqui habia esto:
+
+             if (rep && rep.igc) {
+               const tr = igcDemo(rep.lat, rep.lon);   // <-- INVENTADO
+               m.mapaTrack(tr, 'mapaTrack');
+               m.pintaTimeline(tr, 'timeline', 'excepciones');
+             }
+
+         Es decir: bastaba con que el reporte dijera 'tengo IGC' para que la
+         app pintara un track SINTETICO y lo presentara como la reconstruccion
+         del vuelo de esa persona. Sin decirlo en ningun sitio.
+
+         Eso no puede pasar, por dos razones. La primera es que es mentira, y
+         una app de seguridad no puede permitirse mentir ni un poco: si alguien
+         cree estar viendo lo que hizo su ala cuando ve numeros inventados,
+         puede sacar conclusiones equivocadas sobre su propio vuelo. La
+         segunda es que los datos inventados son verosimiles: tienen la forma
+         de un track real, asi que no hay forma de que el lector lo note.
+
+         La regla ahora:
+           - Demo Mode + reporte demo  -> track de demostracion, y se avisa
+           - puntos reales guardados   -> se usan esos
+           - solo metadata, sin puntos -> NO hay Black Box, y se dice por que
+         ============================================================ */
       if (rep && rep.igc) {
-        const tr = igcDemo(rep.lat, rep.lon);
-        m.mapaTrack(tr, 'mapaTrack');
-        m.pintaTimeline(tr, 'timeline', 'excepciones');
+        const esDemo = rep.demo === true && enModoDemo();
+        const puntos = Array.isArray(rep.igcTrack) && rep.igcTrack.length
+          ? rep.igcTrack : null;
+
+        if (puntos) {
+          /* datos de verdad del reporte */
+          m.mapaTrack(puntos, 'mapaTrack');
+          m.pintaTimeline(puntos, 'timeline', 'excepciones', rep.igcEventoTs);
+        } else if (esDemo) {
+          /* solo aqui se permite inventar, y se dice en pantalla */
+          const tr = igcDemo(rep.lat, rep.lon);
+          const av = document.getElementById('avisoTrack');
+          if (av) av.textContent = t('igc.demoTrack');
+          m.mapaTrack(tr, 'mapaTrack');
+          m.pintaTimeline(tr, 'timeline', 'excepciones');
+        } else {
+          /* hay IGC, pero no se guardo el track: NO se inventa nada */
+          const caja = document.getElementById('trackNoGuardado');
+          if (caja) caja.classList.remove('oculto');
+        }
       }
     }
   });

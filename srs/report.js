@@ -373,7 +373,7 @@ function pasoBasico() {
   <div class="card mt">
     <div class="campo"><label>${escapa(t('report.phase'))}</label>
       <div class="opciones">${FASES.map(f =>
-        `<button class="op${F.fase === f.id ? ' on' : ''}" data-fase="${f.id}">${escapa(f.n)}</button>`).join('')}</div></div>
+        `<button class="op${F.fase === f.id ? ' on' : ''}" data-fase="${f.id}">${escapa(nombreFase(f.id))}</button>`).join('')}</div></div>
 
     <div class="campo"><label>${escapa(t('report.event'))}</label>
       <div class="opciones">${EVENTOS.map(e =>
@@ -417,7 +417,7 @@ function campoExtra(q) {
 /* ---------- PASO 3: CONDICIONES ---------- */
 function pasoCondiciones() {
   return `<section class="bloque"><div class="cab"><h2>${escapa(t('report.conditionsTitle'))}</h2>
-    <span class="mini">as you felt them, not from a model</span></div>
+    <span class="mini">${escapa(t('common.gustsNote'))}</span></div>
   <div class="card">
     <div class="campo"><label>${escapa(t('report.windDir'))}</label>
       <div class="opciones">${DIRECCIONES.map(d =>
@@ -442,14 +442,14 @@ function pasoCondiciones() {
           escapa(t('cond.' + v))}</button>`).join('')}</div></div>
     <div class="campo"><label>${escapa(t('report.weatherNotes'))}
       <span class="mini">(${escapa(t('common.optional'))})</span></label>
-      <textarea id="fMeteo" placeholder="Dust devils at the field after 16:00…">${escapa(F.meteo)}</textarea></div>
+      <textarea id="fMeteo" placeholder="${escapa(t('ph.meteo'))}">${escapa(F.meteo)}</textarea></div>
     <p class="mini">${escapa(t('report.weatherFuture'))}</p>
   </div></section>`;
 }
 
 /* ---------- PASO 4: EQUIPO ---------- */
 function pasoEquipo() {
-  return `<section class="bloque"><div class="cab"><h2>Equipment</h2>
+  return `<section class="bloque"><div class="cab"><h2>${escapa(t('report.equipmentTitle'))}</h2>
     <span class="mini">${escapa(t('report.equipmentHelp'))}</span></div>
   <div class="card">
     <div class="row wrap" style="gap:12px">
@@ -468,7 +468,7 @@ function pasoEquipo() {
         <input type="text" id="fHarness" placeholder="Pod" value="${escapa(F.harness)}"></div>
     </div>
     <div class="campo"><label>${escapa(t('common.reserve'))}</label>
-      <input type="text" id="fReserva" placeholder="Brand / model" value="${escapa(F.reserva)}"></div>
+      <input type="text" id="fReserva" placeholder="${escapa(t('ph.reserva'))}" value="${escapa(F.reserva)}"></div>
     <div class="campo"><label>${escapa(t('report.experience'))}</label>
       <div class="opciones">${['less1','1-3','3-5','5-10','10+']
         .map(v => `<button class="op${F.exp === v ? ' on' : ''}" data-exp="${v}">${
@@ -568,16 +568,16 @@ function pasoNarrativa() {
     <span class="mini">${escapa(t('report.narrativeHelp'))}</span></div>
   <div class="card">
     <div class="campo"><label>${escapa(t('report.whatHappened'))}</label>
-      <textarea id="fFactores" placeholder="On the lee side of the ridge, on a NW day…">${escapa(F.factores)}</textarea></div>
+      <textarea id="fFactores" placeholder="${escapa(t('ph.factores'))}">${escapa(F.factores)}</textarea></div>
     <div class="campo"><label>${escapa(t('report.contributing'))}
       <span class="mini">(${escapa(t('common.optional'))})</span></label>
-      <textarea id="fContrib" placeholder="The wind was stronger than forecast…">${escapa(F.contrib || '')}</textarea></div>
+      <textarea id="fContrib" placeholder="${escapa(t('ph.contrib'))}">${escapa(F.contrib || '')}</textarea></div>
     <div class="campo"><label>${escapa(t('report.lessons'))}
       <span class="mini">(${escapa(t('common.optional'))})</span></label>
-      <textarea id="fLecciones" placeholder="If the drift is faster than the climb, move out…">${escapa(F.lecciones)}</textarea></div>
+      <textarea id="fLecciones" placeholder="${escapa(t('ph.lecciones'))}">${escapa(F.lecciones)}</textarea></div>
     <div class="campo"><label>${escapa(t('report.advice'))}
       <span class="mini">(${escapa(t('common.optional'))})</span></label>
-      <textarea id="fRecomendar" placeholder="Ask locally which side of the ridge is working…">${escapa(F.recomendar)}</textarea></div>
+      <textarea id="fRecomendar" placeholder="${escapa(t('ph.recomendar'))}">${escapa(F.recomendar)}</textarea></div>
   </div>
   <div class="card mt"><div class="cab"><h3>${escapa(t('common.dataCompleteness'))}</h3></div>
     <div id="completitud"></div></div>
@@ -806,7 +806,7 @@ async function envia() {
   if (!F.site) falta.push(t('report.site'));
   if (!F.fase) falta.push(t('report.phase'));
   if (!F.evento) falta.push(t('report.event'));
-  if (falta.length) { aviso('Still needed: ' + falta.join(', ')); return; }
+  if (falta.length) { aviso(t('report.needFields', { x: falta.join(', ') })); return; }
 
   const s = SITES.find(x => x.id === F.site) || {};
   const rep = {
@@ -818,7 +818,9 @@ async function envia() {
     windKmh: F.windKmh ? +F.windKmh : null,
     gustKmh: F.gustKmh ? +F.gustKmh : null,
     altAgl: F.altAgl ? +F.altAgl : '',
-    fecha: F.fecha || '2026-09-20',
+    /* hoyISO(), no una constante: la fecha de un reporte real sale del reloj
+       del dispositivo. Las fechas fijas solo viven en los datos de demo. */
+    fecha: F.fecha || hoyISO(),
   };
   /* se guarda en el teléfono SIEMPRE (por si acaso) y además se
      intenta enviar. Si no hay conexión, queda en la cola y se dice. */

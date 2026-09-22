@@ -436,3 +436,27 @@ input:focus,select:focus,textarea:focus{
 }
 .tabbar a.on .tab-ic{ background:var(--blue);color:#fff }
 .tabbar .tab-ic svg{ display:block }
+
+
+/* ============================================================
+   LAS TARJETAS SON ENLACES
+   ============================================================
+   ReportCard, SignalCard y SiteCard eran <article> con un onclick puesto por
+   JavaScript: no se podian alcanzar con el tabulador, Enter no hacia nada y un
+   lector de pantalla no sabia que llevaban a algun sitio.
+
+   Ahora son <a href="#...">, asi que el enlace funciona por si solo aunque el
+   JavaScript no cargue, y se puede navegar con el teclado.
+
+   Como <a> trae sus propios estilos (azul y subrayado), hay que devolverle los
+   de la tarjeta. Y hace falta un foco bien visible: sin el, quien navega con
+   el teclado no sabe donde esta. */
+.card.clic{ color:inherit; text-decoration:none; }
+.card.clic:hover{ text-decoration:none; }
+.card.clic:focus-visible{
+  outline:3px solid var(--blue);
+  outline-offset:3px;
+  border-radius:var(--r);
+}
+/* el boton de dentro no debe capturar el foco: ya lo tiene la tarjeta */
+.card.clic .btn{ pointer-events:none }

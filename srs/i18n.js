@@ -417,6 +417,17 @@ const EN = {
   'brand.sub': 'Turns pilot reports into patterns, context and collective learning.',
   'home.days30': '30 j',
   'status.sent': 'Sent {n}.',
+  'signals.relatedShort': '{n} reports',
+  'igc.noTrackStored': 'IGC available — track reconstruction is not stored for this report.',
+  'igc.noTrackStoredHelp': 'No reconstruction is shown rather than inventing data. If the pilot attached the file, the system can recalculate it from there.',
+  'signals.relatedFiltered': '{n} of {t} reports match the filter',
+  'ph.meteo': 'Dust devils at the field after 16:00…',
+  'ph.reserva': 'Brand / model',
+  'ph.factores': 'On the lee side of the ridge, on a NW day…',
+  'ph.contrib': 'The wind was stronger than forecast…',
+  'ph.lecciones': 'If the drift is faster than the climb, move out…',
+  'ph.recomendar': 'Ask locally which side of the ridge is working…',
+  'box.eventMark': 'EVENT',
 };
 
 const ES = {
@@ -809,6 +820,17 @@ const ES = {
   'brand.sub': 'Convierte reportes de pilotos en patrones, contexto y aprendizaje colectivo.',
   'home.days30': '30 d',
   'status.sent': 'Enviados {n}.',
+  'signals.relatedShort': '{n} reportes',
+  'igc.noTrackStored': 'IGC disponible — la reconstrucción del track no está guardada para este reporte.',
+  'igc.noTrackStoredHelp': 'No se muestra ninguna reconstrucción para no inventar datos. Si el piloto adjuntó el archivo, el sistema puede recalcularla a partir de él.',
+  'signals.relatedFiltered': '{n} de {t} reportes pasan el filtro',
+  'ph.meteo': 'Remolinos de polvo en el campo después de las 16:00…',
+  'ph.reserva': 'Marca / modelo',
+  'ph.factores': 'En el lado de socavón de la cresta, un día de NW…',
+  'ph.contrib': 'El viento era más fuerte de lo previsto…',
+  'ph.lecciones': 'Si la deriva es más rápida que el ascenso, sal de ahí…',
+  'ph.recomendar': 'Pregunta en el sitio qué lado de la cresta está funcionando…',
+  'box.eventMark': 'EVENTO',
 };
 
 const FR = {
@@ -1258,6 +1280,17 @@ const FR = {
   'brand.sub': 'Transforme les signalements des pilotes en schémas, contexte et apprentissage collectif.',
   'home.days30': '30 T',
   'status.sent': '{n} envoyés.',
+  'signals.relatedShort': '{n} signalements',
+  'igc.noTrackStored': 'IGC disponible — la reconstitution du tracé n’est pas enregistrée pour ce signalement.',
+  'igc.noTrackStoredHelp': 'Aucune reconstitution n’est affichée pour ne pas inventer de données. Si le pilote a joint le fichier, le système peut la recalculer à partir de celui-ci.',
+  'signals.relatedFiltered': '{n} sur {t} signalements correspondent au filtre',
+  'ph.meteo': 'Des tourbillons de poussière au terrain après 16h00…',
+  'ph.reserva': 'Marque / modèle',
+  'ph.factores': 'Du côté sous le vent de la crête, un jour de NW…',
+  'ph.contrib': 'Le vent était plus fort que prévu…',
+  'ph.lecciones': 'Si la dérive est plus rapide que la montée, dégagez…',
+  'ph.recomendar': 'Demandez sur place quel côté de la crête fonctionne…',
+  'box.eventMark': 'ÉVÉNEMENT',
 };
 
 const DE = {
@@ -1707,6 +1740,17 @@ const DE = {
   'brand.sub': 'Macht Pilotenmeldungen zu Mustern, Kontext und gemeinschaftlichem Lernen.',
   'home.days30': '30 d',
   'status.sent': '{n} gesendet.',
+  'signals.relatedShort': '{n} Meldungen',
+  'igc.noTrackStored': 'IGC verfügbar — die Track-Rekonstruktion ist für diese Meldung nicht gespeichert.',
+  'igc.noTrackStoredHelp': 'Es wird keine Rekonstruktion angezeigt, um keine Daten zu erfinden. Wenn der Pilot die Datei angehängt hat, kann das System sie daraus neu berechnen.',
+  'signals.relatedFiltered': '{n} von {t} Meldungen passen zum Filter',
+  'ph.meteo': 'Staubteufel am Startplatz nach 16:00…',
+  'ph.reserva': 'Marke / Modell',
+  'ph.factores': 'Auf der Leeseite des Grats, an einem NW-Tag…',
+  'ph.contrib': 'Der Wind war stärker als vorhergesagt…',
+  'ph.lecciones': 'Wenn die Abdrift schneller ist als das Steigen, raus dort…',
+  'ph.recomendar': 'Frag vor Ort, welche Seite des Grats gerade geht…',
+  'box.eventMark': 'EREIGNIS',
 };
 
 const PT = {
@@ -2156,6 +2200,17 @@ const PT = {
   'brand.sub': 'Converte relatos de pilotos em padrões, contexto e aprendizagem coletiva.',
   'home.days30': '30 d',
   'status.sent': '{n} enviados.',
+  'signals.relatedShort': '{n} relatos',
+  'igc.noTrackStored': 'IGC disponível — a reconstrução do percurso não está guardada para este relato.',
+  'igc.noTrackStoredHelp': 'Não é mostrada nenhuma reconstrução para não inventar dados. Se o piloto anexou o ficheiro, o sistema pode recalculá-la a partir dele.',
+  'signals.relatedFiltered': '{n} de {t} relatos correspondem ao filtro',
+  'ph.meteo': 'Redemoinhos de pó no campo depois das 16:00…',
+  'ph.reserva': 'Marca / modelo',
+  'ph.factores': 'No lado de sotavento da crista, num dia de NW…',
+  'ph.contrib': 'O vento estava mais forte do que o previsto…',
+  'ph.lecciones': 'Se a deriva é mais rápida que a subida, sai de lá…',
+  'ph.recomendar': 'Pergunta no local que lado da crista está a funcionar…',
+  'box.eventMark': 'EVENTO',
 };
 
 /* ============================================================
