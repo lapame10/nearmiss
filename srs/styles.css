@@ -466,3 +466,26 @@ input:focus,select:focus,textarea:focus{
 .marca-ic{
   width:26px;height:26px;display:block;
 }
+
+/* ============================================================
+   EL ENLACE A 'COMO FUNCIONA'
+   ============================================================
+   Va debajo de la explicacion, en Inicio. Secundario a proposito: subrayado
+   discreto y color del acento, pero sin fondo ni borde, para que no se confunda
+   con los dos botones de accion que hay justo debajo.
+
+   Pam lo pidio asi: visible sin hacer scroll, tanto en movil como en escritorio,
+   pero sin competir con 'Reportar un evento' ni con 'Hoy vole'. */
+.enlace-suave{
+  display:inline-block;
+  font-size:13.5px;font-weight:600;
+  color:var(--blue);
+  text-decoration:underline;
+  text-underline-offset:3px;
+  text-decoration-thickness:1px;
+  padding:2px 0;
+}
+.enlace-suave:hover{ text-decoration-thickness:2px }
+.enlace-suave:focus-visible{
+  outline:3px solid var(--blue);outline-offset:3px;border-radius:4px;
+}

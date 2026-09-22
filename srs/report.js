@@ -24,8 +24,9 @@ import {
   DIRECCIONES, TIPOS_ZONA, CLAVE_LOCAL, CLAVE_VUELOS, guardaLocal, igcDemo,
 } from './data.js';
 import { est, cargaDatos, ir, aviso, escapa } from './app.js';
-import { EventSnapshot, DataCompleteness } from './app.js';
+import { EventSnapshot, DataCompleteness, nombreEv, nombreFase, nombreRes } from './app.js';
 import { t } from './i18n.js';
+import { distKm } from './signals.js';
 import { parseIGC, posiblesAnomalias, ventanaEvento, horaBonita } from './igc.js';
 import { enviaReporte, enviaVuelo, enModoDemo } from './supabase.js';
 import { AJUSTES, red } from './config.js';
@@ -129,7 +130,11 @@ function nuevoForm() {
   };
 }
 
-const PASOS = ['report.step.type','report.step.basics','report.step.conditions','report.step.equipment','report.step.igc','report.step.narrative'];
+/* EL IGC VA SEGUNDO, no quinto.
+   El archivo ya sabe la fecha, la hora, la posicion, la duracion y lo que hizo
+   la vela. Pedir todo eso a mano y luego ofrecer el IGC es el orden equivocado:
+   con el archivo delante, la mitad del formulario sobra. */
+const PASOS = ['report.step.type','report.step.igc','report.step.event','report.step.conditions','report.step.equipment','report.step.narrative'];
 const PASOS_VUELO = ['report.step.quick'];
 
 /* ============================================================
@@ -273,8 +278,8 @@ function pintaPaso() {
     `<span class="paso-n${paso === i + 1 ? ' on' : paso > i + 1 ? ' hecho' : ''}">${
       paso > i + 1 ? '✓ ' : (i + 1) + '. '}${escapa(t(n))}</span>`).join('')}</div>`;
 
-  html += rapido ? pasoVuelo() : [null, pasoTipo, pasoBasico, pasoCondiciones,
-    pasoEquipo, pasoIGC, pasoNarrativa][paso]();
+  html += rapido ? pasoVuelo() : [null, pasoTipo, pasoIGC, pasoEvento,
+    pasoCondiciones, pasoEquipo, pasoNarrativa][paso]();
 
   /* navegacion */
   if (rapido) {
@@ -336,7 +341,9 @@ function pasoVuelo() {
 }
 
 /* ---------- PASO 2: BÁSICO ---------- */
-function pasoBasico() {
+/* El formulario manual de siempre. Con IGC casi no se usa, sin IGC es el
+   camino principal. No se le ha cambiado nada. */
+function pasoManual() {
   const sz = (SITES.find(s => s.id === F.site) || {}).zonas || [];
   return `<section class="bloque"><div class="cab"><h2>${escapa(t('igc.whereTitle'))}</h2></div>
   <div class="card">
@@ -414,6 +421,136 @@ function campoExtra(q) {
     ${q.p ? `<p class="pista">${escapa(q.p)}</p>` : ''}</div>`;
 }
 
+/* ============================================================
+   PASO 3: EL EVENTO
+   ============================================================
+   Es el paso que mas cambia segun el camino.
+
+   SIN IGC: el formulario manual entero. Sitio, fecha, hora, ubicacion, fase,
+   tipo de evento y resultado. Es lo que habia antes, sin recortes.
+
+   CON IGC: el archivo ya dijo donde, cuando y como fue el vuelo, asi que este
+   paso empieza por lo unico que el archivo NO puede saber: DONDE estuvo el
+   evento. Se propone el track, se marcan posibles anomalias como sitios donde
+   mirar, y la persona confirma.
+
+   Lo de 'posibles anomalias' es importante: el sistema NO decide cual fue el
+   evento. Una caida fuerte, un giro brusco o un corte del track son motivos
+   para mirar ahi, no diagnosticos. Un cravat, un roce o un problema de lineas
+   no se parecen en nada a una caida fuerte, y solo el piloto sabe que paso.
+
+   Hasta que no confirma, no hay Black Box y el reporte no tiene hora de evento.
+   ============================================================ */
+function pasoEvento() {
+  const hayTrack = track && track.puntos && track.puntos.length;
+  if (!hayTrack) return pasoManual();
+
+  const p = track.puntos[F.igcPunto || 0] || {};
+  const res = F.igcResumen || {};
+
+  return `<section class="bloque">
+  <div class="cab"><h2>${escapa(t('igc.markTitle'))}</h2>
+    <span class="mini">${escapa(t('igc.markHelp'))}</span></div>
+
+  <!-- ===== lo que se saco del archivo ===== -->
+  <div class="card" style="border-color:var(--blue-2)">
+    <div class="entre">
+      <b>✓ ${escapa(t('igc.loaded'))}</b>
+      <span class="mini">${escapa(res.fecha || '')}${res.hora ? ' · ' + escapa(res.hora) + ' UTC' : ''}</span>
+    </div>
+    ${res.site ? `<p class="mini mt">${escapa(t('common.site'))}: <b>${escapa(res.site)}</b></p>` : ''}
+  </div>
+
+  <!-- ===== el track y el slider ===== -->
+  <div class="card mt">
+    <div id="mapaEvento" style="height:250px;border-radius:10px;overflow:hidden;border:1px solid var(--line)"></div>
+
+    <div class="campo mt">
+      <label>${escapa(t('igc.confirm'))}</label>
+      <input type="range" id="sliderEvento" min="0" max="${track.puntos.length - 1}"
+             value="${F.igcPunto || 0}" step="1" class="slider">
+      <div class="entre mini mono mt">
+        <span id="horaDesde">${escapa(horaBonita(track.meta.desde))}</span>
+        <b id="horaElegida">${escapa(horaBonita(p.hora))} UTC</b>
+        <span id="horaHasta">${escapa(horaBonita(track.meta.hasta))}</span>
+      </div>
+    </div>
+
+    <!-- lo que se sabe de ese punto concreto -->
+    <dl class="mets mt" id="datosPunto">
+      ${p.altGps != null ? `<div class="fila"><dt>${escapa(t('igc.altGps'))}</dt>
+        <dd>${escapa(String(p.altGps))} m</dd></div>` : ''}
+      ${p.altBaro != null ? `<div class="fila"><dt>${escapa(t('igc.altBaro'))}</dt>
+        <dd>${escapa(String(p.altBaro))} m</dd></div>` : ''}
+      ${p.vel != null ? `<div class="fila"><dt>${escapa(t('igc.speed'))}</dt>
+        <dd>${escapa(String(p.vel))} km/h</dd></div>` : ''}
+      ${p.velVert != null ? `<div class="fila"><dt>${escapa(t('igc.vertical'))}</dt>
+        <dd>${escapa(String(p.velVert))} m/s</dd></div>` : ''}
+      ${p.rumbo != null ? `<div class="fila"><dt>${escapa(t('igc.heading'))}</dt>
+        <dd>${escapa(String(p.rumbo))}°</dd></div>` : ''}
+    </dl>
+
+    ${anomalias.length ? `
+    <div class="mt2">
+      <h4>${escapa(t('igc.anomalies'))}</h4>
+      <p class="mini mb">${escapa(t('box.observation'))}</p>
+      ${anomalias.map(a => `<button class="op anom" data-irA="${a.t}">${escapa(a.txt)}</button>`).join('')}
+    </div>` : `<p class="mini mt">${escapa(t('igc.noAnomalies'))}</p>`}
+
+    <button class="btn pri grande bloque mt2" id="igcConfirma">
+      ✓ ${escapa(t('igc.confirm'))}</button>
+    ${F.igcConfirmado ? `<p class="mini mt centro" id="igcOk">
+      ${escapa(t('igc.confirmed', { h: horaBonita(F.igcHora) }))}</p>` : ''}
+  </div>
+
+  <!-- ===== la black box, solo despues de confirmar ===== -->
+  ${F.igcConfirmado ? `
+  <div class="card mt">
+    <div class="cab"><h3>${escapa(t('box.title'))}</h3>
+      <span class="mini">${escapa(t('box.window'))}</span></div>
+    <div id="timeline"></div>
+    <div id="excepciones" class="mt"></div>
+  </div>` : ''}
+
+  <!-- ===== lo que el archivo NO puede saber ===== -->
+  <div class="card mt">
+    <div class="cab"><h3>${escapa(t('igc.whatHappened'))}</h3>
+      <span class="mini">${escapa(t('igc.whatHappenedHelp'))}</span></div>
+
+    <div class="campo"><label>${escapa(t('report.event'))}</label>
+      <div class="opciones col">
+        ${EVENTOS.slice(0, 12).map(e => `<button class="op${F.evento === e.id ? ' on' : ''}"
+          data-evento="${e.id}">${escapa(nombreEv(e.id))}</button>`).join('')}
+        <button class="op${F.evento && !EVENTOS.slice(0, 12).some(e => e.id === F.evento) ? ' on' : ''}"
+          data-evento="unknown">${escapa(t('ev.unknown'))}</button>
+      </div>
+    </div>
+
+    <div class="campo mt2"><label>${escapa(t('report.phase'))}</label>
+      <div class="opciones">
+        ${FASES.map(f => `<button class="op${F.fase === f.id ? ' on' : ''}"
+          data-fase="${f.id}">${escapa(nombreFase(f.id))}</button>`).join('')}
+      </div>
+    </div>
+
+    <div class="campo mt2"><label>${escapa(t('report.outcome'))}</label>
+      <div class="opciones">
+        ${RESULTADOS.map(r => `<button class="op${F.resultado === r.id ? ' on' : ''}"
+          data-resultado="${r.id}">${escapa(nombreRes(r.id))}</button>`).join('')}
+      </div>
+    </div>
+
+    ${['deployed', 'injury', 'material'].includes(F.resultado) ? `
+    <div class="campo mt2"><label>${escapa(t('report.injury'))}</label>
+      <div class="opciones">
+        ${SEVERIDAD.map(s => `<button class="op${F.cons === s.id ? ' on' : ''}"
+          data-cons="${s.id}">${escapa(t('cons.' + s.id))}</button>`).join('')}
+      </div>
+    </div>` : ''}
+  </div>
+  </section>`;
+}
+
 /* ---------- PASO 3: CONDICIONES ---------- */
 function pasoCondiciones() {
   return `<section class="bloque"><div class="cab"><h2>${escapa(t('report.conditionsTitle'))}</h2>
@@ -478,86 +615,81 @@ function pasoEquipo() {
 }
 
 /* ---------- PASO 5: IGC ---------- */
+/* ============================================================
+   PASO 2: EL IGC
+   ============================================================
+   Una sola pregunta: tienes el archivo de este vuelo o no.
+
+   Si lo tienes, se sube AQUI y SkyReport saca del archivo todo lo que puede
+   sacar de forma fiable (fecha, hora, sitio aproximado, duracion, altitudes,
+   velocidad, rumbo, y el viento si viene o se puede estimar). Eso se le ensena
+   al piloto antes de seguir, para que vea que ha funcionado.
+
+   Si no lo tienes, se sigue a mano exactamente igual que antes. El IGC nunca
+   es obligatorio.
+   ============================================================ */
 function pasoIGC() {
   const hayTrack = track && track.puntos && track.puntos.length;
-  return `<section class="bloque"><div class="cab"><h2>${escapa(t('igc.title'))}</h2>
-    <span class="mini">${escapa(t('common.optional'))}</span></div>
+  const res = F.igcResumen;
 
-  ${!hayTrack ? `
+  /* ---------- ya esta cargado: el resumen de lo que se saco ---------- */
+  if (hayTrack && res) {
+    return `<section class="bloque"><div class="cab"><h2>${escapa(t('igc.stepTitle'))}</h2></div>
+
+  <div class="card" style="border-color:var(--green,#5b7c5a)">
+    <div class="entre">
+      <b>✓ ${escapa(t('igc.loaded'))}</b>
+      <button class="btn gh" id="igcQuitar">✕</button>
+    </div>
+    <dl class="mets mt">
+      <div class="fila"><dt>${escapa(t('igc.detected'))}</dt>
+        <dd>${escapa(res.fecha)}${res.hora ? ' · ' + escapa(res.hora) + ' UTC' : ''}</dd></div>
+      ${res.site ? `<div class="fila"><dt>${escapa(t('common.site'))}</dt>
+        <dd>${escapa(res.site)}</dd></div>` : ''}
+      ${res.duracion ? `<div class="fila"><dt>${escapa(t('igc.duration'))}</dt>
+        <dd>${escapa(res.duracion)}</dd></div>` : ''}
+      <div class="fila"><dt>${escapa(t('igc.points'))}</dt>
+        <dd>${escapa(String(res.puntos))}</dd></div>
+      ${res.altMax ? `<div class="fila"><dt>${escapa(t('igc.altMax'))}</dt>
+        <dd>${escapa(res.altMax)}</dd></div>` : ''}
+    </dl>
+  </div>
+
+  <div class="card mt" style="background:var(--bg-2)">
+    <h4>${escapa(t('igc.privacyTitle'))}</h4>
+    <p class="sub mt">${escapa(t('igc.privacy'))}</p>
+  </div>
+  </section>`;
+  }
+
+  /* ---------- la pregunta ---------- */
+  return `<section class="bloque"><div class="cab"><h2>${escapa(t('igc.stepTitle'))}</h2></div>
+
   <div class="card">
-    <div id="zonaDrop" class="drop">
+    <p class="sub">${escapa(t('igc.stepHelp'))}</p>
+
+    ${!F.igcSin ? `
+    <div id="zonaDrop" class="drop mt2">
       <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor"
            stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <path d="M12 16V4"/><path d="m7 9 5-5 5 5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
-      <b>${escapa(t('igc.drop'))}</b>
+      <b>${escapa(t('igc.upload'))}</b>
       <p class="mini">${escapa(t('igc.orTap'))}</p>
       <input type="file" id="fIGC" accept=".igc" style="display:none">
     </div>
+
+    <button class="btn gh bloque mt" id="igcSin">${escapa(t('igc.continueWithout'))}</button>
+
     <div id="igcError" class="oculto mt" style="background:var(--red-bg);border:1px solid #e8c8c4;
       border-radius:8px;padding:12px">
       <b>${escapa(t('igc.cantParse'))}</b>
       <p class="mini" id="igcMotivo"></p>
       <div class="row wrap mt" style="gap:8px">
         <button class="btn sec" id="igcOtro">${escapa(t('igc.tryAnother'))}</button>
-        <button class="btn gh" id="igcSin">${escapa(t('igc.continueWithout'))}</button>
+        <button class="btn gh" id="igcSin2">${escapa(t('igc.continueWithout'))}</button>
       </div>
-    </div>
-  </div>` : `
-  <div class="card">
-    <div class="entre">
-      <b>${escapa(t('igc.loaded', { n: track.meta.puntos, a: track.meta.desde, b: track.meta.hasta }))}</b>
-      <button class="btn gh" id="igcQuitar">✕</button>
-    </div>
-  </div>`}
-
-  ${F.igcVentana ? `
-  <!-- ===== CONFIRMAR EL MOMENTO DEL EVENTO =====
-       Esto es lo que hacía mal antes: se daba por hecho que el evento era el
-       punto de mayor caída. No tiene por qué: un cravat, un roce con otro ala,
-       un enganche en el despegue o un problema de líneas no se parecen en nada
-       a una caída fuerte. Así que SkyReport PROPONE sitios donde mirar y la
-       persona confirma dónde fue. Hasta que no confirma, no hay Black Box. -->
-  <div class="card mt" style="border-color:var(--blue-2)">
-    <h3>${escapa(t('igc.suggestTitle'))}</h3>
-    <p class="mini mb">${escapa(t('igc.suggestHelp'))}</p>
-
-    <div id="mapaEvento" style="height:250px;border-radius:10px;overflow:hidden;border:1px solid var(--line)"></div>
-
-    <div class="campo mt">
-      <label>${escapa(t('igc.confirm'))}</label>
-      <input type="range" id="sliderEvento" min="0" max="${track.puntos.length - 1}"
-             value="${F.igcPunto || 0}" step="1" class="slider">
-      <div class="entre mini mono mt">
-        <span id="horaDesde">${escapa(track.meta.desde)}</span>
-        <b id="horaElegida">${escapa(horaBonita((track.puntos[F.igcPunto || 0] || {}).hora))} UTC</b>
-        <span id="horaHasta">${escapa(track.meta.hasta)}</span>
-      </div>
-    </div>
-
-    ${anomalias.length ? `
-    <div class="mt2">
-      <h4>${escapa(t('igc.anomalies'))}</h4>
-      <p class="mini mb">${escapa(t('box.observation'))}</p>
-      ${anomalias.map(a => `<button class="op anom" data-irA="${a.t}">${escapa(a.txt)}</button>`).join('')}
-    </div>` : `<p class="mini mt">${escapa(t('igc.noAnomalies'))}</p>`}
-
-    <button class="btn pri grande bloque mt2" id="igcConfirma">
-      ✓ ${escapa(t('igc.confirm'))}</button>
-    ${F.igcConfirmado ? `<p class="mini mt centro" id="igcOk">
-      ${escapa(t('igc.confirmed', { h: horaBonita(F.igcHora) }))}</p>` : ''}
-  </div>` : ''}
-
-  ${F.igcConfirmado ? `
-  <div class="card mt">
-    <div class="cab"><h3>${escapa(t('box.title'))}</h3>
-      <span class="mini">${escapa(t('box.window'))}</span></div>
-    <div id="timeline"></div>
-    <div id="excepciones" class="mt"></div>
-  </div>` : ''}
-
-  <div class="card mt" style="background:var(--bg-2)">
-    <h4>${escapa(t('igc.privacyTitle'))}</h4>
-    <p class="sub mt">${escapa(t('igc.privacy'))}</p>
+    </div>` : `
+    <p class="mini mt2">${escapa(t('igc.withoutHint'))}</p>`}
   </div>
   </section>`;
 }
@@ -727,6 +859,31 @@ function enganchaPaso() {
       if (f) cargaIGC(f);
     });
   }
+
+  /* ===== SEGUIR SIN IGC =====
+     El IGC nunca es obligatorio. Al pulsar esto se marca el formulario como
+     'sin IGC' y se pasa al paso 3, que en ese caso es el formulario manual de
+     siempre. No se le quita ninguna opcion al que no tiene el archivo. */
+  const sin1 = document.getElementById('igcSin');
+  if (sin1) sin1.onclick = () => { F.igcSin = true; F.igc = false; paso = 3; pintaPaso(); };
+  const sin2 = document.getElementById('igcSin2');
+  if (sin2) sin2.onclick = () => { F.igcSin = true; F.igc = false; paso = 3; pintaPaso(); };
+
+  /* ===== QUITAR EL ARCHIVO =====
+     Vuelve al principio del paso, con la pregunta otra vez. Se limpian tambien
+     los datos que se habian deducido del archivo, para no dejar medio
+     formulario relleno con datos de un vuelo que ya no aplica. */
+  const quitar = document.getElementById('igcQuitar');
+  if (quitar) quitar.onclick = () => {
+    track = null; anomalias = [];
+    F.igc = false; F.igcVentana = false; F.igcConfirmado = false;
+    F.igcResumen = null; F.igcSin = false;
+    if (F.siteDeducido) { F.site = ''; F.siteDeducido = false; }
+    if (F.fechaDeducida) { F.fecha = hoyISO(); F.fechaDeducida = false; }
+    if (F.horaDeducida) { F.hora = ''; F.horaDeducida = false; }
+    if (F.ubiDeducida) { F.lat = null; F.lon = null; F.ubiDeducida = false; }
+    pintaPaso();
+  };
 }
 
 /* ============================================================
@@ -752,7 +909,7 @@ async function cargaIGC(f) {
     const b = document.getElementById('igcOtro');
     if (b) b.onclick = () => pintaPaso();
     const c = document.getElementById('igcSin');
-    if (c) c.onclick = () => { F.igc = false; paso = 5; pintaPaso(); };
+    if (c) c.onclick = () => { F.igc = false; F.igcSin = true; paso = 3; pintaPaso(); };
   };
 
   if (!/\.igc$/i.test(f.name)) { fallo(t('igc.notIgc')); return; }
@@ -766,6 +923,37 @@ async function cargaIGC(f) {
 
   track = { puntos: r.puntos, meta: r.meta, nombre: f.name };
   anomalias = posiblesAnomalias(r.puntos);
+
+  /* ===== LO QUE SE SACO DEL ARCHIVO =====
+     Se guarda ya montado, para poder ensenarlo justo despues de subirlo. El
+     sitio no viene en un IGC: se deduce del punto de despegue, mirando cual de
+     los sitios conocidos esta mas cerca. Si no hay ninguno a menos de 30 km se
+     deja vacio y lo pone el piloto. */
+  const p0 = r.puntos[0] || {};
+  const cerca = SITES.map(x => ({ x, km: distKm(p0.lat, p0.lon, x.lat, x.lon) }))
+    .filter(o => o.km < 30).sort((a, b) => a.km - b.km)[0];
+  const dur = r.meta.duracionS || 0;
+  F.igcResumen = {
+    /* OJO: meta.desde es la HORA del primer punto (HHMMSS), no la fecha. La
+       fecha de un IGC va en la cabecera HFDTE, y el parser la deja en
+       meta.fecha. Confundirlas ponia '134200' donde va la fecha. */
+    fecha: r.meta.fecha || '',
+    hora: p0.hora && p0.hora.length >= 4
+      ? p0.hora.slice(0, 2) + ':' + p0.hora.slice(2, 4) : '',
+    site: cerca ? cerca.x.n : '',
+    siteId: cerca ? cerca.x.id : '',
+    duracion: dur ? `${Math.floor(dur / 3600)} h ${Math.round((dur % 3600) / 60)} min` : '',
+    puntos: r.meta.puntos,
+    altMax: r.meta.altMax != null ? String(r.meta.altMax) + ' m' : '',
+  };
+  /* si el sitio se deduce bien, se rellena solo: no se le pregunta lo que ya sabemos */
+  if (cerca && !F.site) { F.site = cerca.x.id; F.siteDeducido = true; }
+  if (r.meta.desde) { F.fecha = r.meta.desde; F.fechaDeducida = true; }
+  if (p0.hora) {
+    F.hora = p0.hora.slice(0, 2) + ':' + p0.hora.slice(2, 4);
+    F.horaDeducida = true;
+  }
+  if (p0.lat != null) { F.lat = p0.lat; F.lon = p0.lon; F.ubiDeducida = true; }
   F.igc = true;
   F.igcNombre = f.name;
   F.igcVentana = true;
@@ -777,7 +965,8 @@ async function cargaIGC(f) {
     tiene_barometrica: r.meta.tieneBarometrica, tiene_gps: r.meta.tieneGPS,
     anomalias: anomalias.map(a => ({ tipo: a.tipo, hora: a.hora })),
   };
-  aviso(t('igc.loaded', { n: r.meta.puntos, a: r.meta.desde, b: r.meta.hasta }), 5200);
+  aviso(t('igc.loaded', { n: r.meta.puntos, a: horaBonita(r.meta.desde),
+    b: horaBonita(r.meta.hasta) }), 5200);
   pintaPaso();
 }
 

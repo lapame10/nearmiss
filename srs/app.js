@@ -314,6 +314,14 @@ function vistaInicio() {
     <h1>SkyReport</h1>
     <p class="lema">${escapa(t('brand.tagline'))}</p>
     <p class="lema-sub">${escapa(t('brand.sub'))}</p>
+    <!-- ===== COMO FUNCIONA =====
+         Pam: en el movil la metodologia no se encontraba. No queria una sexta
+         pestana en la barra de abajo ni un menu 'mas': queria un acceso claro
+         en Inicio.
+         Va justo debajo de la explicacion, como enlace secundario: se ve sin
+         hacer scroll, pero no compite con 'Reportar un evento' ni con
+         'Hoy vole', que son las acciones de verdad. -->
+    <p class="mt"><a class="enlace-suave" href="#metodo">${escapa(t('home.howItWorks'))} →</a></p>
     ${demo ? `<div class="etq watch mt2" style="font-size:12px">
       ${escapa(t('common.demo'))}</div>` : ''}
   </div>
