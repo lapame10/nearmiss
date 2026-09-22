@@ -853,6 +853,13 @@ export function arranca() {
       `<option value="${x.id}"${idioma() === x.id ? ' selected' : ''}>${escapa(x.n)}</option>`).join('');
     sel.onchange = () => {
       ponIdioma(sel.value);
+      /* la cabecera tambien: los enlaces de navegacion y los atributos
+         data-i18n del HTML no se repintan con pinta(), asi que hay que
+         volver a traducirlos a mano. */
+      traducePantalla(document);
+      const b = document.getElementById('bReportar');
+      if (b) b.textContent = t('home.reportEvent');
+      sel.title = t('nav.language');
       pinta(est.vista, est.sitioAbierto);
       pintaEstadoRed();
     };
@@ -867,6 +874,9 @@ export function arranca() {
     aviso(r.enviados ? `Enviados ${r.enviados}.` : t('status.offlineSaved'));
   };
 
+  traducePantalla(document);
+  const bR = document.getElementById('bReportar');
+  if (bR) bR.textContent = t('home.reportEvent');
   pintaEstadoRed();
   /* si hay Supabase configurado, se traen los datos de la comunidad */
   if (haySupabase()) {
