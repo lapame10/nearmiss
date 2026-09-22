@@ -146,9 +146,15 @@ const PASOS_VUELO = ['Type', 'Quick log'];
    Se guarda aparte, con su propia función, para que no pueda
    fallar por culpa del formulario grande. */
 export function pintaVueloRapido() {
-  const cont = document.getElementById('app');
-  document.querySelectorAll('.vista').forEach(x => x.classList.remove('on'));
-  cont.classList.add('on');
+  /* ===== OJO CON ESTO =====
+     #app TIENE la clase .vista. Si primero se enciende y luego se
+     recorren todas las .vista apagandolas, se apaga a si mismo y la
+     vista sale EN BLANCO. Pam: "no me deja hacer reporte". El
+     contenedor se excluye de la lista. */
+  document.querySelectorAll('.vista').forEach(x => {
+    if (x.id !== 'app') x.classList.remove('on');
+  });
+  document.getElementById('app').classList.add('on');
   const hoy = hoyISO();
 
   cont.innerHTML = `<div class="cont" style="padding-top:10px;padding-bottom:40px">
@@ -233,7 +239,10 @@ export function pintaReportar(arg) {
   if (arg === 'igc') paso = 5;
   const cont = document.getElementById('app');
   cont.classList.add('on');
-  document.querySelectorAll('.vista').forEach(x => x.classList.remove('on'));
+  /* #app lleva la clase .vista: excluirla, o se apaga a si misma */
+  document.querySelectorAll('.vista').forEach(x => {
+    if (x.id !== 'app') x.classList.remove('on');
+  });
   cont.innerHTML = `<div class="cont" style="padding-top:10px;padding-bottom:40px">
     <button class="btn gh mb" id="rVolver">← Back</button>
     <div id="rCuerpo"></div>

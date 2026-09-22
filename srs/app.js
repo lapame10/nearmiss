@@ -824,7 +824,8 @@ export function ir(vista, arg) {
   if (vista === 'reportar') { import('./report.js').then(m => m.pintaReportar(arg)); return; }
   if (vista === 'vuelo')    { import('./report.js').then(m => m.pintaVueloRapido()); return; }
   if (vista === 'mapa')     { import('./mapa.js').then(m => m.pintaMapa()); return; }
-  $$('.vista').forEach(x => x.classList.remove('on'));
+  /* #app lleva la clase .vista: se excluye, o se quitaría el 'on' a si misma */
+  $$('.vista').forEach(x => { if (x.id !== 'app') x.classList.remove('on'); });
   $('#app').classList.add('on');
   pinta(vista, arg);
   window.scrollTo({ top: 0 });

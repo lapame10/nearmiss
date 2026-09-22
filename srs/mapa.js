@@ -103,9 +103,12 @@ export function filtra(reps) {
    MAPA PRINCIPAL
    ============================================================ */
 export async function pintaMapa() {
-  const cont = document.getElementById('app');
-  document.querySelectorAll('.vista').forEach(x => x.classList.remove('on'));
-  cont.classList.add('on');
+  /* #app lleva la clase .vista: hay que excluirla o se apaga a si misma
+     y la vista sale en blanco (Pam: "no me deja hacer reporte"). */
+  document.querySelectorAll('.vista').forEach(x => {
+    if (x.id !== 'app') x.classList.remove('on');
+  });
+  document.getElementById('app').classList.add('on');
   cont.innerHTML = `<div class="cont" style="padding-top:10px;padding-bottom:40px">
     <div class="hero" style="padding:4px 0 0">
       <h1>Map</h1>
