@@ -251,14 +251,31 @@ input:focus,select:focus,textarea:focus{
 .barra i{display:block;height:100%;background:var(--blue);border-radius:4px}
 
 /* ===== AVISO ===== */
+/* ============================================================
+   EL AVISO FLOTANTE
+   ============================================================
+   Pam mando una captura con una pastilla negra sin texto encima de
+   la barra de abajo: era esto, el aviso, escondido a medias.
+
+   El truco de esconderlo con translateY(120%) funciona cuando tiene
+   texto (mide unos 44 px y se va fuera). Pero VACIO solo mide el
+   padding, unos 22 px, y el 120% se queda corto: asomaba 52 px por
+   encima del borde. De ahi la pastilla negra.
+
+   La solucion buena no es subir el porcentaje, es no pintarlo
+   cuando no hay nada que decir. */
 #aviso{
-  position:fixed;left:50%;transform:translateX(-50%) translateY(120%);
-  bottom:calc(78px + env(safe-area-inset-bottom));z-index:200;
+  position:fixed;left:50%;transform:translateX(-50%) translateY(180%);
+  bottom:calc(84px + env(safe-area-inset-bottom));z-index:200;
   background:var(--ink);color:#fff;padding:11px 17px;border-radius:var(--r);
   font-size:13.5px;max-width:92vw;box-shadow:var(--sombra-2);
   transition:transform .22s ease;text-align:center;
 }
 #aviso.on{transform:translateX(-50%) translateY(0)}
+/* sin texto, ni se pinta */
+#aviso:empty{display:none}
+/* si esta vacio pero con el 'on' (a medio apagar), tampoco */
+#aviso.on:empty{display:none}
 
 /* ===== UTILIDADES ===== */
 .row{display:flex;align-items:center;gap:9px}

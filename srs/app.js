@@ -81,7 +81,17 @@ export function aviso(txt, ms = 3200) {
   a.innerHTML = txt;
   a.classList.add('on');
   clearTimeout(_avisoT);
-  _avisoT = setTimeout(() => a.classList.remove('on'), ms);
+  _avisoT = setTimeout(() => {
+    a.classList.remove('on');
+    /* ===== Y QUE SE LIMPIE DE VERDAD =====
+       Antes solo se le quitaba la clase, asi que el texto se quedaba dentro.
+       Con el texto dentro el aviso mide 44 px y el translateY lo esconde, pero
+       si alguna vez se quedaba a medias asomaba una pastilla negra sin nada.
+       Vaciandolo, el CSS `#aviso:empty{display:none}` hace el resto.
+       El retardo es para que no desaparezca de golpe: primero se va (0.22 s de
+       transicion) y luego se vacia. */
+    setTimeout(() => { a.innerHTML = ''; }, 260);
+  }, ms);
 }
 
 export function fechaLarga(iso) {
