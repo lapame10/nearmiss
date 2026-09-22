@@ -109,7 +109,8 @@ export async function pintaMapa() {
   document.querySelectorAll('.vista').forEach(x => {
     if (x.id !== 'app') x.classList.remove('on');
   });
-  document.getElementById('app').classList.add('on');
+  const cont = document.getElementById('app');
+  cont.classList.add('on');
   cont.innerHTML = `<div class="cont" style="padding-top:10px;padding-bottom:40px">
     <div class="hero" style="padding:4px 0 0">
       <h1>${escapa(t('map.title'))}</h1>

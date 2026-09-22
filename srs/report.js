@@ -154,7 +154,8 @@ export function pintaVueloRapido() {
   document.querySelectorAll('.vista').forEach(x => {
     if (x.id !== 'app') x.classList.remove('on');
   });
-  document.getElementById('app').classList.add('on');
+  const cont = document.getElementById('app');
+  cont.classList.add('on');
   const hoy = hoyISO();
 
   cont.innerHTML = `<div class="cont" style="padding-top:10px;padding-bottom:40px">
@@ -281,14 +282,14 @@ function pintaPaso() {
       ${paso > 1 ? `<button class="btn sec" id="rAtras">← ${escapa(t('common.back'))}</button>` : ''}
       ${paso < listaPasos.length
         ? `<button class="btn pri" id="rSig" style="flex:1">${escapa(t('common.continue'))} →</button>`
-        : '<button class="btn pri grande" id="rEnviar" style="flex:1">${escapa(t('report.submit'))}</button>'}
+        : `<button class="btn pri grande" id="rEnviar" style="flex:1">${escapa(t('report.submit'))}</button>`}
     </div>`;
   }
 
   /* el snapshot en vivo, segun vas escribiendo */
   if (!rapido && (F.evento || F.fase)) {
     html += `<section class="bloque"><div class="cab"><h2>${escapa(t('snapshot.title'))}</h2>
-      <span class="mini">updates as you type</span></div><div id="snapVivo"></div></section>`;
+      <span class="mini">${escapa(t('snapshot.updates'))}</span></div><div id="snapVivo"></div></section>`;
   }
 
   c.innerHTML = html;
