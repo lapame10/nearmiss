@@ -428,6 +428,9 @@ const EN = {
   'ph.lecciones': 'If the drift is faster than the climb, move out…',
   'ph.recomendar': 'Ask locally which side of the ridge is working…',
   'box.eventMark': 'EVENT',
+  'cond.windDir': '{d} wind',
+  'cond.timeOfDay': 'Time of day',
+  'cond.windAvg': '{v} km/h average',
 };
 
 const ES = {
@@ -831,6 +834,9 @@ const ES = {
   'ph.lecciones': 'Si la deriva es más rápida que el ascenso, sal de ahí…',
   'ph.recomendar': 'Pregunta en el sitio qué lado de la cresta está funcionando…',
   'box.eventMark': 'EVENTO',
+  'cond.windDir': 'viento {d}',
+  'cond.timeOfDay': 'Franja horaria',
+  'cond.windAvg': 'media de {v} km/h',
 };
 
 const FR = {
@@ -1291,6 +1297,9 @@ const FR = {
   'ph.lecciones': 'Si la dérive est plus rapide que la montée, dégagez…',
   'ph.recomendar': 'Demandez sur place quel côté de la crête fonctionne…',
   'box.eventMark': 'ÉVÉNEMENT',
+  'cond.windDir': 'vent {d}',
+  'cond.timeOfDay': 'Plage horaire',
+  'cond.windAvg': 'moyenne de {v} km/h',
 };
 
 const DE = {
@@ -1751,6 +1760,9 @@ const DE = {
   'ph.lecciones': 'Wenn die Abdrift schneller ist als das Steigen, raus dort…',
   'ph.recomendar': 'Frag vor Ort, welche Seite des Grats gerade geht…',
   'box.eventMark': 'EREIGNIS',
+  'cond.windDir': '{d}-Wind',
+  'cond.timeOfDay': 'Tageszeit',
+  'cond.windAvg': 'Mittel {v} km/h',
 };
 
 const PT = {
@@ -2211,6 +2223,9 @@ const PT = {
   'ph.lecciones': 'Se a deriva é mais rápida que a subida, sai de lá…',
   'ph.recomendar': 'Pergunta no local que lado da crista está a funcionar…',
   'box.eventMark': 'EVENTO',
+  'cond.windDir': 'vento {d}',
+  'cond.timeOfDay': 'Faixa horária',
+  'cond.windAvg': 'média de {v} km/h',
 };
 
 /* ============================================================
