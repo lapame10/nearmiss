@@ -1,0 +1,3105 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#16323b">
+<title>SkyReport — reportes anónimos de eventos de parapente</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icono-192.png">
+<link rel="apple-touch-icon" href="icono-192.png">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&display=swap">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+  :root{
+    --marino:#16323b; --marino2:#1f4756; --mar:#2d6b80; --marClaro:#e8f1f5;
+    --naranja:#d9782f; --naranjaOsc:#b85f1c;
+    --fondo:#eef1f3; --papel:#fff; --tinta:#18313a; --gris:#63757d;
+    --linea:#dde4e8; --borde:#c9d6dc;
+    --ok:#2f7d4f; --okBg:#e9f6ee;
+    --casi:#c98a24; --casiBg:#fdf5e6;
+    --grave:#b5544a; --graveBg:#fbeeec;
+  }
+  *{box-sizing:border-box}
+/* seguro: que NUNCA aparezca scroll horizontal en el movil */
+  html,body{margin:0;padding:0;overflow-x:hidden;max-width:100%}
+  *,*::before,*::after{min-width:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,Roboto,sans-serif;
+    background:var(--fondo);color:var(--tinta);font-size:15px;line-height:1.5}
+  .mso{font-family:'Material Symbols Outlined';font-weight:normal;font-style:normal;
+    font-size:21px;line-height:1;letter-spacing:normal;text-transform:none;
+    display:inline-block;white-space:nowrap;word-wrap:normal;direction:ltr;
+    -webkit-font-feature-settings:'liga';-webkit-font-smoothing:antialiased;
+    font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;vertical-align:middle}
+
+  /* ===================== CABECERA ===================== */
+  .cab{background:var(--marino);color:#fff;padding:0 24px;
+    display:flex;align-items:center;gap:20px;height:60px;position:sticky;top:0;z-index:1500}
+  .marca{display:flex;align-items:center;gap:9px;font-weight:900;font-size:20px;
+    letter-spacing:-.5px;flex-shrink:1;min-width:0}
+  /* el logo es una gota mas alta que ancha, asi que fijo el ALTO y dejo el
+     ancho automatico para que no se deforme */
+  .marca .pico{height:34px;width:auto;flex-shrink:0;display:block}
+  .marcaTxt{font-size:11.5px;opacity:.72;font-weight:500;margin-left:6px;
+    border-left:1px solid rgba(255,255,255,.25);padding-left:16px;
+    display:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+    min-width:0}
+  .nav{display:flex;gap:4px;margin-left:auto;flex-shrink:0}
+  .nav button{background:none;border:none;color:#fff;opacity:.75;font-family:inherit;
+    font-size:13.5px;font-weight:700;padding:9px 15px;border-radius:9px;cursor:pointer;
+    display:flex;align-items:center;gap:7px;white-space:nowrap}
+  .nav button .mso{font-size:19px}
+  /* el nav NUNCA se encoge: si no cabe, se quitan los textos (abajo), no se
+     aplastan los botones uno contra otro */
+  .nav button>span:not(.mso){white-space:nowrap}
+  .nav button.on{opacity:1;background:rgba(255,255,255,.13)}
+  /* el boton de idioma: discreto, a la derecha del todo */
+  /* el selector de idioma: 5 idiomas, discreto, en la cabecera */
+  select.idiomaSuelto{background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.3);
+    border-radius:9px;padding:7px 9px;font-family:inherit;font-size:12px;font-weight:700;
+    letter-spacing:.4px;cursor:pointer;-webkit-appearance:none;appearance:none;
+    padding-right:24px;
+    /* SIN ESTO UN <select> SE ESTIRA Y TAPA EL NOMBRE:
+       en un contenedor flex, un control de formulario no respeta su tamaño
+       natural salvo que le digas explicitamente que no crezca ni encoja. */
+    flex:0 0 auto;width:auto;min-width:0;align-self:center;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6'><path d='M0 0h10L5 6z' fill='white' opacity='.7'/></svg>");
+    background-repeat:no-repeat;background-position:right 7px center}
+  select.idiomaSuelto option{background:var(--marino);color:#fff}
+  .cabDer{font-size:11px;opacity:.7;text-align:right;line-height:1.35;
+    border-left:1px solid rgba(255,255,255,.2);padding-left:18px;display:none;
+    flex-shrink:0}
+
+  /* ===================== PORTADA (hero) ===================== */
+  .hero{background:linear-gradient(180deg,#dbe7ec 0%,#eef1f3 100%);
+    padding:30px 24px 26px;border-bottom:1px solid var(--linea)}
+  .hero h1{margin:0 0 9px;font-size:clamp(21px,5.6vw,31px);letter-spacing:-.8px;
+    font-weight:900;color:#12313d;overflow-wrap:break-word}
+  .hero p{margin:0;font-size:15px;color:#3b5560;max-width:640px;line-height:1.6}
+  /* la cita va debajo del texto, con su barra. Antes estaba encima del dibujo
+     del parapente y se leia fatal. */
+  .hero .cita{margin-top:17px;max-width:560px;font-size:14.5px;font-style:italic;
+    color:#33525f;line-height:1.55;border-left:3px solid #a9c4ce;padding-left:16px}
+  .hero .cita b{font-style:normal}
+
+  /* ===================== LAYOUT ===================== */
+  /* OJO: minmax(0,1fr) y min-width:0 son necesarios. Sin eso, el formulario
+     impone un ancho minimo grande y la columna derecha se sale de la pantalla. */
+  .cuerpo{display:grid;grid-template-columns:minmax(0,1fr);gap:18px;
+    padding:18px 24px 40px;max-width:1500px;margin:0 auto}
+  .cuerpo>*{min-width:0}
+  @media(min-width:1000px){
+    .cuerpo{grid-template-columns:minmax(0,1fr) 360px}
+    .hero .cita{display:block}
+    .marcaTxt{display:inline}
+    .cabDer{display:block}
+  }
+  /* El subtítulo de la cabecera es lo primero que sobra: el hero ya dice lo
+     mismo. Y con los idiomas largos (Signaler, Tendances) hace falta el sitio
+     antes. Por eso se quita ya a los 1400px. */
+  @media(max-width:1400px){
+    .marcaTxt{display:none}
+  }
+  @media(max-width:1150px){
+    .cabDer{display:none}
+  }
+
+  /* ===================== TARJETAS ===================== */
+  .tarj{background:var(--papel);border-radius:13px;
+    box-shadow:0 1px 3px rgba(22,50,59,.08),0 1px 2px rgba(22,50,59,.05);
+    padding:20px;margin-bottom:15px}
+  .tarj h2{margin:0 0 2px;font-size:20px;letter-spacing:-.4px}
+  .tarj .avisoTop{font-size:12.5px;color:var(--gris)}
+
+  /* ===================== CAMPOS ===================== */
+  .rejilla{display:grid;grid-template-columns:1fr;gap:16px}
+  @media(min-width:760px){.rejilla.dos{grid-template-columns:1fr 1fr}}
+  .campo{position:relative}
+  .campoTit{display:flex;align-items:center;gap:10px;margin-bottom:3px}
+  .num{width:23px;height:23px;border-radius:50%;border:1.5px solid var(--borde);
+    background:#fff;color:var(--gris);font-size:12px;font-weight:800;
+    display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .campoTit h3{margin:0;font-size:15.5px;font-weight:800;letter-spacing:-.2px}
+  .etq{font-size:10.5px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;
+    padding:3px 8px;border-radius:20px;background:#eef2f4;color:var(--gris)}
+  .etq.req{background:#e8f1f5;color:var(--mar)}
+  .etq.opc{background:#f2f4f5;color:#8a99a0}
+  .campoAyuda{font-size:12.5px;color:var(--gris);margin:0 0 10px 33px;line-height:1.5}
+
+  /* los botones de opcion, con icono de linea */
+  .ops{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-left:0}
+  @media(min-width:620px){.ops{grid-template-columns:repeat(3,1fr)}}
+  .ops button{display:flex;align-items:center;gap:9px;text-align:left;
+    border:1.5px solid var(--borde);background:#fff;color:var(--tinta);
+    border-radius:10px;padding:12px 12px;font-family:inherit;font-size:13.5px;
+    font-weight:700;cursor:pointer;line-height:1.25;transition:all .13s;
+    min-width:0;overflow-wrap:break-word;word-break:break-word}
+  .ops button span{min-width:0}
+  .ops button .mso{font-size:20px;color:var(--gris);flex-shrink:0}
+  .ops button:hover{border-color:var(--mar);background:#fafcfd}
+  .ops button.on{border-color:var(--mar);background:#eef6f9;
+    box-shadow:0 0 0 1px var(--mar) inset}
+  .ops button.on .mso{color:var(--mar)}
+  .ops.ancho button{grid-column:span 1}
+  @media(min-width:620px){.ops.ancho button{grid-column:span 1}}
+  .ops.unaCol{grid-template-columns:1fr}
+  @media(min-width:620px){.ops.unaCol{grid-template-columns:1fr 1fr}}
+
+  /* los que acaban bien / mal: color propio */
+  .ops.cons button.on[data-id=sin]{border-color:var(--ok);background:var(--okBg);
+    box-shadow:0 0 0 1px var(--ok) inset}
+  .ops.cons button.on[data-id=sin] .mso{color:var(--ok)}
+  .ops.cons button.on[data-id=leves]{border-color:var(--casi);background:var(--casiBg);
+    box-shadow:0 0 0 1px var(--casi) inset}
+  .ops.cons button.on[data-id=leves] .mso{color:var(--casi)}
+  .ops.cons button.on[data-id=danos]{border-color:var(--casi);background:var(--casiBg);
+    box-shadow:0 0 0 1px var(--casi) inset}
+  .ops.cons button.on[data-id=danos] .mso{color:var(--casi)}
+  .ops.cons button.on[data-id=graves]{border-color:var(--grave);background:var(--graveBg);
+    box-shadow:0 0 0 1px var(--grave) inset}
+  .ops.cons button.on[data-id=graves] .mso{color:var(--grave)}
+  /* la fatalidad: gris muy oscuro, SOBRIO. Nada de rojo chillón: esto se trata
+     con respeto, no como una alarma mas. */
+  .ops.cons button.on[data-id=fatal]{border-color:#33424a;background:#eef1f3;
+    box-shadow:0 0 0 1px #33424a inset}
+  .ops.cons button.on[data-id=fatal] .mso{color:#33424a}
+
+  select,input[type=date],input[type=text],textarea{
+    width:100%;font-family:inherit;font-size:14.5px;color:var(--tinta);
+    padding:13px 14px;border:1.5px solid var(--borde);border-radius:10px;
+    background:#fff;-webkit-appearance:none;appearance:none}
+  select{background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'><path d='M1 1l5 5 5-5' fill='none' stroke='%2363757d' stroke-width='2.2' stroke-linecap='round'/></svg>");
+    background-repeat:no-repeat;background-position:right 14px center;padding-right:38px}
+  textarea{min-height:110px;resize:vertical;line-height:1.6}
+  select:focus,input:focus,textarea:focus{outline:none;border-color:var(--mar);
+    box-shadow:0 0 0 3px rgba(45,107,128,.13)}
+
+  .mapaMarcar{height:230px;border-radius:10px;overflow:hidden;
+    border:1.5px solid var(--borde)}
+
+  /* la caja del "otro" */
+  .cajaOtro{display:none;margin-top:10px;background:#f5f9fb;border-radius:10px;
+    padding:13px;border-left:3px solid var(--mar)}
+  .cajaOtro.on{display:block}
+  .cajaOtro label{font-size:12px;font-weight:800;color:var(--gris);text-transform:uppercase;
+    letter-spacing:.4px;display:block;margin-bottom:7px}
+
+  /* al marcar una fatalidad: un texto de respeto, sin dramatismo ni morbo */
+  .cajaFatalidad{display:none;margin-top:10px;background:#eef1f3;border-radius:10px;
+    padding:13px;border-left:3px solid #33424a;gap:11px;align-items:flex-start}
+  .cajaFatalidad.on{display:flex}
+  .cajaFatalidad .mso{color:#33424a;font-size:20px;flex-shrink:0;margin-top:1px}
+  .cajaFatalidad div{font-size:12.5px;line-height:1.6;color:#2c3d45}
+
+  /* el IGC */
+  .igcBox{background:#f7fafb;border:1.5px dashed var(--borde);border-radius:10px;padding:13px}
+  .btnIgc{width:100%;border:1.5px solid var(--mar);background:#fff;color:var(--mar);
+    border-radius:10px;padding:13px;font-family:inherit;font-size:13.5px;font-weight:800;
+    cursor:pointer;display:flex;align-items:center;justify-content:center;gap:9px}
+  .btnIgc.on{border-color:var(--ok);color:var(--ok);background:var(--okBg)}
+  .igcInfo{display:none;font-size:12.5px;color:#2b4750;margin-top:10px;line-height:1.6}
+  .igcInfo.on{display:block}
+
+  .privacidad{display:flex;align-items:flex-start;gap:11px;background:#f2f7f4;
+    border-radius:10px;padding:13px 14px;margin-top:16px;border:1px solid #d8e8dd}
+  .privacidad .mso{color:var(--ok);font-size:20px}
+  .privacidad div{font-size:12.5px;line-height:1.55;color:#33574a}
+
+  .enviarFila{display:flex;justify-content:flex-end;margin-top:16px}
+  .btnEnviar{background:var(--naranja);color:#fff;border:none;border-radius:10px;
+    padding:15px 26px;font-family:inherit;font-size:15px;font-weight:800;
+    cursor:pointer;display:flex;align-items:center;gap:10px;
+    box-shadow:0 2px 6px rgba(185,95,28,.3);letter-spacing:.2px}
+  .btnEnviar:hover{background:var(--naranjaOsc)}
+  .btnEnviar:disabled{opacity:.6;cursor:default}
+  .contador{text-align:right;font-size:11.5px;color:var(--gris);margin-top:6px}
+
+  /* ===================== COLUMNA DERECHA ===================== */
+  .lateral{display:flex;flex-direction:column;gap:15px}
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  .stat{background:var(--papel);border-radius:12px;padding:14px 6px;text-align:center;
+    box-shadow:0 1px 3px rgba(22,50,59,.08);overflow:hidden}
+  .stat .mso{font-size:22px;color:var(--mar);display:block;margin:0 auto 5px}
+  .stat .n{font-size:23px;font-weight:900;letter-spacing:-.6px;line-height:1}
+  .stat .t{font-size:11.5px;color:var(--gris);margin-top:5px;line-height:1.25;
+    font-weight:600}
+  .miniTarj{background:var(--papel);border-radius:12px;padding:16px;
+    box-shadow:0 1px 3px rgba(22,50,59,.08)}
+  .miniTarj h3{margin:0 0 12px;font-size:14.5px;display:flex;align-items:center;gap:8px}
+  .miniTarj h3 .mso{font-size:19px;color:var(--mar)}
+  .princ{display:flex;gap:11px;margin-bottom:13px;align-items:flex-start}
+  .princ:last-child{margin-bottom:0}
+  .princ .mso{font-size:19px;color:var(--mar);flex-shrink:0;margin-top:1px}
+  .princ b{display:block;font-size:13px;margin-bottom:2px}
+  .princ span{font-size:12px;color:var(--gris);line-height:1.5}
+  .enlace{color:var(--mar);font-weight:800;font-size:12.5px;text-decoration:none;
+    display:inline-flex;align-items:center;gap:4px;margin-top:9px}
+
+  #mapaCalor{height:150px;border-radius:9px;overflow:hidden;margin-bottom:12px}
+  .zonas{font-size:12.5px}
+  .zonas .zf{display:flex;justify-content:space-between;gap:8px;padding:5px 0;
+    border-bottom:1px solid #f0f3f5}
+  .zonas .zf span{min-width:0;overflow:hidden;text-overflow:ellipsis;
+    white-space:nowrap}
+  .zonas .zf b{flex-shrink:0}
+  .zonas .zf:last-child{border:none}
+  .zonas .zf b{font-weight:800;color:var(--mar)}
+
+  .alertaEmerg{background:#fdf6e8;border:1px solid #f0dfba;border-radius:11px;
+    padding:14px;display:flex;gap:11px;align-items:flex-start}
+  .alertaEmerg .mso{color:var(--naranja);font-size:20px}
+  .alertaEmerg div{font-size:12.5px;line-height:1.55;color:#6b5220}
+
+  /* ===================== EL MAPA Y LA LISTA ===================== */
+  #mapa{height:56vh;min-height:320px;border-radius:12px;overflow:hidden;
+    box-shadow:0 1px 3px rgba(22,50,59,.08)}
+  .filtros{display:flex;gap:7px;flex-wrap:wrap;margin:14px 0 4px}
+  .filtros button{border:1.5px solid var(--borde);background:#fff;color:var(--tinta);
+    border-radius:20px;padding:8px 14px;font-size:12.5px;font-weight:700;
+    font-family:inherit;cursor:pointer;display:flex;align-items:center;gap:6px}
+  .filtros button .mso{font-size:17px;color:var(--gris)}
+  .filtros button.on{background:var(--marino);border-color:var(--marino);color:#fff}
+  .filtros button.on .mso{color:#fff}
+
+  .lista{display:grid;grid-template-columns:1fr;gap:12px;margin-top:14px}
+  @media(min-width:760px){.lista{grid-template-columns:1fr 1fr}}
+  .inc{background:var(--papel);border-radius:12px;padding:16px;
+    box-shadow:0 1px 3px rgba(22,50,59,.08);border-left:4px solid var(--casi);
+    cursor:pointer;transition:box-shadow .15s}
+  .inc:hover{box-shadow:0 3px 14px rgba(22,50,59,.17)}
+  .inc.senala{box-shadow:0 0 0 3px var(--mar)}
+  /* el aviso de que se puede tocar */
+  .inc .verPunto{display:flex;align-items:center;gap:6px;margin-top:11px;
+    font-size:12px;font-weight:800;color:var(--mar);letter-spacing:-.1px}
+  .inc .verPunto .mso{font-size:17px}
+  .inc.sin{border-left-color:var(--ok)}
+  .inc.leves{border-left-color:var(--casi)}
+  .inc.danos{border-left-color:var(--casi)}
+  .inc.graves{border-left-color:var(--grave)}
+  .inc.fatalidad{border-left-color:#33424a}
+  .inc .tipo{display:flex;align-items:center;gap:9px;font-weight:800;font-size:15px}
+  .inc .tipo .mso{font-size:21px;color:var(--mar)}
+  .inc .meta{font-size:12px;color:var(--gris);margin-top:5px;line-height:1.55}
+  .inc .dato{font-size:12px;margin-top:8px;padding:8px 11px;border-radius:8px;
+    background:#f5f9fb;font-weight:600;line-height:1.5}
+  .inc .relato{font-size:13px;margin-top:9px;line-height:1.6;color:#2b4750;
+    border-left:3px solid var(--linea);padding-left:11px}
+  .marcaRacha{background:var(--casiBg);color:#8a5a10;font-size:10px;font-weight:800;
+    padding:2px 7px;border-radius:20px;margin-left:5px}
+
+  /* ===== LA GRAVEDAD EN LA TARJETA =====
+     Pam: 'naranja solo para advertencias importantes, rojo solo para accidente
+     grave o fatalidad'. Asi que el color sube con la gravedad, sin gritar. */
+  .etq.sevEtq{background:#eef3f6;color:#5f7a86;text-transform:none;
+    letter-spacing:0;font-size:10.5px;margin-left:auto;white-space:nowrap}
+  .inc.sevincidente .etq.sevEtq{background:#eef2f4;color:#4a6470}
+  .inc.sevaccidente .etq.sevEtq{background:#fdf1e0;color:#8a5a10}
+  .inc.sevgrave .etq.sevEtq{background:#fbeeec;color:#8f3f36}
+  .inc.sevfatal .etq.sevEtq{background:#e4e9eb;color:#26343b}
+  .inc.sevnear{border-left-color:#8ba3ad}
+  .inc.sevincidente{border-left-color:#5f7a86}
+  .inc.sevaccidente{border-left-color:#d9782f}
+  .inc.sevgrave{border-left-color:#b5544a}
+  .inc.sevfatal{border-left-color:#33424a}
+
+  /* pendiente de verificacion: se ve, pero se nota que no esta confirmado */
+  .etq.pendEtq{background:#fdf6e8;color:#8a6420;display:inline-flex;
+    align-items:center;gap:3px;text-transform:none;letter-spacing:0;font-size:10px}
+  .etq.pendEtq .mso{font-size:13px}
+  .inc.pendiente{background:#fcfcfa}
+
+  /* la nota del IGC: dice que el archivo se borra solo, sin casilla que marcar */
+  .igcNota{display:flex;gap:9px;align-items:flex-start;margin-top:11px;
+    font-size:12.5px;color:#2b4750;line-height:1.5}
+  .igcNota .mso{font-size:19px;color:var(--mar);flex-shrink:0;margin-top:1px}
+  .igcNota span:last-child{flex:1}
+
+  /* cuando todavia no hay nada: en vez de tres ceros, decir que esto empieza */
+  .empezando{display:none;gap:11px;align-items:flex-start;background:#f2f6f8;
+    border-radius:11px;padding:14px;font-size:12.5px;line-height:1.55;color:#3b5560}
+  .empezando .mso{color:var(--mar);font-size:20px;flex-shrink:0;margin-top:1px}
+
+  /* ==========================================================================
+     LA PÁGINA DE ADMINISTRACIÓN
+     Discreta y sobria: quien entra aquí no viene a mirar, viene a resolver algo.
+     ========================================================================== */
+  .cabAdmin{display:flex;justify-content:space-between;align-items:flex-start;
+    gap:16px;flex-wrap:wrap;margin-bottom:18px}
+  .cabAdmin h2{margin:0;font-size:23px;letter-spacing:-.6px;display:flex;
+    align-items:center;gap:9px}
+  .cabAdmin h2 .mso{font-size:26px;color:var(--mar)}
+  .adQuien{font-size:12.5px;color:var(--gris);margin-top:6px;line-height:1.5}
+  .adQuien b{color:var(--tinta)}
+  .bloqueAdmin{background:var(--papel);border-radius:13px;padding:18px;
+    box-shadow:0 1px 3px rgba(22,50,59,.08);margin-bottom:16px}
+  .bloqueAdmin h3{margin:0 0 4px;font-size:15px;display:flex;align-items:center;gap:8px}
+  .bloqueAdmin h3 .mso{font-size:20px;color:var(--mar)}
+  .cuenta{background:#eef3f6;color:var(--mar);font-size:12px;font-weight:800;
+    border-radius:20px;padding:2px 9px;margin-left:auto}
+  .cuenta.rojo{background:#fbeeec;color:#8f3f36}
+  .adAyuda{font-size:12.5px;color:var(--gris);line-height:1.55;margin:0 0 14px}
+  .adFila{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;
+    padding:13px 0;border-top:1px solid var(--linea);flex-wrap:wrap}
+  .adFila:first-child{border-top:none}
+  .adFila .adInfo{flex:1;min-width:220px}
+  .adFila .adTit{font-weight:800;font-size:13.5px;display:flex;align-items:center;gap:7px}
+  .adFila .adMeta{font-size:12px;color:var(--gris);margin-top:4px;line-height:1.5}
+  .adFila .adRelato{font-size:12.5px;color:#4a6470;margin-top:7px;line-height:1.55;
+    font-style:italic}
+  .adBtns{display:flex;gap:7px;flex-wrap:wrap;align-items:flex-start}
+  .adBtns button{border:none;border-radius:9px;padding:9px 14px;font-family:inherit;
+    font-size:12.5px;font-weight:800;cursor:pointer;display:flex;align-items:center;gap:5px}
+  .adBtns button .mso{font-size:17px}
+  .adOk{background:#e8f5ec;color:#1f6b40}
+  .adOk:hover{background:#d5ecdd}
+  .adNo{background:#fbeeec;color:#8f3f36}
+  .adNo:hover{background:#f6ddd9}
+  .adEd{background:#eef2f4;color:#3b5560}
+  .adEd:hover{background:#e0e7ea}
+  .adDel{background:#fdf1e8;color:#96500f}
+  .adDel:hover{background:#fae3d0}
+  .adNuevo{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+  .adNuevo input,.adNuevo select{flex:1;min-width:130px;font-family:inherit;font-size:13.5px;
+    padding:11px 12px;border:2px solid var(--linea);border-radius:10px;background:#fbfdfd;
+    color:var(--tinta);-webkit-appearance:none;appearance:none}
+  .adNuevo input:focus,.adNuevo select:focus{outline:none;border-color:var(--mar)}
+  .adNuevo button{flex:0 0 auto;margin:0}
+  .adClave{font-family:ui-monospace,Menlo,monospace;font-size:13px;font-weight:700;
+    background:#eef3f6;border-radius:7px;padding:5px 9px;color:var(--mar);
+    letter-spacing:1px;user-select:all}
+  .adLogFila{display:flex;gap:11px;padding:9px 0;border-top:1px solid var(--linea);
+    font-size:12.5px;align-items:baseline}
+  .adLogFila:first-child{border-top:none}
+  .adLogFila .mso{font-size:17px;color:var(--gris);flex-shrink:0}
+  .adLogFila .cuando{color:var(--gris);font-size:11.5px;white-space:nowrap;margin-left:auto}
+  .vacioAdmin{font-size:13px;color:var(--gris);line-height:1.6;padding:14px 0}
+
+  /* la pantalla de entrada con la clave */
+  .puerta{background:var(--papel);border-radius:13px;padding:26px;max-width:430px;
+    box-shadow:0 2px 10px rgba(22,50,59,.1);margin:0 auto}
+  .puerta h2{margin:0 0 6px;font-size:20px;display:flex;align-items:center;gap:9px}
+  .puerta p{font-size:13px;color:var(--gris);line-height:1.55;margin:0 0 16px}
+  .puerta input{width:100%;font-family:ui-monospace,Menlo,monospace;font-size:16px;
+    letter-spacing:3px;text-align:center;padding:14px;border:2px solid var(--linea);
+    border-radius:11px;background:#fbfdfd;text-transform:uppercase}
+  .puerta input:focus{outline:none;border-color:var(--mar)}
+  .puerta .err{color:var(--rojo);font-size:12.5px;margin-top:10px;display:none}
+  .puerta .err.on{display:block}
+
+  /* el boton de instalar la app */
+  .btn.instalar{width:100%;justify-content:center;background:#fff;
+    border:2px solid var(--mar);color:var(--mar);margin-bottom:16px}
+  .btn.instalar:hover{background:#eef6f9}
+  .btn.instalar .mso{font-size:19px}
+
+  /* ===== EL PUNTO QUE HAS TOCADO =====
+     Con muchos puntos en el mapa no sabes cual es el tuyo. Este pin oscuro con
+     el aro que late no se puede confundir. */
+  .pinAqui{width:38px;height:38px;border-radius:50%;background:#16323b;
+    display:flex;align-items:center;justify-content:center;color:#fff;
+    box-shadow:0 0 0 5px rgba(22,50,59,.22),0 3px 12px rgba(0,0,0,.35);
+    animation:latePin 1.5s ease-in-out infinite;pointer-events:none}
+  .pinAqui .mso{font-size:21px}
+  @keyframes latePin{
+    0%,100%{transform:scale(1);box-shadow:0 0 0 5px rgba(22,50,59,.22),0 3px 12px rgba(0,0,0,.35)}
+    50%{transform:scale(1.1);box-shadow:0 0 0 12px rgba(22,50,59,.07),0 3px 12px rgba(0,0,0,.35)}
+  }
+
+  /* ===================== PATRONES ===================== */
+  .patrones{display:grid;grid-template-columns:1fr;gap:14px}
+  @media(min-width:760px){.patrones{grid-template-columns:1fr 1fr}}
+  .patron{background:var(--papel);border-radius:12px;padding:17px;
+    box-shadow:0 1px 3px rgba(22,50,59,.08)}
+  .patron.destaca{background:#eef6f9;border:1px solid #cfe3ec;
+    grid-column:1/-1}
+  .patron h3{margin:0 0 3px;font-size:15px;display:flex;align-items:center;gap:8px}
+  .patron h3 .mso{font-size:20px;color:var(--mar)}
+  .patron .cuantos{font-size:11.5px;color:var(--gris);margin-bottom:13px}
+  .fila{display:flex;align-items:center;gap:10px;margin-bottom:8px;font-size:13px}
+  .fila .nom{flex:0 0 40%;font-weight:600;line-height:1.3}
+  .fila .pista{flex:1;height:15px;background:#eef2f4;border-radius:8px;overflow:hidden}
+  .fila .pista i{display:block;height:100%;background:var(--mar);border-radius:8px}
+  .fila .n{flex:0 0 32px;text-align:right;font-weight:800;color:var(--gris);font-size:12.5px}
+  .vacio{text-align:center;color:var(--gris);padding:34px 20px;line-height:1.65;
+    font-size:13.5px}
+
+  /* ===================== PIE ===================== */
+  .pie{background:var(--marino);color:#fff;padding:16px 24px;font-size:11.5px;
+    display:flex;justify-content:space-between;align-items:center;gap:20px;
+    flex-wrap:wrap;opacity:.96}
+  .pie .lema{font-weight:800;letter-spacing:.4px;font-size:12.5px}
+
+  /* ===================== AVISO ===================== */
+  .aviso{position:fixed;inset:0;background:rgba(22,50,59,.7);display:none;
+    align-items:center;justify-content:center;z-index:3000;padding:22px}
+  .aviso.on{display:flex}
+  .aviso .caja{background:#fff;border-radius:15px;padding:24px;max-width:400px;
+    width:100%;box-shadow:0 14px 44px rgba(0,0,0,.32)}
+  .aviso h3{margin:0 0 8px;font-size:19px;color:var(--marino)}
+  .aviso .cuerpo{font-size:14px;line-height:1.65;margin-bottom:18px}
+  .aviso .btn{width:100%;background:var(--marino);color:#fff;border:none;
+    border-radius:10px;padding:14px;font-family:inherit;font-size:14.5px;
+    font-weight:800;cursor:pointer}
+
+  .vista{display:none}
+  .vista.on{display:block}
+  .cabSeccion{display:flex;align-items:baseline;gap:12px;margin-bottom:2px}
+  .cabSeccion h2{margin:0;font-size:21px;letter-spacing:-.5px}
+  .cabSeccion .sub{font-size:12.5px;color:var(--gris)}
+
+  /* ==========================================================================
+     MOVIL — el diseno de Pam es de ordenador, asi que en el telefono hay que
+     apretarlo: menos huecos, letra mas pequeña y el nav con los 3 botones que
+     quepan. Pam: 'para celular no se ve tan bien'.
+     ========================================================================== */
+  /* ==========================================================================
+     EN MÓVIL LA NAVEGACIÓN SE VA ABAJO
+     --------------------------------------------------------------------------
+     Arriba competían cuatro cosas por 390 px (nombre, nav de 3 botones,
+     selector de idioma y lema) y con los idiomas largos —Signaler, Tendances,
+     Melden— el texto se solapaba. Se apretó tres veces y no hubo manera.
+     Así que se hace como las apps de verdad: la navegación, en una barra fija
+     abajo. Cabe siempre, en cualquier idioma, y además se llega con el pulgar.
+     ========================================================================== */
+  @media(max-width:820px){
+    .cab{gap:10px}
+    .marca{margin-right:auto}
+    .nav{position:fixed;left:0;right:0;bottom:0;z-index:1800;
+      background:var(--marino);border-top:1px solid rgba(255,255,255,.16);
+      display:flex;justify-content:space-around;align-items:stretch;
+      margin:0;gap:0;
+      padding:6px 6px calc(6px + env(safe-area-inset-bottom))}
+    .nav button{flex:1;flex-direction:column;gap:2px;padding:7px 4px;
+      font-size:10.5px;font-weight:700;border-radius:10px;justify-content:center}
+    .nav button .mso{font-size:22px}
+    /* el texto vuelve: abajo hay sitio de sobra */
+    .nav button>span:not(.mso){display:inline;white-space:nowrap}
+    .nav button.on{background:rgba(255,255,255,.14)}
+    /* y el cuerpo deja hueco para que la barra no tape el final de la pagina */
+    body{padding-bottom:calc(72px + env(safe-area-inset-bottom))}
+    /* el aviso no puede quedar debajo de la barra */
+    .aviso{z-index:2600}
+  }
+
+  @media(max-width:640px){
+    .cab{padding:0 12px;gap:9px}
+    select.idiomaSuelto{padding:6px 8px;padding-right:22px;font-size:11.5px;
+      flex:0 0 auto;width:auto;background-position:right 6px center}
+    .marca{font-size:16.5px;gap:7px;letter-spacing:-.3px}
+    .marca .pico{height:27px}
+    .nav{gap:2px}
+    .nav button{padding:8px 8px;font-size:11.5px;gap:5px;border-radius:8px}
+    .nav button .mso{font-size:17px}
+    .marcaTxt,.cabDer{display:none}
+
+    .hero{padding:20px 14px 18px}
+    .hero h1{font-size:23px;letter-spacing:-.7px;line-height:1.2}
+    .hero p{font-size:13.5px;line-height:1.55}
+    .hero .cita{font-size:13px;margin-top:14px;padding-left:13px;line-height:1.5}
+
+    .cuerpo{padding:12px 12px 34px;gap:12px}
+    .tarj{padding:15px 14px;border-radius:11px;margin-bottom:12px}
+    .tarj h2{font-size:17px}
+    .tarj .avisoTop{font-size:11.5px;margin-top:5px}
+
+    .rejilla{gap:14px;margin-top:15px !important}
+    .campoTit{gap:8px}
+    .campoTit h3{font-size:14.5px}
+    .num{width:21px;height:21px;font-size:11px}
+    .etq{font-size:9.5px;padding:2px 7px}
+    .campoAyuda{font-size:12px;margin-left:0;margin-bottom:9px}
+
+    .ops{gap:7px}
+    .ops button{padding:11px 10px;font-size:12.5px;gap:7px;border-radius:9px}
+    .ops button .mso{font-size:18px}
+    .mapaMarcar{height:195px}
+    #mapa{height:42vh;min-height:250px}
+    select,input[type=date],input[type=text]{font-size:16px;padding:12px}
+    textarea{font-size:15px;min-height:95px}
+
+    .stats{gap:7px}
+    .stat{padding:12px 4px;border-radius:10px}
+    .stat .mso{font-size:20px;margin-bottom:4px}
+    .stat .n{font-size:20px}
+    .stat .t{font-size:10.5px}
+    .miniTarj{padding:14px;border-radius:11px}
+    .miniTarj h3{font-size:13.5px}
+    .princ b{font-size:12.5px}
+    .princ span{font-size:11.5px}
+
+    .lista{grid-template-columns:1fr;gap:10px}
+    .patrones{grid-template-columns:1fr;gap:11px}
+    .inc{padding:14px;border-radius:11px}
+    .fila .nom{flex:0 0 44%}
+    .fila{font-size:12.5px}
+
+    /* el boton de enviar, ancho completo y comodo para el pulgar */
+    .enviarFila{margin-top:14px}
+    .btnEnviar{width:100%;justify-content:center;padding:17px;font-size:15.5px}
+
+    .privacidad{padding:12px;gap:9px}
+    .privacidad div{font-size:12px}
+
+    .alertaEmerg{padding:12px;gap:9px}
+    .alertaEmerg div{font-size:12px}
+
+    .filtros{gap:5px;margin:12px 0 2px}
+    .filtros button{padding:7px 11px;font-size:12px}
+    .filtros button .mso{font-size:16px}
+
+    .pie{flex-direction:column;gap:6px;text-align:center;font-size:11px;
+      padding:14px 16px}
+    .pie .lema{font-size:11.5px}
+
+    .cabSeccion{flex-direction:column;gap:3px}
+    .cabSeccion h2{font-size:19px}
+  }
+</style>
+</head>
+<body>
+
+<!-- ===================== CABECERA ===================== -->
+<header class="cab">
+  <div class="marca">
+    <img src="logo.png" class="pico" alt="SkyReport">
+    SkyReport
+    <span class="marcaTxt" data-i18n="subTitulo"></span>
+  </div>
+    <select id="bIdioma" class="idiomaSuelto" aria-label="Language" title="Idioma / Language">
+    <option value="es">ES</option>
+    <option value="en">EN</option>
+    <option value="fr">FR</option>
+    <option value="de">DE</option>
+    <option value="pt">PT</option>
+  </select>
+  <nav class="nav">
+    <button id="tMapa"><span class="mso">map</span><span data-i18n="navMapa">Mapa</span></button>
+    <button id="tReportar" class="on"><span class="mso">edit_note</span><span data-i18n="navReportar">Reportar</span></button>
+    <button id="tPatrones"><span class="mso">bar_chart</span><span data-i18n="navPatrones">Patrones</span></button>
+    <button id="tAdmin" style="display:none"><span class="mso">admin_panel_settings</span><span data-i18n="navAdmin">Admin</span></button>
+  </nav>
+  <div class="cabDer" data-i18n="lema"></div>
+</header>
+
+<!-- ===================== PORTADA ===================== -->
+<div class="vista on" id="vReportar">
+  <div class="hero">
+    <h1 data-i18n="heroTitulo">Seguridad compartida. Aprendizaje colectivo.</h1>
+    <p data-i18n="heroTexto"></p>
+    <div class="cita" data-i18n="heroCita"></div>
+  </div>
+
+  <div class="cuerpo">
+    <!-- ===== FORMULARIO ===== -->
+    <div>
+      <div class="tarj">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap">
+          <h2 data-i18n="formTitulo">Reportar un evento</h2>
+          <span class="avisoTop" data-i18n="formAviso"></span>
+        </div>
+
+        <div class="rejilla dos" style="margin-top:22px">
+
+          <div class="campo">
+            <div class="campoTit"><span class="num">1</span><h3 data-i18n="c1t">¿Qué ocurrió?</h3>
+              <span class="etq req" data-i18n="obligatorio"></span></div>
+            <p class="campoAyuda" data-i18n="c1a"></p>
+            <div class="ops sev" id="opSev"></div>
+          </div>
+
+          <div class="campo">
+            <div class="campoTit"><span class="num">2</span><h3 data-i18n="c2t">¿Qué pasó?</h3>
+              <span class="etq req" data-i18n="obligatorio"></span></div>
+            <p class="campoAyuda" data-i18n="c2a"></p>
+            <div class="ops" id="opSit"></div>
+            <div class="cajaOtro" id="cajaOtro">
+              <label data-i18n="otroTitulo"></label>
+              <input type="text" id="otroTexto" maxlength="70"
+                data-i18n-ph="otroEjemplo">
+            </div>
+          </div>
+
+          <div class="campo">
+            <div class="campoTit"><span class="num">3</span><h3 data-i18n="c3t">Consecuencias</h3>
+              <span class="etq req" data-i18n="obligatorio"></span></div>
+            <p class="campoAyuda" data-i18n="c3a"></p>
+            <div class="ops cons" id="opCons"></div>
+            <div class="cajaFatalidad" id="cajaFatalidad">
+              <span class="mso">volunteer_activism</span>
+              <div data-i18n="fatalTexto"></div>
+            </div>
+          </div>
+
+          <div class="campo">
+            <div class="campoTit"><span class="num">4</span><h3 data-i18n="c4t">Fase del vuelo</h3>
+              <span class="etq req" data-i18n="obligatorio"></span></div>
+            <p class="campoAyuda" data-i18n="c4a"></p>
+            <select id="selFase"></select>
+          </div>
+
+          <div class="campo">
+            <div class="campoTit"><span class="num">5</span><h3 data-i18n="c5t">Dónde</h3>
+              <span class="etq req" data-i18n="obligatorio"></span></div>
+            <p class="campoAyuda" data-i18n="c5a"></p>
+            <div class="mapaMarcar" id="mapaMarca"></div>
+          </div>
+
+          <div class="campo">
+            <div class="campoTit"><span class="num">6</span><h3 data-i18n="c6t">Cuándo</h3>
+              <span class="etq opc" data-i18n="opcional"></span></div>
+            <p class="campoAyuda" data-i18n="c6a"></p>
+            <input type="date" id="fecha">
+          </div>
+
+          <div class="campo">
+            <div class="campoTit"><span class="num">7</span><h3 data-i18n="c7t">Franja del día</h3>
+              <span class="etq req" data-i18n="obligatorio"></span></div>
+            <p class="campoAyuda" data-i18n="c7a"></p>
+            <div class="ops" id="opFranja" style="grid-template-columns:repeat(2,1fr)"></div>
+          </div>
+
+          <div class="campo">
+            <div class="campoTit"><span class="num">8</span><h3 data-i18n="c8t">Cómo estaba el aire</h3>
+              <span class="etq opc" data-i18n="opcional"></span></div>
+            <p class="campoAyuda" data-i18n="c8a"></p>
+            <div class="ops" id="opAire"></div>
+          </div>
+
+          <div class="campo">
+            <div class="campoTit"><span class="num">9</span><h3 data-i18n="c9t">Tu archivo de vuelo</h3>
+              <span class="etq opc" data-i18n="opcional"></span></div>
+            <p class="campoAyuda" data-i18n="c9a"></p>
+            <div class="igcBox">
+              <button class="btnIgc" id="bIGC"><span class="mso">upload_file</span> <span data-i18n="igcBoton">Subir mi archivo IGC</span></button>
+              <input type="file" id="ficheroIGC" accept=".igc,text/plain" style="display:none">
+              <div class="igcInfo" id="igcInfo"></div>
+              <div class="igcNota"><span class="mso">delete_sweep</span>
+                <span data-i18n="igcNota"></span></div>
+            </div>
+          </div>
+
+        </div>
+
+        <div style="margin-top:22px">
+          <div class="campoTit"><span class="num">10</span><h3 data-i18n="c10t">Cuéntalo</h3>
+            <span class="etq opc" data-i18n="opcional"></span></div>
+          <p class="campoAyuda" data-i18n="c10a"></p>
+          <textarea id="relato" maxlength="1000"
+            data-i18n-ph="relatoEjemplo"></textarea>
+          <div class="contador"><span id="cuentaTxt">0</span> / 1000</div>
+        </div>
+
+        <div class="privacidad">
+          <span class="mso">lock</span>
+          <div data-i18n="privacidad"></div>
+        </div>
+
+        <div class="enviarFila">
+          <button class="btnEnviar" id="bEnviar">
+            <span class="mso">send</span> <span data-i18n="enviar">Enviar reporte anónimo</span>
+          </button>
+        </div>
+        <div style="text-align:right;font-size:12px;color:var(--gris);margin-top:9px" id="txtEstado"></div>
+      </div>
+    </div>
+
+    <!-- ===== COLUMNA DERECHA ===== -->
+    <aside class="lateral">
+      <div class="stats" id="filaStats">
+        <div class="stat" id="stEventos"><span class="mso">description</span>
+          <div class="n" id="nReportes">0</div><div class="t" id="tReportes">eventos</div></div>
+        <div class="stat" id="stSitios"><span class="mso">place</span>
+          <div class="n" id="nSitios">0</div><div class="t" id="tSitios">sitios</div></div>
+        <div class="stat" id="stPatrones"><span class="mso">insights</span>
+          <div class="n" id="nPatrones">0</div><div class="t" id="tPatronesTxt">patrones</div></div>
+      </div>
+      <div class="empezando" id="empezando" style="display:none">
+        <span class="mso">eco</span>
+        <div data-i18n="empezando"></div>
+      </div>
+
+      <div class="miniTarj">
+        <h3><span class="mso">verified_user</span> <span data-i18n="principios"></span></h3>
+        <div class="princ"><span class="mso">health_and_safety</span>
+          <div><b data-i18n="p1"></b><span data-i18n="p1s"></span></div></div>
+        <div class="princ"><span class="mso">balance</span>
+          <div><b data-i18n="p2"></b><span data-i18n="p2s"></span></div></div>
+        <div class="princ"><span class="mso">public</span>
+          <div><b data-i18n="p3"></b><span data-i18n="p3s"></span></div></div>
+      </div>
+
+      <div class="miniTarj">
+        <button class="btn instalar" id="bInstalar" style="display:none"
+          onclick="instalar()">
+          <span class="mso">download_for_offline</span>
+          <span data-i18n="instBoton"></span>
+        </button>
+
+        <h3><span class="mso">lock</span> <span data-i18n="anonTitulo"></span></h3>
+        <div style="font-size:12.5px;color:var(--gris);line-height:1.6" data-i18n="anonTexto"></div>
+        <a class="enlace" href="#" id="masPrivacidad"><span data-i18n="anonMas"></span> →</a>
+      </div>
+
+      <div class="miniTarj">
+        <h3><span class="mso">school</span> <span data-i18n="aprendeTitulo"></span></h3>
+        <div style="font-size:12.5px;color:var(--gris);line-height:1.6" data-i18n="aprendeTexto"></div>
+        <a class="enlace" href="#" id="verPatrones"><span data-i18n="aprendeVer"></span> →</a>
+      </div>
+
+      <div class="miniTarj">
+        <h3><span class="mso">map</span> <span data-i18n="reciente"></span></h3>
+        <div id="mapaCalor"></div>
+        <div class="zonas" id="zonasTop"></div>
+        <a class="enlace" href="#" id="verMapa"><span data-i18n="verMapaCompleto"></span> →</a>
+      </div>
+
+      <div class="alertaEmerg">
+        <span class="mso">warning</span>
+        <div data-i18n="emergencia"></div>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<!-- ===================== MAPA ===================== -->
+<!-- ===================== ADMIN ===================== -->
+<div class="vista" id="vAdmin">
+  <div class="cuerpo" style="grid-template-columns:1fr">
+
+    <div class="cabAdmin">
+      <div>
+        <h2><span class="mso">admin_panel_settings</span> <span data-i18n="admTitulo"></span></h2>
+        <div class="adQuien" id="adQuien"></div>
+      </div>
+      <button class="btn claro" id="adSalir" data-i18n="admSalir"></button>
+    </div>
+
+    <!-- 1: lo pendiente de verificar -->
+    <div class="bloqueAdmin">
+      <h3><span class="mso">pending_actions</span>
+        <span data-i18n="admPendientes"></span>
+        <span class="cuenta rojo" id="adNPend">0</span></h3>
+      <p class="adAyuda" data-i18n="admPendientesAyuda"></p>
+      <div id="adListaPend"></div>
+    </div>
+
+    <!-- 2: todos los eventos, para corregir o borrar -->
+    <div class="bloqueAdmin">
+      <h3><span class="mso">list_alt</span> <span data-i18n="admTodos"></span>
+        <span class="cuenta" id="adNTotal">0</span></h3>
+      <p class="adAyuda" data-i18n="admTodosAyuda"></p>
+      <input type="text" id="adBusca" data-i18n-ph="admBuscar" placeholder="Buscar…">
+      <div id="adListaTodos"></div>
+    </div>
+
+    <!-- 3: solo para el super admin -->
+    <div class="bloqueAdmin" id="adAdmins" style="display:none">
+      <h3><span class="mso">group</span> <span data-i18n="admEquipo"></span></h3>
+      <p class="adAyuda" data-i18n="admEquipoAyuda"></p>
+      <div class="adNuevo">
+        <input type="text" id="adNuevoNombre" data-i18n-ph="admNombre" placeholder="Nombre">
+        <input type="text" id="adNuevoZona" data-i18n-ph="admZona" placeholder="Zona (ej: Valle de Bravo)">
+        <select id="adNuevoRol">
+          <option value="zona">Zona</option>
+          <option value="super">Super admin</option>
+        </select>
+        <button class="btn" id="adCrear" data-i18n="admCrear"></button>
+      </div>
+      <div id="adListaAdmins"></div>
+    </div>
+
+    <!-- 4: el rastro -->
+    <div class="bloqueAdmin">
+      <h3><span class="mso">history</span> <span data-i18n="admRegistro"></span></h3>
+      <p class="adAyuda" data-i18n="admRegistroAyuda"></p>
+      <div id="adListaLog"></div>
+    </div>
+
+  </div>
+</div>
+
+<div class="vista" id="vMapa">
+  <div class="cuerpo" style="grid-template-columns:1fr">
+    <div>
+      <div class="cabSeccion"><h2 data-i18n="mapaTitulo"></h2>
+        <span class="sub" data-i18n="mapaSub"></span></div>
+      <div id="mapa" style="margin-top:14px"></div>
+      <div class="filtros" id="filtros"></div>
+      <div class="lista" id="listaInc"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== PATRONES ===================== -->
+<div class="vista" id="vPatrones">
+  <div class="cuerpo" style="grid-template-columns:1fr">
+    <div>
+      <div class="cabSeccion"><h2 data-i18n="patronesTitulo"></h2>
+        <span class="sub" data-i18n="patronesSub"></span></div>
+      <div class="patrones" id="patrones" style="margin-top:16px"></div>
+    </div>
+  </div>
+</div>
+
+<footer class="pie">
+  <div><b>SkyReport</b></div>
+  <div data-i18n="pieTexto">Reportes anónimos de eventos de parapente</div>
+  <div class="lema" data-i18n="pieLema">Volar. Aprender. Volver.</div>
+</footer>
+
+<div class="aviso" id="aviso">
+  <div class="caja">
+    <h3 id="avT"></h3>
+    <div class="cuerpo" id="avD"></div>
+    <button class="btn" id="avX" data-i18n="entender">Entendido</button>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+<script>
+/* ==========================================================================
+   NEARMISS — incidentes y casi-accidentes de parapente
+   Diseño: Pam.  Código: Whale.
+   No es para señalar pilotos, es para aprender.
+   ========================================================================== */
+
+const FIRE = 'https://plan-gym-8aff7-default-rtdb.firebaseio.com';
+const $ = id => document.getElementById(id);
+
+/* ==========================================================================
+   LOS IDIOMAS (idea de Pam)
+   --------------------------------------------------------------------------
+   'Si queremos que sea para todo el mundo eso es super importante'.
+   El español va primero porque es el idioma en que se piensa esto, pero el
+   inglés es el que hace que un piloto de Suiza o de Brasil lo pueda usar.
+   Añadir otro idioma = copiar un bloque y traducirlo. Nada mas.
+   ========================================================================== */
+const TXT = {
+  es: {
+    /* cabecera */
+    lema: 'Una comunidad<br>por vuelos más seguros',
+    navMapa: 'Mapa', navReportar: 'Reportar', navPatrones: 'Patrones',
+    /* portada */
+    heroTitulo: 'Seguridad compartida. Aprendizaje colectivo.',
+    heroTexto: 'Aquí puedes reportar de forma anónima eventos de parapente.<br>'
+             + 'No buscamos culpables. Buscamos entender qué pasó, para que el '
+             + 'próximo vuelo salga mejor.',
+    heroCita: '<b>“Cada experiencia cuenta.</b> Un vuelo más seguro empieza con '
+            + 'compartir lo que ocurrió.”',
+    /* el formulario */
+    formTitulo: 'Reportar un evento',
+    formAviso: 'Todo es anónimo. Los campos marcados son obligatorios.',
+    c1t: '¿Qué ocurrió?', c1a: 'Clasifica el nivel del evento, desde un casi accidente hasta una fatalidad.',
+    c2t: '¿Qué pasó?', c2a: 'La situación concreta. Es lo que permite ver patrones después.',
+    c3t: 'Consecuencias', c3a: 'El resultado concreto.',
+    c4t: 'Fase del vuelo', c4a: '¿En qué momento del vuelo?',
+    c5t: 'Dónde', c5a: 'Toca la zona en el mapa. La ubicación pública se muestra de forma '
+                     + 'aproximada, para reducir la posibilidad de identificar al piloto.',
+    c6t: 'Cuándo', c6a: 'Con el día saco el viento real que hacía ahí. '
+                      + '<b>El día no se publica</b>: se guarda el mes y el año.',
+    c7t: 'Franja del día', c7a: 'Se publica la franja, nunca la hora.',
+    c8t: 'Cómo estaba el aire', c8a: 'Lo que tú sentiste. Si indicas fecha y ubicación, SkyReport puede '
+       + 'complementar el reporte con datos meteorológicos registrados de esa zona.',
+    c9t: 'Tu archivo de vuelo', c9a: 'Un IGC identifica un vuelo concreto. Lee cómo se trata antes de subirlo.',
+    c10t: 'Cuéntalo', c10a: 'Sin nombres. El detalle que identifica a alguien, fuera; '
+                          + 'el que explica lo que pasó, dentro.',
+    obligatorio: 'obligatorio', opcional: 'opcional',
+    otroTitulo: '¿Cuál? Cuéntalo en una línea',
+    otroEjemplo: 'Ej: enganche con el arnés · objetivo en el aire · nudo en el freno',
+    fatalTexto: '<b>Gracias por contarlo.</b> Es el dato que más ayuda a que no vuelva '
+              + 'a pasar.<br><br>Cuéntalo <b>sin nombres</b> y sin detalles que no '
+              + 'aporten aprendizaje. Lo que importa es qué pasó y en qué condiciones, '
+              + 'no quién.<br><br><b>Las fatalidades no se publican al momento:</b> '
+              + 'quedan pendientes de verificación para que un error o un rumor no se '
+              + 'convierta en un dato.',
+    igcBoton: 'Subir mi archivo IGC',
+    igcNota: 'El archivo se elimina automáticamente después de extraer los datos '
+           + 'necesarios: la hora del vuelo y la altura máxima. No se guarda ni se '
+           + 'publica en ningún caso.',
+    relatoEjemplo: 'Escribe aquí tu relato (opcional)...',
+    privacidad: '<b>Qué se publica y qué no.</b><br><b>Se publica:</b> el mes y el año, '
+              + 'la ubicación aproximada, la franja del día, la situación y las consecuencias.'
+              + '<br><b>No se publica nunca:</b> tu nombre, el día exacto, la hora exacta, '
+              + 'tu posición precisa, ni el archivo IGC. El archivo se usa solo para leer '
+              + 'las condiciones del vuelo y se elimina en el momento.',
+    enviar: 'Enviar evento anónimo',
+    /* los contadores y la columna derecha */
+    evEventos: 'eventos', evEvento: 'evento',
+    evSitios: 'sitios', evSitio: 'sitio',
+    empezando: 'La base de conocimiento está empezando.<br>Cada reporte ayuda a construirla.',
+    zonasNada: 'Aún no hay zonas con reportes.', evPatrones: 'patrones', evPatron: 'patrón',
+    principios: 'Principios',
+    p1: 'Seguridad antes que todo', p1s: 'Aprendemos de la experiencia real.',
+    p2: 'Sin juicios, sin culpables', p2s: 'Esto no trata de señalar, sino de mejorar.',
+    p3: 'Comunidad global', p3s: 'El conocimiento compartido hace nuestros vuelos más seguros.',
+    anonTitulo: 'Anónimo por diseño',
+    anonTexto: 'No pedimos tu nombre, ni datos personales, ni información que pueda '
+             + 'identificarte. La ubicación es aproximada y los detalles se tratan con cuidado.',
+    anonMas: 'Saber más sobre tu privacidad',
+    aprendeTitulo: 'Qué aprendemos',
+    aprendeTexto: 'Los reportes nos permiten identificar patrones, zonas de riesgo y '
+                + 'situaciones recurrentes para compartir aprendizajes con toda la comunidad.',
+    aprendeVer: 'Ver patrones y análisis',
+    reciente: 'Actividad reciente en el mapa',
+    verMapaCompleto: 'Ver mapa completo',
+    emergencia: '<b>Importante</b><br>SkyReport no es un canal de emergencia. Si '
+              + 'necesitas ayuda inmediata, contacta con los servicios de rescate locales.',
+    /* las vistas */
+    mapaTitulo: 'Mapa de eventos',
+    mapaSub: 'Cada punto es un evento. El calor muestra dónde se acumulan.',
+    patronesTitulo: 'Patrones',
+    patronesSub: 'Los eventos aislados cuentan historias. Juntos revelan patrones.',
+    todos: 'Todos',
+    /* --- admin --- */
+    navAdmin: 'Admin',
+    instBoton: 'Instalar la app',
+    instTitulo: 'Añádelo a tu pantalla de inicio',
+    instTexto: 'En iPhone no hay un botón de instalar. Es así:<br><br>'
+      + '<b>1.</b> Toca el botón de <b>Compartir</b> (el cuadradito con la flecha).<br>'
+      + '<b>2.</b> Baja y toca <b>«Añadir a pantalla de inicio»</b>.<br>'
+      + '<b>3.</b> Ponle nombre y dale a <b>Añadir</b>.<br><br>'
+      + 'Y ya lo tienes con su icono, como una app. <b>Y funciona sin cobertura.</b>',
+    admTitulo: 'Administración',
+    admSalir: 'Salir',
+    admPendientes: 'Pendientes de verificar',
+    admPendientesAyuda: 'Las fatalidades no se publican hasta que alguien las '
+      + 'confirma. Aquí decides. Si dudas, no la publiques: un dato falso hace '
+      + 'más daño que un dato que falta.',
+    admTodos: 'Todos los eventos',
+    admTodosAyuda: 'Puedes corregir un dato mal puesto o borrar un evento. Borrar '
+      + 'no borra: se guarda una copia por si hay que deshacerlo.',
+    admBuscar: 'Buscar por sitio, tipo o texto…',
+    admEquipo: 'Quién puede administrar',
+    admEquipoAyuda: 'Dale una clave a cada persona de confianza. Puedes revocarla '
+      + 'cuando quieras. Los de zona solo ven y tocan lo de su zona.',
+    admNombre: 'Nombre',
+    admZona: 'Zona (ej: Valle de Bravo)',
+    admCrear: 'Dar clave',
+    admRegistro: 'Registro de acciones',
+    admRegistroAyuda: 'Quién hizo qué y cuándo. Esto no se puede borrar.',
+    admPub: 'Publicar', admRech: 'Rechazar', admEditar: 'Editar',
+    admBorrar: 'Borrar', admRevocar: 'Revocar',
+    admTuClave: 'Tu clave',
+    admPuerta: 'Entrar como administrador',
+    admPuertaAyuda: 'Pega aquí la clave que te dieron. Se queda guardada en este '
+      + 'dispositivo y no se envía a ningún sitio.',
+    admClaveMal: 'Esa clave no vale. Mírala bien, o pídele otra a quien te la dio.',
+    admEres: 'Eres <b>{n}</b> · {r}',
+    admRolSuper: 'super admin (puedes todo)',
+    admRolZona: 'encargado de <b>{z}</b>',
+    admRolVer: 'verificador',
+    admSinPermiso: 'Ese evento no es de tu zona.',
+    admPublicado: 'Publicado. Ya se ve en el mapa.',
+    admRechazado: 'Rechazado. No se publicará, pero queda el registro.',
+    admBorrado: 'Borrado. Se puede deshacer: hay copia.',
+    admNadaPend: 'No hay nada pendiente. Todo verificado.',
+    admNadaLog: 'Todavía no se ha hecho nada.',
+    admConfirmBorrar: '¿Seguro que quieres borrar este evento? Se puede deshacer.',
+    admOk: 'Hecho',
+    subTitulo: 'Reportes anónimos de eventos de parapente',
+    pieTexto: 'Reportes anónimos de eventos de parapente',
+    pieLema: 'Volar. Aprender. Volver.',
+    eligeFase: 'Selecciona una fase…',
+    /* avisos */
+    faltaTitulo: 'Falta algún dato', faltaTexto: 'Necesito: ',
+    faltaFin: '.<br><br>Son 30 segundos y con eso ya sirve.',
+    graciasTitulo: 'Gracias. Ya está dentro.',
+    graciasTexto: 'Lo que has contado puede evitar que otro pase por lo mismo.',
+    graciasViento: 'Y he guardado el viento real de ese día: ',
+    graciasFin: 'Puedes reportar todos los que quieras: <b>los sustos también cuentan</b>.',
+    errorTitulo: 'No se pudo enviar',
+    errorTexto: 'Revisa tu conexión e inténtalo otra vez.',
+    privTitulo: 'Privacidad',
+    privTexto: 'No pedimos tu nombre, ni tu teléfono, ni tu correo.<br><br>La ubicación '
+             + 'que se publica es <b>aproximada</b>. En un despegue remoto, con la fecha y '
+             + 'las circunstancias, eso todavía podría ser identificable — por eso pedimos '
+             + 'también que no pongas detalles que señalen a una persona.'
+             + '<br><br>El <b>día</b> que pongas se usa solo para calcular el viento de '
+             + 'esa jornada y <b>no se guarda</b>: solo queda el mes y el año.'
+             + '<br><br>Y no hay cuentas ni usuarios: nadie puede ver quién reportó qué.'
+             + '<br><br>El anonimato no es un extra. Es lo único que hace que esto sirva.',
+    sinPuntoTitulo: 'Ese evento no tiene punto',
+    sinPuntoTexto: 'Quien lo escribió no marcó dónde pasó. Es lo único que se pide y no '
+                 + 'se obligó, así que no hay sitio al que llevarte.',
+    mirandoViento: 'Mirando el viento que hacía ese día…',
+    enviando: 'Enviando…',
+    verEnMapa: 'Ver en el mapa',
+    pendVerif: 'pendiente de verificación',
+    entender: 'Entendido',
+    nada: 'Todavía no hay eventos.<br>Sé el primero en contar uno.',
+    /* los patrones */
+    masClaro: 'El patrón más claro hasta ahora', en: 'En', hayEventos: 'hay',
+    eventos2: 'eventos', yDeEllos: 'y de ellos', sonDe: 'son de',
+    masDatos: 'Con más datos esto dirá cosas como «aquí, en esta época, pasa esto». Ese es el objetivo.',
+    quePasaMas: 'Qué pasa más', enTotal: 'eventos en total',
+    faseTitulo: 'En qué fase del vuelo', faseSub: 'dónde se complica',
+    vientoTitulo: 'El viento de esos días', vientoSub: 'traen el viento real del clima de ese día',
+    vientoMedio: 'Viento medio', rachasMedias: 'rachas medias',
+    tenianRachas: 'tenían <b>rachas muy por encima del viento medio</b>',
+    mayoriaRachado: ' — la mayoría fueron con aire <b>racheado</b>',
+    conSostenido: 'fueron con viento sostenido de <b>25 km/h o más</b>',
+    gravedadTitulo: 'Gravedad de los eventos', gravedadSub: 'del susto a lo peor: mirarlo sin morbo, para aprender',
+    consecTitulo: 'Consecuencias', consecSub: 'el resultado, en datos',
+    horaTitulo: 'A qué hora del día', horaSub: 'franja del día',
+    dondeTitulo: 'Dónde', dondeSub: 'por sitio, sin señalar puntos exactos',
+    pocosDatos: 'Todavía no hay suficientes datos',
+    pocosTexto: 'Los patrones salen cuando hay al menos 3 eventos. Ahora hay ',
+    pocosFin: 'Por eso lo importante ahora es que la gente reporte: <b>cada susto cuenta</b>. '
+            + 'Con 20 eventos esto ya dice cosas útiles.',
+  },
+
+  en: {
+    lema: 'A community<br>for safer flights',
+    navMapa: 'Map', navReportar: 'Report', navPatrones: 'Patterns',
+    heroTitulo: 'Shared safety. Collective learning.',
+    heroTexto: 'Here you can anonymously report paragliding events.<br>'
+             + 'We are not looking for someone to blame. We are trying to understand '
+             + 'what happened, so the next flight goes better.',
+    heroCita: '<b>“Every experience counts.</b> A safer flight starts by sharing '
+            + 'what happened.”',
+    formTitulo: 'Report an event',
+    formAviso: 'Everything is anonymous. The marked fields are required.',
+    c1t: 'What happened?', c1a: 'Sets the level of the event, from a near miss to a fatality.',
+    c2t: 'What was it?', c2a: 'The specific situation. This is what makes patterns possible.',
+    c3t: 'Consequences', c3a: 'The actual outcome.',
+    c4t: 'Phase of flight', c4a: 'At what point in the flight?',
+    c5t: 'Where', c5a: 'Tap the area on the map. The public location is shown only approximately, '
+                     + 'to reduce the chance of identifying the pilot.',
+    c6t: 'When', c6a: 'With the day I work out the real wind that day. '
+                    + '<b>The day is never published</b>: only the month and year are kept.',
+    c7t: 'Time of day', c7a: 'The time of day is published, never the exact hour.',
+    c8t: 'How was the air', c8a: 'What you felt. If you give the date and location, SkyReport can add '
+       + 'recorded weather data for that area.',
+    c9t: 'Your flight file', c9a: 'An IGC identifies one specific flight. Read how it is handled before uploading.',
+    c10t: 'Tell the story', c10a: 'No names. Leave out anything that identifies someone; '
+                                + 'keep what explains what happened.',
+    obligatorio: 'required', opcional: 'optional',
+    otroTitulo: 'Which one? Describe it in one line',
+    otroEjemplo: 'E.g. harness snag · someone in the air · brake knot',
+    fatalTexto: '<b>Thank you for telling it.</b> This is the data that helps most to '
+              + 'keep it from happening again.<br><br>Please tell it <b>without names</b> '
+              + 'and without details that do not add to what we learn. What matters is '
+              + 'what happened and in what conditions, not who.<br><br>'
+              + '<b>Fatalities are not published immediately:</b> they stay pending '
+              + 'verification so a mistake or a rumour does not become data.',
+    igcBoton: 'Upload my IGC file',
+    igcNota: 'The file is deleted automatically after extracting the data we need: '
+           + 'the flight time and the maximum altitude. It is never stored or '
+           + 'published.',
+    relatoEjemplo: 'Write your story here (optional)...',
+    privacidad: '<b>What is published and what is not.</b><br><b>Published:</b> the month '
+              + 'and year, the rounded area, the time of day, the situation and the '
+              + 'consequences.<br><b>Never published:</b> your name, the exact day, the '
+              + 'exact hour, your precise position, or the IGC file. The file is only '
+              + 'read for the flight conditions and is not kept.',
+    enviar: 'Send anonymous event',
+    evEventos: 'events', evEvento: 'event',
+    evSitios: 'sites', evSitio: 'site',
+    empezando: 'The knowledge base is just starting.<br>Every report helps build it.',
+    zonasNada: 'No areas with reports yet.', evPatrones: 'patterns', evPatron: 'pattern',
+    principios: 'Principles',
+    p1: 'Safety above all', p1s: 'We learn from real experience.',
+    p2: 'No judgement, no blame', p2s: 'This is not about pointing fingers, it is about improving.',
+    p3: 'A global community', p3s: 'Shared knowledge makes our flights safer.',
+    anonTitulo: 'Anonymous by design',
+    anonTexto: 'We do not ask for your name, personal data, or anything that could '
+             + 'identify you. The location is approximate and details are handled with care.',
+    anonMas: 'Learn more about your privacy',
+    aprendeTitulo: 'What we learn',
+    aprendeTexto: 'Events let us spot patterns, risk areas and recurring situations so '
+                + 'we can share what we learn with the whole community.',
+    aprendeVer: 'See patterns and analysis',
+    reciente: 'Recent activity on the map',
+    verMapaCompleto: 'See the full map',
+    emergencia: '<b>Important</b><br>SkyReport is not an emergency channel. If you need '
+              + 'immediate help, contact your local rescue services.',
+    mapaTitulo: 'Event map',
+    mapaSub: 'Each dot is one event. The heat shows where they pile up.',
+    patronesTitulo: 'Patterns',
+    patronesSub: 'Single events tell stories. Together they reveal patterns.',
+    todos: 'All',
+    navAdmin: 'Admin',
+    instBoton: 'Install the app',
+    instTitulo: 'Add it to your home screen',
+    instTexto: 'On iPhone there is no install button. Here is how:<br><br>'
+      + '<b>1.</b> Tap the <b>Share</b> button (the square with the arrow).<br>'
+      + '<b>2.</b> Scroll down and tap <b>“Add to Home Screen”</b>.<br>'
+      + '<b>3.</b> Give it a name and tap <b>Add</b>.<br><br>'
+      + 'That is it — its own icon, just like an app. <b>And it works with no '
+      + 'signal.</b>',
+    admTitulo: 'Administration',
+    admSalir: 'Sign out',
+    admPendientes: 'Pending verification',
+    admPendientesAyuda: 'Fatalities are not published until somebody confirms '
+      + 'them. That is your call. If in doubt, do not publish: a false entry '
+      + 'does more damage than a missing one.',
+    admTodos: 'All events',
+    admTodosAyuda: 'You can fix a wrong detail or delete an event. Deleting does '
+      + 'not destroy: a copy is kept in case it needs undoing.',
+    admBuscar: 'Search by site, type or text…',
+    admEquipo: 'Who can administer',
+    admEquipoAyuda: 'Give a key to each trusted person. You can revoke it any '
+      + 'time. Zone admins only see and touch their own zone.',
+    admNombre: 'Name',
+    admZona: 'Zone (e.g. Valle de Bravo)',
+    admCrear: 'Issue key',
+    admRegistro: 'Action log',
+    admRegistroAyuda: 'Who did what and when. This cannot be deleted.',
+    admPub: 'Publish', admRech: 'Reject', admEditar: 'Edit',
+    admBorrar: 'Delete', admRevocar: 'Revoke',
+    admTuClave: 'Your key',
+    admPuerta: 'Sign in as administrator',
+    admPuertaAyuda: 'Paste the key you were given. It stays on this device and is '
+      + 'never sent anywhere.',
+    admClaveMal: 'That key is not valid. Check it, or ask for another one.',
+    admEres: 'You are <b>{n}</b> · {r}',
+    admRolSuper: 'super admin (you can do everything)',
+    admRolZona: 'zone admin for <b>{z}</b>',
+    admRolVer: 'verifier',
+    admSinPermiso: 'That event is not in your zone.',
+    admPublicado: 'Published. It is on the map now.',
+    admRechazado: 'Rejected. It will not be published, but the record stays.',
+    admBorrado: 'Deleted. It can be undone: a copy is kept.',
+    admNadaPend: 'Nothing pending. All verified.',
+    admNadaLog: 'Nothing has been done yet.',
+    admConfirmBorrar: 'Delete this event? It can be undone.',
+    admOk: 'Done',
+    subTitulo: 'Anonymous paragliding event reports',
+    pieTexto: 'Anonymous paragliding event reports',
+    pieLema: 'Fly. Learn. Come back.',
+    eligeFase: 'Choose a phase…',
+    faltaTitulo: 'Something is missing', faltaTexto: 'I need: ',
+    faltaFin: '.<br><br>It takes 30 seconds and that is all it needs.',
+    graciasTitulo: 'Thank you. It is in.',
+    graciasTexto: 'What you told us may keep someone else from going through the same.',
+    graciasViento: 'And I saved the real wind from that day: ',
+    graciasFin: 'You can report as many as you like: <b>close calls count too</b>.',
+    errorTitulo: 'Could not send it',
+    errorTexto: 'Check your connection and try again.',
+    privTitulo: 'Privacy',
+    privTexto: 'We do not ask for your name, phone or email.<br><br>The location is '
+             + '<b>rounded to about 100 metres</b>, so it does not point at an exact spot.'
+             + '<br><br>The <b>day</b> you enter is used only to work out the wind that '
+             + 'day and is <b>not saved</b>: only the month and year remain.'
+             + '<br><br>There are no accounts and no users: nobody can see who reported what.'
+             + '<br><br>Anonymity is not a feature. It is the only thing that makes this work.',
+    sinPuntoTitulo: 'That event has no location',
+    sinPuntoTexto: 'Whoever wrote it did not mark where it happened. It is the one thing '
+                 + 'we ask for and it is not required, so there is nowhere to take you.',
+    mirandoViento: 'Checking the wind that day…',
+    enviando: 'Sending…',
+    verEnMapa: 'See on the map',
+    pendVerif: 'pending verification',
+    entender: 'Got it',
+    nada: 'No events yet.<br>Be the first to tell one.',
+    masClaro: 'The clearest pattern so far', en: 'At', hayEventos: 'there are',
+    eventos2: 'events', yDeEllos: 'and of those', sonDe: 'are',
+    masDatos: 'With more data this will say things like “here, in this season, this is '
+            + 'what happens”. That is the goal.',
+    quePasaMas: 'What happens most', enTotal: 'events in total',
+    faseTitulo: 'Phase of flight', faseSub: 'where it gets complicated',
+    vientoTitulo: 'The wind on those days', vientoSub: 'carry the real wind from the weather of that day',
+    vientoMedio: 'Average wind', rachasMedias: 'average gusts',
+    tenianRachas: 'had <b>gusts well above the average wind</b>',
+    mayoriaRachado: ' — most of them were in <b>gusty</b> air',
+    conSostenido: 'had sustained wind of <b>25 km/h or more</b>',
+    gravedadTitulo: 'Severity of the events', gravedadSub: 'from a scare to the worst: read it without morbid curiosity, to learn',
+    consecTitulo: 'Consequences', consecSub: 'the outcome, in numbers',
+    horaTitulo: 'Time of day', horaSub: 'time of day',
+    dondeTitulo: 'Where', dondeSub: 'by site, without pointing at exact spots',
+    pocosDatos: 'Not enough data yet',
+    pocosTexto: 'Patterns appear once there are at least 3 events. Right now there are ',
+    pocosFin: 'That is why the important thing now is that people report: <b>every close '
+            + 'call counts</b>. With 20 events this already tells you useful things.',
+  },
+
+  /* ==================== FRANCÉS ==================== */
+  fr: {
+    lema: 'Une communauté<br>pour des vols plus sûrs',
+    navMapa: 'Carte', navReportar: 'Signaler', navPatrones: 'Tendances',
+    heroTitulo: 'Sécurité partagée. Apprentissage collectif.',
+    heroTexto: 'Ici, tu peux signaler un événement de parapente de façon anonyme.<br>'
+             + 'Nous ne cherchons pas de coupable. Nous cherchons à comprendre ce qui '
+             + 's’est passé, pour que le prochain vol se passe mieux.',
+    heroCita: '<b>« Chaque expérience compte.</b> Un vol plus sûr commence par '
+            + 'raconter ce qui s’est passé. »',
+    formTitulo: 'Signaler un événement',
+    formAviso: 'Tout est anonyme. Les champs marqués sont obligatoires.',
+    c1t: 'Que s’est-il passé ?', c1a: 'Classe le niveau de l’événement, du presque-accident à l’accident mortel.',
+    c2t: 'De quoi s’agissait-il ?', c2a: 'La situation concrète. C’est ce qui permet de voir des tendances ensuite.',
+    c3t: 'Conséquences', c3a: 'Le résultat concret.',
+    c4t: 'Phase du vol', c4a: 'À quel moment du vol ?',
+    c5t: 'Où', c5a: 'Touche la zone sur la carte. La localisation publique est donnée de façon '
+                  + 'approximative, pour réduire la possibilité d’identifier le pilote.',
+    c6t: 'Quand', c6a: 'Avec le jour, j’obtiens le vent qu’il faisait là-bas. '
+                    + '<b>Le jour n’est jamais publié</b> : seul le mois et l’année sont conservés.',
+    c7t: 'Moment de la journée', c7a: 'C’est le moment qui est publié, jamais l’heure.',
+    c8t: 'Comment était l’air', c8a: 'Ce que tu as ressenti. Si tu indiques la date et le lieu, SkyReport '
+                                  + 'peut compléter le rapport avec les données météo enregistrées de cette zone.',
+    c9t: 'Ton fichier de vol', c9a: 'Un IGC identifie un vol précis. Lis comment il est traité avant de l’envoyer.',
+    c10t: 'Raconte', c10a: 'Pas de noms. Ce qui identifie quelqu’un, dehors ; ce qui explique ce qui s’est passé, dedans.',
+    obligatorio: 'obligatoire', opcional: 'facultatif',
+    otroTitulo: 'Lequel ? Décris-le en une ligne',
+    otroEjemplo: 'Ex : accrochage du harnais · quelqu’un en l’air · nœud dans le frein',
+    fatalTexto: '<b>Merci de le raconter.</b> C’est la donnée qui aide le plus à éviter que cela se reproduise.'
+              + '<br><br>Raconte-le <b>sans noms</b> et sans détails qui n’apportent rien. Ce qui compte, '
+              + 'c’est ce qui s’est passé et dans quelles conditions, pas qui.<br><br>'
+              + '<b>Les accidents mortels ne sont pas publiés tout de suite :</b> ils restent en attente de '
+              + 'vérification, pour qu’une erreur ou une rumeur ne devienne pas une donnée.',
+    igcBoton: 'Envoyer mon fichier IGC',
+    igcNota: 'Le fichier est supprimé automatiquement après l’extraction des données nécessaires : '
+           + 'l’heure du vol et l’altitude maximale. Il n’est jamais conservé ni publié.',
+    relatoEjemplo: 'Écris ton récit ici (facultatif)...',
+    privacidad: '<b>Ce qui est publié et ce qui ne l’est pas.</b><br><b>Publié :</b> le mois et l’année, '
+              + 'la localisation approximative, le moment de la journée, la situation et les conséquences.'
+              + '<br><b>Jamais publié :</b> ton nom, le jour exact, l’heure exacte, ta position précise, '
+              + 'ni le fichier IGC. Le fichier sert uniquement à lire les conditions du vol et il est supprimé aussitôt.',
+    enviar: 'Envoyer l’événement anonyme',
+    evEventos: 'événements', evEvento: 'événement',
+    evSitios: 'sites', evSitio: 'site',
+    empezando: 'La base de connaissances commence.<br>Chaque signalement aide à la construire.',
+    evPatrones: 'tendances', evPatron: 'tendance',
+    principios: 'Principes',
+    p1: 'La sécurité avant tout', p1s: 'On apprend de l’expérience réelle.',
+    p2: 'Sans jugement, sans coupable', p2s: 'Il ne s’agit pas de pointer quelqu’un, mais d’améliorer.',
+    p3: 'Communauté internationale', p3s: 'Le savoir partagé rend nos vols plus sûrs.',
+    anonTitulo: 'Anonyme par conception',
+    anonTexto: 'Nous ne demandons ni ton nom, ni de données personnelles, ni rien qui puisse t’identifier. '
+             + 'La localisation est approximative et les détails sont traités avec soin.',
+    anonMas: 'En savoir plus sur ta vie privée',
+    aprendeTitulo: 'Ce qu’on apprend',
+    aprendeTexto: 'Les signalements permettent d’identifier des tendances, des zones à risque et des '
+                + 'situations récurrentes, pour partager ce savoir avec toute la communauté.',
+    aprendeVer: 'Voir les tendances et l’analyse',
+    reciente: 'Activité récente sur la carte',
+    verMapaCompleto: 'Voir la carte complète',
+    emergencia: '<b>Important</b><br>SkyReport n’est pas un canal d’urgence. Si tu as besoin d’aide '
+              + 'immédiate, contacte les secours locaux.',
+    mapaTitulo: 'Carte des événements',
+    mapaSub: 'Chaque point est un événement. La chaleur montre où ils s’accumulent.',
+    patronesTitulo: 'Tendances',
+    patronesSub: 'Les événements isolés racontent des histoires. Ensemble, ils révèlent des tendances.',
+    todos: 'Tous',
+    subTitulo: 'Signalements anonymes d’événements de parapente',
+    pieTexto: 'Signalements anonymes d’événements de parapente',
+    pieLema: 'Voler. Apprendre. Revenir.',
+    eligeFase: 'Choisis une phase…',
+    faltaTitulo: 'Il manque une donnée', faltaTexto: 'Il me faut : ',
+    faltaFin: '.<br><br>C’est l’affaire de 30 secondes et ça suffit.',
+    graciasTitulo: 'Merci. C’est enregistré.',
+    graciasTexto: 'Ce que tu as raconté peut éviter à quelqu’un d’autre de vivre la même chose.',
+    graciasViento: 'Et j’ai gardé le vent qu’il faisait ce jour-là : ',
+    graciasFin: 'Tu peux en signaler autant que tu veux : <b>les frayeurs comptent aussi</b>.',
+    errorTitulo: 'Envoi impossible',
+    errorTexto: 'Vérifie ta connexion et réessaie.',
+    privTitulo: 'Vie privée',
+    privTexto: 'Nous ne demandons ni ton nom, ni ton téléphone, ni ton e-mail.<br><br>La localisation '
+             + 'publiée est <b>approximative</b>. Sur un décollage isolé, avec la date et les '
+             + 'circonstances, cela pourrait encore être identifiable — c’est pourquoi nous demandons '
+             + 'aussi de ne pas écrire de détails qui désignent une personne.'
+             + '<br><br>Le <b>jour</b> que tu indiques sert uniquement à calculer le vent de cette '
+             + 'journée et <b>n’est pas conservé</b> : il ne reste que le mois et l’année.'
+             + '<br><br>Il n’y a ni compte ni utilisateur : personne ne peut voir qui a signalé quoi.'
+             + '<br><br>L’anonymat n’est pas une option. C’est la seule chose qui fait que ça marche.',
+    sinPuntoTitulo: 'Cet événement n’a pas de point',
+    sinPuntoTexto: 'Celui qui l’a écrit n’a pas marqué où c’est arrivé. C’est la seule chose qu’on '
+                 + 'demande et elle n’est pas obligatoire, donc il n’y a nulle part où t’emmener.',
+    mirandoViento: 'Je regarde le vent qu’il faisait ce jour-là…',
+    enviando: 'Envoi…',
+    verEnMapa: 'Voir sur la carte',
+    pendVerif: 'en attente de vérification',
+    entender: 'Compris',
+    nada: 'Pas encore d’événement.<br>Sois le premier à en raconter un.',
+    masClaro: 'La tendance la plus claire jusqu’ici', en: 'À', hayEventos: 'il y a',
+    eventos2: 'événements', yDeEllos: 'et parmi eux', sonDe: 'sont de',
+    masDatos: 'Avec plus de données, ceci dira des choses comme « ici, à cette saison, voilà ce qui '
+            + 'se passe ». C’est l’objectif.',
+    quePasaMas: 'Ce qui arrive le plus', enTotal: 'événements au total',
+    faseTitulo: 'À quelle phase du vol', faseSub: 'où ça se complique',
+    vientoTitulo: 'Le vent de ces jours-là', vientoSub: 'apportent le vent réel de la météo de ce jour',
+    vientoMedio: 'Vent moyen', rachasMedias: 'rafales moyennes',
+    tenianRachas: 'avaient des <b>rafales bien au-dessus du vent moyen</b>',
+    mayoriaRachado: ' — la plupart étaient par air <b>rafaleux</b>',
+    conSostenido: 'avaient un vent soutenu de <b>25 km/h ou plus</b>',
+    gravedadTitulo: 'Gravité des événements',
+    gravedadSub: 'de la frayeur au pire : à regarder sans morbidité, pour apprendre',
+    consecTitulo: 'Conséquences', consecSub: 'le résultat, en chiffres',
+    horaTitulo: 'À quel moment de la journée', horaSub: 'moment de la journée',
+    dondeTitulo: 'Où', dondeSub: 'par site, sans pointer de lieu exact',
+    pocosDatos: 'Pas encore assez de données',
+    pocosTexto: 'Les tendances apparaissent à partir de 3 événements. Il y en a ',
+    pocosFin: 'C’est pourquoi le plus important maintenant, c’est que les gens signalent : '
+            + '<b>chaque frayeur compte</b>. Avec 20 événements, ceci dit déjà des choses utiles.',
+  
+    /* --- admin (francés) --- */
+    instBoton: 'Installer l’application',
+    instTitulo: 'Ajoute-le à ton écran d’accueil',
+    instTexto: 'Sur iPhone il n’y a pas de bouton d’installation. Voici comment :<br><br>'
+      + '<b>1.</b> Touche le bouton <b>Partager</b> (le carré avec la flèche).<br>'
+      + '<b>2.</b> Fais défiler et touche <b>« Sur l’écran d’accueil »</b>.<br>'
+      + '<b>3.</b> Donne-lui un nom et touche <b>Ajouter</b>.<br><br>'
+      + 'Et voilà : sa propre icône, comme une app. <b>Et ça marche sans réseau.</b>',
+    zonasNada: 'Pas encore de zones avec des signalements.',
+    admTitulo: 'Administration',
+    admSalir: 'Quitter',
+    admPendientes: 'En attente de vérification',
+    admPendientesAyuda: 'Les accidents mortels ne sont pas publiés tant que quelqu’un '
+      + 'ne les a pas confirmés. C’est ton rôle. En cas de doute, ne publie pas : '
+      + 'une donnée fausse fait plus de dégâts qu’une donnée manquante.',
+    admTodos: 'Tous les événements',
+    admTodosAyuda: 'Tu peux corriger une donnée mal saisie ou supprimer un événement. '
+      + 'Supprimer ne détruit pas : une copie est conservée au cas où.',
+    admBuscar: 'Chercher par site, type ou texte…',
+    admEquipo: 'Qui peut administrer',
+    admEquipoAyuda: 'Donne une clé à chaque personne de confiance. Tu peux la révoquer '
+      + 'quand tu veux. Les admins de zone ne voient et ne touchent que leur zone.',
+    admNombre: 'Nom',
+    admZona: 'Zone (ex : Valle de Bravo)',
+    admCrear: 'Créer une clé',
+    admRegistro: 'Journal des actions',
+    admRegistroAyuda: 'Qui a fait quoi et quand. Cela ne peut pas être supprimé.',
+    admPub: 'Publier', admRech: 'Refuser', admEditar: 'Modifier',
+    admBorrar: 'Supprimer', admRevocar: 'Révoquer',
+    admTuClave: 'Ta clé',
+    admPuerta: 'Entrer comme administrateur',
+    admPuertaAyuda: 'Colle ici la clé qu’on t’a donnée. Elle reste sur cet appareil et '
+      + 'n’est envoyée nulle part.',
+    admClaveMal: 'Cette clé n’est pas valable. Vérifie-la, ou demande-en une autre.',
+    admEres: 'Tu es <b>{n}</b> · {r}',
+    admRolSuper: 'super admin (tu peux tout)',
+    admRolZona: 'responsable de <b>{z}</b>',
+    admRolVer: 'vérificateur',
+    admSinPermiso: 'Cet événement n’est pas dans ta zone.',
+    admPublicado: 'Publié. Il est sur la carte.',
+    admRechazado: 'Refusé. Il ne sera pas publié, mais la trace reste.',
+    admBorrado: 'Supprimé. C’est réversible : une copie est conservée.',
+    admNadaPend: 'Rien en attente. Tout est vérifié.',
+    admNadaLog: 'Rien n’a encore été fait.',
+    admConfirmBorrar: 'Supprimer cet événement ? C’est réversible.',
+    admOk: 'C’est fait',
+  },
+
+  /* ==================== ALEMÁN ==================== */
+  de: {
+    lema: 'Eine Gemeinschaft<br>für sicherere Flüge',
+    navMapa: 'Karte', navReportar: 'Melden', navPatrones: 'Muster',
+    heroTitulo: 'Geteilte Sicherheit. Gemeinsames Lernen.',
+    heroTexto: 'Hier kannst du Gleitschirm-Ereignisse anonym melden.<br>'
+             + 'Wir suchen keinen Schuldigen. Wir versuchen zu verstehen, was passiert '
+             + 'ist, damit der nächste Flug besser wird.',
+    heroCita: '<b>„Jede Erfahrung zählt.</b> Ein sicherer Flug beginnt damit, zu '
+            + 'erzählen, was passiert ist.“',
+    formTitulo: 'Ein Ereignis melden',
+    formAviso: 'Alles ist anonym. Die markierten Felder sind Pflicht.',
+    c1t: 'Was ist passiert?', c1a: 'Ordnet die Schwere des Ereignisses ein — vom Beinaheunfall bis zum tödlichen Unfall.',
+    c2t: 'Worum handelte es sich?', c2a: 'Die konkrete Situation. Sie ermöglicht später die Muster.',
+    c3t: 'Folgen', c3a: 'Das konkrete Ergebnis.',
+    c4t: 'Flugphase', c4a: 'Zu welchem Zeitpunkt des Fluges?',
+    c5t: 'Wo', c5a: 'Tippe die Gegend auf der Karte an. Der öffentliche Standort wird nur '
+                  + 'ungenau dargestellt, um die Möglichkeit zu verringern, den Piloten zu erkennen.',
+    c6t: 'Wann', c6a: 'Mit dem Tag ermittle ich den tatsächlichen Wind dort. '
+                    + '<b>Der Tag wird nie veröffentlicht</b>: nur Monat und Jahr bleiben erhalten.',
+    c7t: 'Tageszeit', c7a: 'Veröffentlicht wird die Tageszeit, nie die genaue Uhrzeit.',
+    c8t: 'Wie war die Luft', c8a: 'Was du gespürt hast. Wenn du Datum und Ort angibst, kann SkyReport '
+                                + 'den Bericht mit aufgezeichneten Wetterdaten für diese Gegend ergänzen.',
+    c9t: 'Deine Flugdatei', c9a: 'Ein IGC identifiziert einen bestimmten Flug. Lies vorher, wie damit umgegangen wird.',
+    c10t: 'Erzähl es', c10a: 'Keine Namen. Was jemanden identifiziert, raus; was erklärt, was passiert ist, rein.',
+    obligatorio: 'Pflicht', opcional: 'optional',
+    otroTitulo: 'Welches? Beschreib es in einer Zeile',
+    otroEjemplo: 'Z. B. Hängen im Gurtzeug · jemand in der Luft · Knoten in der Bremse',
+    fatalTexto: '<b>Danke, dass du es erzählst.</b> Das ist die Angabe, die am meisten hilft, '
+              + 'damit es nicht wieder passiert.<br><br>Erzähl es <b>ohne Namen</b> und ohne '
+              + 'Details, die nichts beitragen. Wichtig ist, was passiert ist und unter welchen '
+              + 'Bedingungen — nicht, wer.<br><br><b>Tödliche Unfälle werden nicht sofort '
+              + 'veröffentlicht:</b> sie bleiben bis zur Prüfung offen, damit ein Fehler oder '
+              + 'ein Gerücht nicht zu einer Angabe wird.',
+    igcBoton: 'Meine IGC-Datei hochladen',
+    igcNota: 'Die Datei wird nach dem Auslesen der nötigen Daten automatisch gelöscht: Flugzeit '
+           + 'und maximale Höhe. Sie wird nie gespeichert oder veröffentlicht.',
+    relatoEjemplo: 'Schreib hier deinen Bericht (optional)...',
+    privacidad: '<b>Was veröffentlicht wird und was nicht.</b><br><b>Veröffentlicht:</b> Monat und '
+              + 'Jahr, der ungefähre Ort, die Tageszeit, die Situation und die Folgen.'
+              + '<br><b>Nie veröffentlicht:</b> dein Name, der genaue Tag, die genaue Uhrzeit, '
+              + 'deine genaue Position oder die IGC-Datei. Die Datei dient nur dem Auslesen der '
+              + 'Flugbedingungen und wird sofort gelöscht.',
+    enviar: 'Anonymes Ereignis senden',
+    evEventos: 'Ereignisse', evEvento: 'Ereignis',
+    evSitios: 'Orte', evSitio: 'Ort',
+    empezando: 'Die Wissensbasis beginnt gerade.<br>Jede Meldung hilft, sie aufzubauen.',
+    evPatrones: 'Muster', evPatron: 'Muster',
+    principios: 'Grundsätze',
+    p1: 'Sicherheit über alles', p1s: 'Wir lernen aus echter Erfahrung.',
+    p2: 'Ohne Urteil, ohne Schuld', p2s: 'Es geht nicht darum, zu zeigen, sondern besser zu werden.',
+    p3: 'Weltweite Gemeinschaft', p3s: 'Geteiltes Wissen macht unsere Flüge sicherer.',
+    anonTitulo: 'Anonym von Grund auf',
+    anonTexto: 'Wir fragen weder nach deinem Namen noch nach persönlichen Daten noch nach '
+             + 'irgendetwas, das dich identifizieren könnte. Der Ort ist ungefähr und Details '
+             + 'werden sorgfältig behandelt.',
+    anonMas: 'Mehr über deinen Datenschutz',
+    aprendeTitulo: 'Was wir lernen',
+    aprendeTexto: 'Meldungen zeigen Muster, Risikogebiete und wiederkehrende Situationen — '
+                + 'damit wir das Gelernte mit der ganzen Gemeinschaft teilen können.',
+    aprendeVer: 'Muster und Analyse ansehen',
+    reciente: 'Letzte Aktivität auf der Karte',
+    verMapaCompleto: 'Ganze Karte ansehen',
+    emergencia: '<b>Wichtig</b><br>SkyReport ist kein Notfallkanal. Wenn du sofort Hilfe '
+              + 'brauchst, wende dich an die örtlichen Rettungsdienste.',
+    mapaTitulo: 'Karte der Ereignisse',
+    mapaSub: 'Jeder Punkt ist ein Ereignis. Die Wärme zeigt, wo sie sich häufen.',
+    patronesTitulo: 'Muster',
+    patronesSub: 'Einzelne Ereignisse erzählen Geschichten. Zusammen zeigen sie Muster.',
+    todos: 'Alle',
+    subTitulo: 'Anonyme Meldungen von Gleitschirm-Ereignissen',
+    pieTexto: 'Anonyme Meldungen von Gleitschirm-Ereignissen',
+    pieLema: 'Fliegen. Lernen. Zurückkommen.',
+    eligeFase: 'Wähle eine Phase…',
+    faltaTitulo: 'Eine Angabe fehlt', faltaTexto: 'Ich brauche: ',
+    faltaFin: '.<br><br>Das dauert 30 Sekunden und reicht schon.',
+    graciasTitulo: 'Danke. Es ist drin.',
+    graciasTexto: 'Was du erzählt hast, kann verhindern, dass es jemand anderem genauso geht.',
+    graciasViento: 'Und ich habe den echten Wind jenes Tages gespeichert: ',
+    graciasFin: 'Du kannst so viele melden, wie du willst: <b>Schreckmomente zählen auch</b>.',
+    errorTitulo: 'Senden fehlgeschlagen',
+    errorTexto: 'Prüfe deine Verbindung und versuch es noch einmal.',
+    privTitulo: 'Datenschutz',
+    privTexto: 'Wir fragen weder nach deinem Namen noch nach Telefon oder E-Mail.<br><br>Der '
+             + 'veröffentlichte Ort ist <b>ungefähr</b>. An einem abgelegenen Startplatz könnte '
+             + 'er zusammen mit Datum und Umständen noch erkennbar sein — deshalb bitten wir '
+             + 'auch darum, keine Details zu schreiben, die auf eine Person hinweisen.'
+             + '<br><br>Der <b>Tag</b>, den du angibst, dient nur der Windberechnung und wird '
+             + '<b>nicht gespeichert</b>: es bleiben nur Monat und Jahr.'
+             + '<br><br>Es gibt keine Konten und keine Nutzer: niemand kann sehen, wer was gemeldet hat.'
+             + '<br><br>Anonymität ist keine Option. Sie ist das Einzige, was das hier funktionieren lässt.',
+    sinPuntoTitulo: 'Dieses Ereignis hat keinen Punkt',
+    sinPuntoTexto: 'Wer es geschrieben hat, hat nicht markiert, wo es passiert ist. Das ist das '
+                 + 'Einzige, wonach wir fragen, und es ist nicht Pflicht — also gibt es kein Ziel.',
+    mirandoViento: 'Ich schaue den Wind jenes Tages nach…',
+    enviando: 'Wird gesendet…',
+    verEnMapa: 'Auf der Karte sehen',
+    pendVerif: 'Prüfung ausstehend',
+    entender: 'Verstanden',
+    nada: 'Noch keine Ereignisse.<br>Sei der Erste, der eines erzählt.',
+    masClaro: 'Das klarste Muster bisher', en: 'In', hayEventos: 'gibt es',
+    eventos2: 'Ereignisse', yDeEllos: 'und davon', sonDe: 'sind',
+    masDatos: 'Mit mehr Daten steht hier so etwas wie „hier, in dieser Jahreszeit, passiert das“. '
+            + 'Das ist das Ziel.',
+    quePasaMas: 'Was am häufigsten passiert', enTotal: 'Ereignisse insgesamt',
+    faseTitulo: 'In welcher Flugphase', faseSub: 'wo es kompliziert wird',
+    vientoTitulo: 'Der Wind jener Tage', vientoSub: 'bringen den echten Wind des Wetters jenes Tages',
+    vientoMedio: 'Mittlerer Wind', rachasMedias: 'mittlere Böen',
+    tenianRachas: 'hatten <b>Böen weit über dem mittleren Wind</b>',
+    mayoriaRachado: ' — die meisten bei <b>böigem</b> Wind',
+    conSostenido: 'hatten beständigen Wind von <b>25 km/h oder mehr</b>',
+    gravedadTitulo: 'Schwere der Ereignisse',
+    gravedadSub: 'vom Schreck bis zum Schlimmsten: ohne Sensationslust ansehen, um zu lernen',
+    consecTitulo: 'Folgen', consecSub: 'das Ergebnis, in Zahlen',
+    horaTitulo: 'Zu welcher Tageszeit', horaSub: 'Tageszeit',
+    dondeTitulo: 'Wo', dondeSub: 'nach Ort, ohne genaue Punkte zu zeigen',
+    pocosDatos: 'Noch nicht genug Daten',
+    pocosTexto: 'Muster entstehen ab 3 Ereignissen. Aktuell gibt es ',
+    pocosFin: 'Deshalb ist jetzt das Wichtigste, dass Leute melden: <b>jeder Schreck zählt</b>. '
+            + 'Mit 20 Ereignissen sagt das hier schon Nützliches.',
+  
+    /* --- admin (alemán) --- */
+    instBoton: 'App installieren',
+    instTitulo: 'Zum Home-Bildschirm hinzufügen',
+    instTexto: 'Auf dem iPhone gibt es keinen Installationsknopf. So geht es:<br><br>'
+      + '<b>1.</b> Tippe auf <b>Teilen</b> (das Quadrat mit dem Pfeil).<br>'
+      + '<b>2.</b> Scrolle und tippe auf <b>„Zum Home-Bildschirm“</b>.<br>'
+      + '<b>3.</b> Gib einen Namen und tippe auf <b>Hinzufügen</b>.<br><br>'
+      + 'Fertig — mit eigenem Symbol, wie eine App. <b>Und sie funktioniert ohne Netz.</b>',
+    zonasNada: 'Noch keine Gebiete mit Meldungen.',
+    admTitulo: 'Verwaltung',
+    admSalir: 'Abmelden',
+    admPendientes: 'Prüfung ausstehend',
+    admPendientesAyuda: 'Tödliche Unfälle werden erst veröffentlicht, wenn jemand sie '
+      + 'bestätigt hat. Das ist deine Aufgabe. Im Zweifel nicht veröffentlichen: eine '
+      + 'falsche Angabe schadet mehr als eine fehlende.',
+    admTodos: 'Alle Ereignisse',
+    admTodosAyuda: 'Du kannst eine falsche Angabe korrigieren oder ein Ereignis löschen. '
+      + 'Löschen zerstört nichts: eine Kopie bleibt erhalten.',
+    admBuscar: 'Nach Ort, Art oder Text suchen…',
+    admEquipo: 'Wer verwalten darf',
+    admEquipoAyuda: 'Gib jeder Vertrauensperson einen Schlüssel. Du kannst ihn jederzeit '
+      + 'entziehen. Gebiets-Admins sehen und bearbeiten nur ihr Gebiet.',
+    admNombre: 'Name',
+    admZona: 'Gebiet (z. B. Valle de Bravo)',
+    admCrear: 'Schlüssel erstellen',
+    admRegistro: 'Aktionsprotokoll',
+    admRegistroAyuda: 'Wer was getan hat und wann. Das lässt sich nicht löschen.',
+    admPub: 'Veröffentlichen', admRech: 'Ablehnen', admEditar: 'Bearbeiten',
+    admBorrar: 'Löschen', admRevocar: 'Entziehen',
+    admTuClave: 'Dein Schlüssel',
+    admPuerta: 'Als Administrator anmelden',
+    admPuertaAyuda: 'Füge hier den Schlüssel ein, den du bekommen hast. Er bleibt auf '
+      + 'diesem Gerät und wird nirgendwohin gesendet.',
+    admClaveMal: 'Dieser Schlüssel ist ungültig. Prüfe ihn, oder bitte um einen neuen.',
+    admEres: 'Du bist <b>{n}</b> · {r}',
+    admRolSuper: 'Super-Admin (du darfst alles)',
+    admRolZona: 'verantwortlich für <b>{z}</b>',
+    admRolVer: 'Prüfer',
+    admSinPermiso: 'Dieses Ereignis liegt nicht in deinem Gebiet.',
+    admPublicado: 'Veröffentlicht. Es ist auf der Karte.',
+    admRechazado: 'Abgelehnt. Es wird nicht veröffentlicht, bleibt aber protokolliert.',
+    admBorrado: 'Gelöscht. Rückgängig möglich: eine Kopie bleibt erhalten.',
+    admNadaPend: 'Nichts offen. Alles geprüft.',
+    admNadaLog: 'Bisher wurde nichts getan.',
+    admConfirmBorrar: 'Dieses Ereignis löschen? Es ist rückgängig zu machen.',
+    admOk: 'Erledigt',
+  },
+
+  /* ==================== PORTUGUÉS ==================== */
+  pt: {
+    lema: 'Uma comunidade<br>por voos mais seguros',
+    navMapa: 'Mapa', navReportar: 'Relatar', navPatrones: 'Padrões',
+    heroTitulo: 'Segurança compartilhada. Aprendizagem coletiva.',
+    heroTexto: 'Aqui podes relatar eventos de parapente de forma anónima.<br>'
+             + 'Não procuramos culpados. Procuramos entender o que aconteceu, para que '
+             + 'o próximo voo corra melhor.',
+    heroCita: '<b>“Cada experiência conta.</b> Um voo mais seguro começa por partilhar '
+            + 'o que aconteceu.”',
+    formTitulo: 'Relatar um evento',
+    formAviso: 'Tudo é anónimo. Os campos marcados são obrigatórios.',
+    c1t: 'O que aconteceu?', c1a: 'Classifica o nível do evento, desde um quase-acidente até uma fatalidade.',
+    c2t: 'O que foi?', c2a: 'A situação concreta. É o que permite ver padrões depois.',
+    c3t: 'Consequências', c3a: 'O resultado concreto.',
+    c4t: 'Fase do voo', c4a: 'Em que momento do voo?',
+    c5t: 'Onde', c5a: 'Toca na zona do mapa. A localização pública é mostrada de forma '
+                    + 'aproximada, para reduzir a possibilidade de identificar o piloto.',
+    c6t: 'Quando', c6a: 'Com o dia descubro o vento real que fazia ali. '
+                    + '<b>O dia nunca é publicado</b>: só ficam o mês e o ano.',
+    c7t: 'Altura do dia', c7a: 'Publica-se a altura do dia, nunca a hora.',
+    c8t: 'Como estava o ar', c8a: 'O que sentiste. Se indicares data e localização, o SkyReport pode '
+                                + 'complementar o relato com dados meteorológicos registados dessa zona.',
+    c9t: 'O teu ficheiro de voo', c9a: 'Um IGC identifica um voo concreto. Lê como é tratado antes de o enviar.',
+    c10t: 'Conta-o', c10a: 'Sem nomes. O que identifica alguém, fora; o que explica o que aconteceu, dentro.',
+    obligatorio: 'obrigatório', opcional: 'opcional',
+    otroTitulo: 'Qual? Descreve-o numa linha',
+    otroEjemplo: 'Ex: prender no arnês · alguém no ar · nó no travão',
+    fatalTexto: '<b>Obrigado por contá-lo.</b> É o dado que mais ajuda a evitar que volte a acontecer.'
+              + '<br><br>Conta-o <b>sem nomes</b> e sem detalhes que não acrescentem nada. O que '
+              + 'importa é o que aconteceu e em que condições, não quem.<br><br>'
+              + '<b>As fatalidades não são publicadas de imediato:</b> ficam pendentes de '
+              + 'verificação, para que um erro ou um rumor não se torne num dado.',
+    igcBoton: 'Enviar o meu ficheiro IGC',
+    igcNota: 'O ficheiro é eliminado automaticamente depois de extrair os dados necessários: '
+           + 'a hora do voo e a altitude máxima. Nunca é guardado nem publicado.',
+    relatoEjemplo: 'Escreve aqui o teu relato (opcional)...',
+    privacidad: '<b>O que se publica e o que não.</b><br><b>Publica-se:</b> o mês e o ano, a '
+              + 'localização aproximada, a altura do dia, a situação e as consequências.'
+              + '<br><b>Nunca se publica:</b> o teu nome, o dia exato, a hora exata, a tua posição '
+              + 'precisa, nem o ficheiro IGC. O ficheiro serve só para ler as condições do voo e é '
+              + 'eliminado de imediato.',
+    enviar: 'Enviar evento anónimo',
+    evEventos: 'eventos', evEvento: 'evento',
+    evSitios: 'locais', evSitio: 'local',
+    empezando: 'A base de conhecimento está a começar.<br>Cada relato ajuda a construí-la.',
+    evPatrones: 'padrões', evPatron: 'padrão',
+    principios: 'Princípios',
+    p1: 'Segurança acima de tudo', p1s: 'Aprendemos com a experiência real.',
+    p2: 'Sem julgamentos, sem culpados', p2s: 'Não se trata de apontar, mas de melhorar.',
+    p3: 'Comunidade global', p3s: 'O conhecimento partilhado torna os nossos voos mais seguros.',
+    anonTitulo: 'Anónimo por conceção',
+    anonTexto: 'Não pedimos o teu nome, nem dados pessoais, nem nada que te possa identificar. '
+             + 'A localização é aproximada e os detalhes são tratados com cuidado.',
+    anonMas: 'Saber mais sobre a tua privacidade',
+    aprendeTitulo: 'O que aprendemos',
+    aprendeTexto: 'Os relatos permitem identificar padrões, zonas de risco e situações recorrentes, '
+                + 'para partilhar o que aprendemos com toda a comunidade.',
+    aprendeVer: 'Ver padrões e análise',
+    reciente: 'Atividade recente no mapa',
+    verMapaCompleto: 'Ver mapa completo',
+    emergencia: '<b>Importante</b><br>O SkyReport não é um canal de emergência. Se precisares de '
+              + 'ajuda imediata, contacta os serviços de socorro locais.',
+    mapaTitulo: 'Mapa de eventos',
+    mapaSub: 'Cada ponto é um evento. O calor mostra onde se acumulam.',
+    patronesTitulo: 'Padrões',
+    patronesSub: 'Os eventos isolados contam histórias. Juntos revelam padrões.',
+    todos: 'Todos',
+    subTitulo: 'Relatos anónimos de eventos de parapente',
+    pieTexto: 'Relatos anónimos de eventos de parapente',
+    pieLema: 'Volar. Aprender. Voltar.',
+    eligeFase: 'Escolhe uma fase…',
+    faltaTitulo: 'Falta um dado', faltaTexto: 'Preciso de: ',
+    faltaFin: '.<br><br>São 30 segundos e com isso já serve.',
+    graciasTitulo: 'Obrigado. Já está dentro.',
+    graciasTexto: 'O que contaste pode evitar que outro passe pelo mesmo.',
+    graciasViento: 'E guardei o vento real desse dia: ',
+    graciasFin: 'Podes relatar todos os que quiseres: <b>os sustos também contam</b>.',
+    errorTitulo: 'Não foi possível enviar',
+    errorTexto: 'Verifica a tua ligação e tenta outra vez.',
+    privTitulo: 'Privacidade',
+    privTexto: 'Não pedimos o teu nome, nem o telemóvel, nem o e-mail.<br><br>A localização '
+             + 'publicada é <b>aproximada</b>. Num descolamento remoto, com a data e as '
+             + 'circunstâncias, ainda poderia ser identificável — por isso pedimos também que '
+             + 'não escrevas detalhes que apontem para uma pessoa.'
+             + '<br><br>O <b>dia</b> que indicares serve só para calcular o vento dessa jornada e '
+             + '<b>não é guardado</b>: fica apenas o mês e o ano.'
+             + '<br><br>Não há contas nem utilizadores: ninguém pode ver quem relatou o quê.'
+             + '<br><br>O anonimato não é um extra. É a única coisa que faz isto funcionar.',
+    sinPuntoTitulo: 'Esse evento não tem ponto',
+    sinPuntoTexto: 'Quem o escreveu não marcou onde aconteceu. É a única coisa que pedimos e não é '
+                 + 'obrigatória, por isso não há sítio para onde te levar.',
+    mirandoViento: 'A ver o vento que fazia nesse dia…',
+    enviando: 'A enviar…',
+    verEnMapa: 'Ver no mapa',
+    pendVerif: 'pendente de verificação',
+    entender: 'Entendido',
+    nada: 'Ainda não há eventos.<br>Sê o primeiro a contar um.',
+    masClaro: 'O padrão mais claro até agora', en: 'Em', hayEventos: 'há',
+    eventos2: 'eventos', yDeEllos: 'e desses', sonDe: 'são de',
+    masDatos: 'Com mais dados isto dirá coisas como «aqui, nesta época, acontece isto». É o objetivo.',
+    quePasaMas: 'O que acontece mais', enTotal: 'eventos no total',
+    faseTitulo: 'Em que fase do voo', faseSub: 'onde se complica',
+    vientoTitulo: 'O vento desses dias', vientoSub: 'trazem o vento real do clima desse dia',
+    vientoMedio: 'Vento médio', rachasMedias: 'rajadas médias',
+    tenianRachas: 'tinham <b>rajadas muito acima do vento médio</b>',
+    mayoriaRachado: ' — a maioria foi com ar <b>rajado</b>',
+    conSostenido: 'foram com vento sustentado de <b>25 km/h ou mais</b>',
+    gravedadTitulo: 'Gravidade dos eventos',
+    gravedadSub: 'do susto ao pior: olhar sem morbidez, para aprender',
+    consecTitulo: 'Consequências', consecSub: 'o resultado, em números',
+    horaTitulo: 'A que hora do dia', horaSub: 'altura do dia',
+    dondeTitulo: 'Onde', dondeSub: 'por local, sem apontar pontos exatos',
+    pocosDatos: 'Ainda não há dados suficientes',
+    pocosTexto: 'Os padrões aparecem a partir de 3 eventos. Neste momento há ',
+    pocosFin: 'Por isso o importante agora é que as pessoas relatem: <b>cada susto conta</b>. '
+            + 'Com 20 eventos isto já diz coisas úteis.',
+  
+    /* --- admin (português) --- */
+    instBoton: 'Instalar a aplicação',
+    instTitulo: 'Adiciona ao ecrã principal',
+    instTexto: 'No iPhone não há botão de instalação. É assim:<br><br>'
+      + '<b>1.</b> Toca em <b>Partilhar</b> (o quadrado com a seta).<br>'
+      + '<b>2.</b> Desce e toca em <b>«Adicionar ao ecrã principal»</b>.<br>'
+      + '<b>3.</b> Dá-lhe um nome e toca em <b>Adicionar</b>.<br><br>'
+      + 'E fica com o seu ícone, como uma app. <b>E funciona sem rede.</b>',
+    zonasNada: 'Ainda não há zonas com relatos.',
+    admTitulo: 'Administração',
+    admSalir: 'Sair',
+    admPendientes: 'Pendentes de verificação',
+    admPendientesAyuda: 'As fatalidades não são publicadas até alguém as confirmar. '
+      + 'É a tua decisão. Em caso de dúvida, não publiques: um dado falso faz mais '
+      + 'dano do que um dado em falta.',
+    admTodos: 'Todos os eventos',
+    admTodosAyuda: 'Podes corrigir um dado mal introduzido ou apagar um evento. Apagar '
+      + 'não destrói: fica uma cópia para o caso de ser preciso.',
+    admBuscar: 'Procurar por local, tipo ou texto…',
+    admEquipo: 'Quem pode administrar',
+    admEquipoAyuda: 'Dá uma chave a cada pessoa de confiança. Podes revogá-la quando '
+      + 'quiseres. Os admins de zona só veem e mexem na sua zona.',
+    admNombre: 'Nome',
+    admZona: 'Zona (ex: Valle de Bravo)',
+    admCrear: 'Criar chave',
+    admRegistro: 'Registo de ações',
+    admRegistroAyuda: 'Quem fez o quê e quando. Isto não se pode apagar.',
+    admPub: 'Publicar', admRech: 'Rejeitar', admEditar: 'Editar',
+    admBorrar: 'Apagar', admRevocar: 'Revogar',
+    admTuClave: 'A tua chave',
+    admPuerta: 'Entrar como administrador',
+    admPuertaAyuda: 'Cola aqui a chave que te deram. Fica neste dispositivo e não é '
+      + 'enviada para lado nenhum.',
+    admClaveMal: 'Essa chave não é válida. Confirma-a, ou pede outra.',
+    admEres: 'És <b>{n}</b> · {r}',
+    admRolSuper: 'super admin (podes tudo)',
+    admRolZona: 'responsável por <b>{z}</b>',
+    admRolVer: 'verificador',
+    admSinPermiso: 'Esse evento não é da tua zona.',
+    admPublicado: 'Publicado. Já está no mapa.',
+    admRechazado: 'Rejeitado. Não será publicado, mas fica o registo.',
+    admBorrado: 'Apagado. Dá para desfazer: fica uma cópia.',
+    admNadaPend: 'Nada pendente. Tudo verificado.',
+    admNadaLog: 'Ainda não se fez nada.',
+    admConfirmBorrar: 'Apagar este evento? Dá para desfazer.',
+    admOk: 'Feito',
+  },
+};
+
+let idioma = 'es';
+
+/* ---------- las opciones ---------- */
+/* ==========================================================================
+   LA CLASIFICACIÓN (revisión de Pam)
+   --------------------------------------------------------------------------
+   Pam: 'dejar de llamar a todo incidente'. SkyReport tiene que ser el PARABUAS
+   de todo lo que pasa volando, de un susto a una fatalidad. Así que ahora hay
+   TRES preguntas distintas que antes estaban mezcladas en una:
+
+     1. ¿Qué ocurrió?   -> la GRAVEDAD del evento (near miss ... fatalidad)
+     2. ¿Qué pasó?      -> la SITUACIÓN concreta (plegada, sotavento...) que es
+                           lo que luego genera los patrones
+     3. Consecuencias   -> el RESULTADO (sin lesiones ... fatalidad)
+   ========================================================================== */
+
+/* 1 · la gravedad. Esto es lo que hace que SkyReport sea el paraguas */
+const SEVERIDAD = [
+  { id:'near',      e:'warning',         es:'Near miss / casi accidente', en:'Near miss',
+    fr:'Presque-accident', de:'Beinaheunfall', pt:'Quase-acidente' },
+  { id:'incidente', e:'error_outline',   es:'Incidente',        en:'Incident',
+    fr:'Incident', de:'Zwischenfall', pt:'Incidente' },
+  { id:'accidente', e:'report_problem',  es:'Accidente',        en:'Accident',
+    fr:'Accident', de:'Unfall', pt:'Acidente' },
+  { id:'grave',     e:'personal_injury', es:'Accidente grave',  en:'Serious accident',
+    fr:'Accident grave', de:'Schwerer Unfall', pt:'Acidente grave' },
+  { id:'fatal',     e:'emergency',       es:'Fatalidad',        en:'Fatality',
+    fr:'Accident mortel', de:'Tödlicher Unfall', pt:'Fatalidade' },
+];
+
+/* 2 · la situación. Aquí está el valor: es lo que permite decir
+   '17 eventos con sotavento' o '8 proximidades entre pilotos' */
+const SITUACION = [
+  { id:'plegada',    e:'air',            es:'Plegada o cierre',         en:'Collapse or closure',
+    fr:'Fermeture', de:'Einklapper', pt:'Fechamento' },
+  { id:'proximidad', e:'groups',         es:'Proximidad entre pilotos', en:'Close to another pilot',
+    fr:'Proximité entre pilotes', de:'Nähe zu anderen Piloten', pt:'Proximidade entre pilotos' },
+  { id:'sotavento',  e:'landscape',      es:'Sotavento',                en:'Lee side',
+    fr:'Sous le vent', de:'Lee-Seite', pt:'Sotavento' },
+  { id:'rotor',      e:'storm',          es:'Rotor o turbulencia',      en:'Rotor or turbulence',
+    fr:'Rotor ou turbulence', de:'Rotor oder Turbulenz', pt:'Rotor ou turbulência' },
+  { id:'cable',      e:'cable',          es:'Cable o tendido',          en:'Cable or power line',
+    fr:'Câble ou ligne électrique', de:'Kabel oder Stromleitung', pt:'Cabo ou linha elétrica' },
+  { id:'arbol',      e:'forest',         es:'Árbol o zona arbolada',    en:'Tree or wooded area',
+    fr:'Arbre ou zone boisée', de:'Baum oder Waldgebiet', pt:'Árvore ou zona arborizada' },
+  { id:'despegue',   e:'flight_takeoff', es:'Despegue',                 en:'Launch',
+    fr:'Décollage', de:'Start', pt:'Descolagem' },
+  { id:'aterrizaje', e:'flight_land',    es:'Aterrizaje',               en:'Landing',
+    fr:'Atterrissage', de:'Landung', pt:'Aterragem' },
+  { id:'bajo',       e:'trending_down',  es:'Quedarse bajo',            en:'Getting low',
+    fr:'Rester trop bas', de:'Zu tief geraten', pt:'Ficar baixo' },
+  { id:'otro',       e:'more_horiz',     es:'Otro',                     en:'Other',
+    fr:'Autre', de:'Sonstiges', pt:'Outro' },
+];
+
+/* 3 · las consecuencias. '¿Cómo acabó?' sonaba feo para una muerte. */
+const CONSEC = [
+  { id:'sin',    e:'check_circle',    es:'Sin lesiones',     en:'No injuries',
+    fr:'Aucune blessure', de:'Keine Verletzungen', pt:'Sem lesões' },
+  { id:'leves',  e:'healing',         es:'Lesiones leves',   en:'Minor injuries',
+    fr:'Blessures légères', de:'Leichte Verletzungen', pt:'Lesões leves' },
+  { id:'graves', e:'personal_injury', es:'Lesiones graves',  en:'Serious injuries',
+    fr:'Blessures graves', de:'Schwere Verletzungen', pt:'Lesões graves' },
+  { id:'danos',  e:'car_crash',       es:'Daños materiales', en:'Material damage',
+    fr:'Dégâts matériels', de:'Sachschaden', pt:'Danos materiais' },
+  { id:'fatal',  e:'emergency',       es:'Fatalidad',        en:'Fatality',
+    fr:'Accident mortel', de:'Tödlicher Unfall', pt:'Fatalidade' },
+];
+
+const FASES = [
+  { id:'despegue',     es:'Despegue',          en:'Launch',
+    fr:'Décollage', de:'Start', pt:'Descolagem' },
+  { id:'termica',      es:'Térmica / ascenso', en:'Thermal / climb',
+    fr:'Thermique / montée', de:'Thermik / Steigen', pt:'Térmica / subida' },
+  { id:'transito',     es:'Tránsito',          en:'Transition',
+    fr:'Transit', de:'Übergang', pt:'Trânsito' },
+  { id:'aproximacion', es:'Aproximación',      en:'Approach',
+    fr:'Approche', de:'Anflug', pt:'Aproximação' },
+  { id:'aterrizaje',   es:'Aterrizaje',        en:'Landing',
+    fr:'Atterrissage', de:'Landung', pt:'Aterragem' },
+];
+const FRANJAS = [
+  { id:'manana',   e:'wb_twilight', es:'Mañana',   en:'Morning',
+    fr:'Matin', de:'Morgen', pt:'Manhã' },
+  { id:'mediodia', e:'light_mode',  es:'Mediodía', en:'Midday',
+    fr:'Midi', de:'Mittag', pt:'Meio-dia' },
+  { id:'tarde',    e:'wb_sunny',    es:'Tarde',    en:'Afternoon',
+    fr:'Après-midi', de:'Nachmittag', pt:'Tarde' },
+  { id:'noche',    e:'dark_mode',   es:'Noche',    en:'Evening',
+    fr:'Soir', de:'Abend', pt:'Noite' },
+];
+const AIRES = [
+  { id:'tranquilo',  e:'air',                   es:'Tranquilo',   en:'Calm',
+    fr:'Calme', de:'Ruhig', pt:'Calmo' },
+  { id:'turbulento', e:'waves',                 es:'Turbulento',  en:'Turbulent',
+    fr:'Turbulent', de:'Turbulent', pt:'Turbulento' },
+  { id:'termico',    e:'local_fire_department', es:'Térmico',     en:'Thermal',
+    fr:'Thermique', de:'Thermisch', pt:'Térmico' },
+  { id:'fuerte',     e:'storm',                 es:'Con viento fuerte', en:'Strong wind',
+    fr:'Vent fort', de:'Starker Wind', pt:'Vento forte' },
+  { id:'variable',   e:'swap_horiz',            es:'Variable',    en:'Variable',
+    fr:'Variable', de:'Wechselhaft', pt:'Variável' },
+  { id:'nose',       e:'help',                  es:'No lo sé',    en:'Not sure',
+    fr:'Je ne sais pas', de:'Weiß nicht', pt:'Não sei' },
+];
+const MESES = {
+  es: ['enero','febrero','marzo','abril','mayo','junio',
+       'julio','agosto','septiembre','octubre','noviembre','diciembre'],
+  en: ['January','February','March','April','May','June',
+       'July','August','September','October','November','December'],
+  fr: ['janvier','février','mars','avril','mai','juin',
+       'juillet','août','septembre','octobre','novembre','décembre'],
+  de: ['Januar','Februar','März','April','Mai','Juni',
+       'Juli','August','September','Oktober','November','Dezember'],
+  pt: ['janeiro','fevereiro','março','abril','maio','junho',
+       'julho','agosto','setembro','outubro','novembro','dezembro'],
+};
+
+let incidentes = [];
+let marcasInc = {};      /* id del reporte -> su marca en el mapa */
+let idSenalado = null;   /* el reporte que has tocado: ese se resalta */
+let mapaPrincipal = null, mapaMarca = null, mapaCalorMini = null;
+let marcaMia = null, capaPuntos = null, capaCalor = null, capaCalorMini = null;
+let filtro = 'todos';
+/* OJO: las claves son sev / sit / cons. Antes ponia tipo y gravedad, que ya
+   no existen. Funcionaba por accidente (se reemplaza el objeto entero), pero
+   era una trampa para el proximo que lo lea. */
+let sel = { sev:null, sit:null, cons:null, franja:null, aire:null, lat:null, lon:null };
+let igc = null;
+
+/* ---------- utilidades ---------- */
+function aviso(t, d){
+  $('avT').textContent = t; $('avD').innerHTML = d;
+  $('aviso').classList.add('on');
+}
+$('avX').onclick = () => $('aviso').classList.remove('on');
+
+function escapa(s){
+  return String(s).replace(/[&<>"']/g, c =>
+    ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+/* el nombre de una opcion, en el idioma que toque */
+function nb(o){ return o ? (o[idioma] || o.es || '') : ''; }
+function sevDe(id){ return SEVERIDAD.find(t => t.id === id) || SEVERIDAD[0]; }
+function sitDe(id){ return SITUACION.find(t => t.id === id) || SITUACION[SITUACION.length - 1]; }
+function consDe(id){ return CONSEC.find(t => t.id === id) || { es: id || '', en: id || '', e:'help' }; }
+function faseDe(id){ return FASES.find(f => f.id === id) || { es:'', en:'' }; }
+function franjaDe(id){ return FRANJAS.find(f => f.id === id) || { es:'', en:'' }; }
+function aireDe(id){ return AIRES.find(a => a.id === id) || { es:'', en:'' }; }
+/* y el texto de la interfaz */
+function t(k){ return (TXT[idioma] && TXT[idioma][k]) || (TXT.es[k] || ''); }
+/* el color, segun Pam: gris para lo leve, naranja para lo que avisa,
+   y rojo SOLO para accidente grave o fatalidad */
+function colorDe(id){
+  return id === 'fatal' ? '#33424a'
+       : id === 'grave' ? '#b5544a'
+       : id === 'accidente' ? '#d9782f'
+       : id === 'incidente' ? '#5f7a86'
+       : '#8ba3ad';
+}
+function nombreMes(m){
+  const p = String(m).split('-');
+  const mm = MESES[idioma][parseInt(p[1], 10) - 1] || '';
+  return mm + ' ' + p[0];
+}
+function redondea(v){ return Math.round(v * 1000) / 1000; }
+
+/* ==========================================================================
+   LOS NOMBRES DE LOS SITIOS
+   Las coordenadas no dicen nada. Mejor "Valle de Bravo" que "19.1, -100.1".
+   Si el punto no esta cerca de ningun sitio conocido, se muestran los numeros.
+   ========================================================================== */
+const SITIOS = [
+  /* Mexico */
+  { n:'Valle de Bravo',   lat:19.107, lon:-100.126 },
+  { n:'La Torre (Valle)', lat:19.093, lon:-100.150 },
+  { n:'Sacacorchos',      lat:19.110, lon:-100.162 },
+  { n:'Malinalco',        lat:18.949, lon: -99.496 },
+  { n:'Tapalpa',          lat:19.945, lon:-103.766 },
+  { n:'La Huasteca',      lat:25.636, lon:-100.440 },
+  { n:'San Miguel de Allende', lat:20.914, lon:-100.744 },
+  { n:'Taxco',            lat:18.556, lon: -99.605 },
+  { n:'Huasca',           lat:20.203, lon: -98.570 },
+  { n:'Mineral del Chico',lat:20.216, lon: -98.729 },
+  { n:'Pico de Orizaba',  lat:18.853, lon: -97.107 },
+  { n:'Chapala',          lat:20.296, lon:-103.191 },
+  { n:'Tequesquitengo',   lat:18.617, lon: -99.260 },
+  { n:'Amecameca',        lat:19.126, lon: -98.766 },
+  { n:'Cuetzalan',        lat:20.018, lon: -97.523 },
+  { n:'Real de Catorce',  lat:23.690, lon:-100.887 },
+  /* los clasicos internacionales */
+  { n:'Roldanillo (Colombia)', lat:4.415, lon:-76.153 },
+  { n:'Castejón de Sos (España)', lat:42.512, lon:0.487 },
+  { n:'Algodonales (España)',   lat:36.877, lon:-5.404 },
+  { n:'Piedrahíta (España)',    lat:40.464, lon:-5.327 },
+  { n:'Organyà (España)',       lat:42.211, lon:1.325 },
+  { n:'Áger (España)',          lat:42.000, lon:0.760 },
+];
+
+/* el sitio conocido mas cercano, si esta a menos de 35 km */
+function nombreSitio(lat, lon){
+  let mejor = null, dMin = 1e9;
+  const cos = Math.cos(lat * Math.PI / 180);
+  SITIOS.forEach(s => {
+    const dLat = (lat - s.lat) * 111;
+    const dLon = (lon - s.lon) * 111 * cos;
+    const d = Math.sqrt(dLat * dLat + dLon * dLon);
+    if (d < dMin){ dMin = d; mejor = s.n; }
+  });
+  if (dMin <= 35) return mejor;
+  return lat.toFixed(2) + ', ' + lon.toFixed(2);
+}
+
+/* ---------- el viento: datos, no etiquetas ---------- */
+/* los puntos cardinales, en cada idioma (el viento se dice de donde VIENE) */
+const CARDINALES = {
+  es: ['Norte','Noreste','Este','Sureste','Sur','Suroeste','Oeste','Noroeste'],
+  en: ['North','North-east','East','South-east','South','South-west','West','North-west'],
+  fr: ['Nord','Nord-est','Est','Sud-est','Sud','Sud-ouest','Ouest','Nord-ouest'],
+  de: ['Norden','Nordosten','Osten','Südosten','Süden','Südwesten','Westen','Nordwesten'],
+  pt: ['Norte','Nordeste','Este','Sudeste','Sul','Sudoeste','Oeste','Noroeste'],
+};
+const DESDE = { es:'del', en:'from', fr:'du', de:'aus', pt:'de' };
+function deDonde(g){
+  if (g == null) return '';
+  const i = Math.round((((g % 360) + 360) % 360) / 45) % 8;
+  return (DESDE[idioma] || 'de') + ' ' + CARDINALES[idioma][i];
+}
+function textoViento(v){
+  if (!v || v.kmh == null) return '';
+  /* OJO: la variable NO se llama 't' a proposito: t() es la traduccion */
+  let txt = v.kmh + ' km/h';
+  if (v.racha != null && v.racha > v.kmh + 8)
+    txt += ' · ' + (idioma === 'es' ? 'rachas ' : 'gusts ') + v.racha + ' km/h';
+  if (v.dir != null) txt += ' · ' + deDonde(v.dir) + ' (' + v.dir + '°)';
+  return txt;
+}
+function eraRacheado(v){
+  return !!(v && v.kmh != null && v.racha != null && v.racha > v.kmh + 12);
+}
+
+/* ---------- pintar botones de opcion ---------- */
+function pintaOps(idDiv, lista, campo, unacol){
+  const div = $(idDiv);
+  div.innerHTML = lista.map(o =>
+    '<button data-id="' + o.id + '">' +
+    (o.e ? '<span class="mso">' + o.e + '</span>' : '') +
+    '<span>' + nb(o) + '</span></button>').join('');
+  if (unacol) div.classList.add('unaCol');
+  div.onclick = ev => {
+    const b = ev.target.closest('button');
+    if (!b) return;
+    div.querySelectorAll('button').forEach(x => x.classList.remove('on'));
+    b.classList.add('on');
+    sel[campo] = b.dataset.id;
+    /* si la situación es "otro", le pido que diga cuál */
+    if (campo === 'sit'){
+      $('cajaOtro').classList.toggle('on', sel.sit === 'otro');
+      if (sel.sit === 'otro') setTimeout(() => $('otroTexto').focus(), 120);
+    }
+    /* si hay una fatalidad (en la gravedad o en las consecuencias), sale el
+       texto de respeto y el aviso de que queda pendiente de verificación */
+    if (campo === 'cons' || campo === 'sev'){
+      const hayFatal = (sel.cons === 'fatal' || sel.sev === 'fatal');
+      if ($('cajaFatalidad')) $('cajaFatalidad').classList.toggle('on', hayFatal);
+    }
+  };
+}
+
+/* ---------- los mapas ---------- */
+function creaMapaPrincipal(){
+  if (mapaPrincipal) return;
+  mapaPrincipal = L.map('mapa', { zoomControl:true })
+    .setView([19.06, -100.09], 11);
+  L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', { maxZoom:16 })
+    .addTo(mapaPrincipal);
+  L.control.attribution({ position:'bottomright', prefix:false })
+    .addAttribution('OpenTopoMap · OpenStreetMap').addTo(mapaPrincipal);
+  capaPuntos = L.layerGroup().addTo(mapaPrincipal);
+  setTimeout(() => mapaPrincipal.invalidateSize(), 300);
+}
+function creaMapaMarca(){
+  if (mapaMarca) return;
+  mapaMarca = L.map('mapaMarca', { zoomControl:true, attributionControl:false })
+    .setView([19.06, -100.09], 10);
+  L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', { maxZoom:16 })
+    .addTo(mapaMarca);
+  mapaMarca.on('click', e => {
+    sel.lat = redondea(e.latlng.lat); sel.lon = redondea(e.latlng.lng);
+    if (marcaMia) mapaMarca.removeLayer(marcaMia);
+    marcaMia = L.circleMarker([sel.lat, sel.lon],
+      { radius:9, color:'#fff', weight:3, fillColor:'#2d6b80', fillOpacity:1 })
+      .addTo(mapaMarca);
+  });
+  setTimeout(() => mapaMarca.invalidateSize(), 300);
+}
+function creaMapaCalor(){
+  if (mapaCalorMini) return;
+  mapaCalorMini = L.map('mapaCalor', { zoomControl:false, attributionControl:false,
+    dragging:false, scrollWheelZoom:false, doubleClickZoom:false })
+    .setView([19.06, -100.09], 9);
+  L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', { maxZoom:16 })
+    .addTo(mapaCalorMini);
+  capaCalorMini = L.layerGroup().addTo(mapaCalorMini);
+  setTimeout(() => mapaCalorMini.invalidateSize(), 400);
+}
+function pintaCalorMini(){
+  if (!mapaCalorMini) return;
+  capaCalorMini.clearLayers();
+  const pts = [];
+  incidentes.forEach(i => {
+    if (i.lat == null) return;
+    pts.push([i.lat, i.lon]);
+    const col = colorDe(i.sev);
+    L.circleMarker([i.lat, i.lon], { radius:6, color:'#fff', weight:2,
+      fillColor:col, fillOpacity:.92 }).addTo(capaCalorMini);
+  });
+  if (pts.length >= 2 && L.heatLayer){
+    L.heatLayer(pts.map(p => [p[0], p[1], 1]), {
+      radius: 26, blur: 20, maxZoom: 11,
+      gradient: { 0.2:'#7fb3c8', 0.55:'#d9a441', 0.85:'#b5544a' }
+    }).addTo(mapaCalorMini);
+  }
+  if (pts.length) mapaCalorMini.fitBounds(pts, { padding:[22,22], maxZoom:11 });
+}
+
+/* ==========================================================================
+   TOCAR UN REPORTE Y QUE EL MAPA VAYA A SU PUNTO (idea de Pam)
+   ========================================================================== */
+function irAlPunto(id){
+  const i = incidentes.find(x => x.id === id);
+  if (!i) return;
+  if (i.lat == null){
+    aviso(t('sinPuntoTitulo'), t('sinPuntoTexto'));
+    return;
+  }
+  idSenalado = id;            /* <- esto hace que SU punto se resalte */
+  ponPestana('tMapa');
+  pintaIncidentes();          /* repinto para que se vea el resalte */
+  setTimeout(() => {
+    if (!mapaPrincipal) return;
+    mapaPrincipal.setView([i.lat, i.lon], 14, { animate:true });
+    const m = marcasInc[id];
+    if (m && m.openPopup) m.openPopup();
+    /* subo al mapa, que es donde esta el punto */
+    const mm = document.getElementById('mapa');
+    if (mm) mm.scrollIntoView({ behavior:'smooth', block:'start' });
+    /* y dejo la tarjeta marcada con un aro, para saber cual es */
+    document.querySelectorAll('.inc').forEach(n => n.classList.remove('senala'));
+    const nodo = document.querySelector('.inc[data-id="' + id + '"]');
+    if (nodo) nodo.classList.add('senala');
+  }, 220);
+}
+
+/* ---------- la lista ---------- */
+function pintaIncidentes(){
+  const vis = incidentes.filter(i => filtro === 'todos' || i.sev === filtro);
+  vis.sort((a, b) => (b.mes || '').localeCompare(a.mes || ''));
+
+  $('listaInc').innerHTML = vis.length ? vis.map(i => {
+    const sv = sevDe(i.sev);          /* NO llamarlo 't': t() es la traduccion */
+    const sit = sitDe(i.sit);
+    const titulo = (i.sit === 'otro' && i.otro) ? escapa(i.otro) : nb(sit);
+    const pend = (i.verif === 'pendiente');
+    return '<div class="inc ' + (i.cons || '') + ' sev' + (i.sev || 'near')
+      + (pend ? ' pendiente' : '') + '" data-id="' + i.id
+      + '" onclick="irAlPunto(\'' + i.id + '\')">'
+      + '<div class="tipo"><span class="mso">' + sit.e + '</span>' + titulo
+      + '<span class="etq sevEtq">' + nb(sv) + '</span>'
+      + (pend ? '<span class="etq pendEtq"><span class="mso">pending</span>' + t('pendVerif') + '</span>' : '')
+      + '</div>'
+      + '<div class="meta">'
+      + (i.lat != null ? '<b>' + escapa(nombreSitio(i.lat, i.lon)) + '</b> · ' : '')
+      + (i.mes ? nombreMes(i.mes) : 'sin fecha')
+      + (i.franja ? ' · ' + nb(franjaDe(i.franja)) : '')
+      + (i.aire ? ' · ' + nb(aireDe(i.aire)) : '')
+      + '</div>'
+      + (textoViento(i.viento) ? '<div class="dato">💨 <b>' + textoViento(i.viento) + '</b>'
+          + (eraRacheado(i.viento) ? '<span class="marcaRacha">racheado</span>' : '') + '</div>' : '')
+      + (i.igcMin ? '<div class="dato">🛫 Vuelo de <b>' + i.igcMin + ' min</b>'
+          + (i.igcAltMax ? ' · techo <b>' + i.igcAltMax + ' m</b>' : '') + '</div>' : '')
+      + (i.relato ? '<div class="relato">' + escapa(i.relato) + '</div>' : '')
+      + (i.lat != null
+          ? '<div class="verPunto"><span class="mso">my_location</span>' + t('verEnMapa') + '</div>'
+          : '')
+      + '</div>';
+  }).join('') : '<div class="vacio">' + t('nada') + '</div>';
+
+  /* el mapa principal */
+  if (mapaPrincipal){
+    capaPuntos.clearLayers();
+    marcasInc = {};
+    if (capaCalor){ mapaPrincipal.removeLayer(capaCalor); capaCalor = null; }
+    const pts = [];
+    vis.forEach(i => {
+      if (i.lat == null) return;
+      pts.push([i.lat, i.lon]);
+      const sv = sevDe(i.sev);
+      const col = colorDe(i.sev);
+      /* el elegido se agranda y se pone oscuro; los demas se atenuan */
+      const elegido = (i.id === idSenalado);
+      marcasInc[i.id] = L.circleMarker([i.lat, i.lon],
+        { radius: elegido ? 14 : 8,
+          color:'#fff',
+          weight: elegido ? 5 : 2.5,
+          fillColor: elegido ? '#16323b' : col,
+          fillOpacity: elegido ? 1 : (idSenalado ? 0.38 : 0.92) })
+        .bindPopup('<b>' + nb(sitDe(i.sit)) + '</b> · ' + nb(sv) + '<br>'
+          + (i.mes ? nombreMes(i.mes) : '') + ' · ' + nb(faseDe(i.fase))
+          + (textoViento(i.viento) ? '<br><b>💨 ' + textoViento(i.viento) + '</b>' : '')
+          + (i.igcMin ? '<br>🛫 ' + i.igcMin + ' min de vuelo'
+              + (i.igcAltMax ? ', techo ' + i.igcAltMax + ' m' : '') : '')
+          + (i.relato ? '<br><span style="font-size:12px">'
+              + escapa(i.relato).slice(0, 170) + '</span>' : ''))
+        .addTo(capaPuntos);
+      /* y encima un pin grande: con muchos puntos, esto no se puede confundir */
+      if (elegido){
+        L.marker([i.lat, i.lon], {
+          icon: L.divIcon({ className:'',
+            html:'<div class="pinAqui"><span class="mso">my_location</span></div>',
+            iconSize:[38,38], iconAnchor:[19,19] }),
+          zIndexOffset: 3000, interactive:false
+        }).addTo(capaPuntos);
+      }
+    });
+    if (pts.length >= 3 && L.heatLayer){
+      capaCalor = L.heatLayer(pts.map(p => [p[0], p[1], 1]), {
+        radius: 34, blur: 28, maxZoom: 13,
+        gradient: { 0.2:'#7fb3c8', 0.55:'#d9a441', 0.85:'#b5544a' }
+      }).addTo(mapaPrincipal);
+      capaCalor.bringToBack();
+    }
+  }
+}
+
+/* ---------- los patrones ---------- */
+function bloque(titulo, icono, sub, filas){
+  const max = Math.max.apply(null, filas.map(f => f[1])) || 1;
+  return '<div class="patron"><h3><span class="mso">' + icono + '</span>' + titulo + '</h3>'
+    + '<div class="cuantos">' + sub + '</div>'
+    + filas.map(f => '<div class="fila"><span class="nom">' + f[0] + '</span>'
+      + '<span class="pista"><i style="width:' + (f[1] / max * 100).toFixed(0) + '%"></i></span>'
+      + '<span class="n">' + f[1] + '</span></div>').join('')
+    + '</div>';
+}
+
+function pintaPatrones(){
+  const caja = $('patrones');
+  if (incidentes.length < 3){
+    caja.innerHTML = '<div class="patron" style="grid-column:1/-1">'
+      + '<h3><span class="mso">hourglass_empty</span>' + t('pocosDatos') + '</h3>'
+      + '<div class="cuantos">' + t('pocosTexto') + incidentes.length + '.</div>'
+      + '<div style="font-size:13px;line-height:1.65;color:var(--gris)">'
+      + t('pocosFin') + '</div></div>';
+    return;
+  }
+
+  const porTipo = {};
+  incidentes.forEach(i => {
+    const clave = (i.sit === 'otro' && i.otro)
+      ? 'otro::' + i.otro.trim().toLowerCase() : (i.sit || 'otro');
+    porTipo[clave] = (porTipo[clave] || 0) + 1;
+  });
+  const tipos = Object.entries(porTipo).sort((a, b) => b[1] - a[1]);
+
+  const porZona = {};
+  incidentes.forEach(i => {
+    if (i.lat == null) return;
+    const clave = nombreSitio(i.lat, i.lon);   /* por nombre, no por cuadricula */
+    porZona[clave] = porZona[clave] || { n:0, tipos:{} };
+    porZona[clave].n++;
+    porZona[clave].tipos[i.sit] = (porZona[clave].tipos[i.sit] || 0) + 1;
+  });
+  const zonas = Object.entries(porZona).sort((a, b) => b[1].n - a[1].n).slice(0, 8);
+
+  const porMes = {};
+  incidentes.forEach(i => { if (i.mes) porMes[i.mes] = (porMes[i.mes] || 0) + 1; });
+  const porFase = {};
+  incidentes.forEach(i => { if (i.fase) porFase[i.fase] = (porFase[i.fase] || 0) + 1; });
+  const porFranja = {};
+  incidentes.forEach(i => { if (i.franja) porFranja[i.franja] = (porFranja[i.franja] || 0) + 1; });
+
+  const total = incidentes.length;
+  let html = '';
+
+  const zTop = zonas[0];
+  if (zTop && zTop[1].n >= 3){
+    const tTop = Object.entries(zTop[1].tipos).sort((a, b) => b[1] - a[1])[0];
+    html += '<div class="patron destaca">'
+      + '<h3><span class="mso">lightbulb</span>' + t('masClaro') + '</h3>'
+      + '<div style="font-size:14.5px;line-height:1.7">En <b>' + escapa(zTop[0])
+      + '</b> hay <b>' + zTop[1].n + ' eventos</b>, y de ellos <b>' + tTop[1]
+      + '</b> son de <b>' + nb(sitDe(tTop[0])) + '</b>.</div>'
+      + '<div class="cuantos" style="margin:10px 0 0">' + t('masDatos') + '</div></div>';
+  }
+
+  if (tipos.length) html += bloque(t('quePasaMas'), 'pie_chart', total + ' ' + t('enTotal'),
+    tipos.map(t => t[0].indexOf('otro::') === 0
+      ? ['Otro: ' + t[0].slice(6), t[1]]
+      : [nb(sitDe(t[0])), t[1]]));
+
+  if (Object.keys(porFase).length) html += bloque(t('faseTitulo'), 'flight', t('faseSub'), Object.entries(porFase).sort((a, b) => b[1] - a[1])
+      .map(f => [nb(faseDe(f[0])) || f[0], f[1]]));
+
+  /* el viento: aqui estan los numeros */
+  const conViento = incidentes.filter(i => i.viento && i.viento.kmh != null);
+  if (conViento.length >= 3){
+    const med = Math.round(conViento.reduce((a, i) => a + i.viento.kmh, 0) / conViento.length);
+    const rach = conViento.filter(i => i.viento.racha != null);
+    const medRach = rach.length
+      ? Math.round(rach.reduce((a, i) => a + i.viento.racha, 0) / rach.length) : null;
+    const nRach = conViento.filter(i => eraRacheado(i.viento)).length;
+    const fuertes = conViento.filter(i => i.viento.kmh >= 25).length;
+    const dirs = {};
+    conViento.forEach(i => {
+      if (i.viento.dir == null) return;
+      const d = deDonde(i.viento.dir).replace(/^(del |from )/, '');
+      dirs[d] = (dirs[d] || 0) + 1;
+    });
+    const listaDirs = Object.entries(dirs).sort((a, b) => b[1] - a[1]);
+
+    /* OJO: la variable NO puede llamarse 't', que es la funcion de traduccion */
+    let blk = '<div class="patron"><h3><span class="mso">air</span>' + t('vientoTitulo') + '</h3>'
+      + '<div class="cuantos">' + conViento.length + ' / ' + total + ' '
+      + t('vientoSub') + '</div>'
+      + '<div style="font-size:13.5px;line-height:1.8">'
+      + t('vientoMedio') + ': <b>' + med + ' km/h</b>'
+      + (medRach != null ? ' · ' + t('rachasMedias') + ': <b>' + medRach + ' km/h</b>' : '')
+      + '<br>' + nRach + ' / ' + conViento.length + ' ' + t('tenianRachas')
+      + (nRach > conViento.length / 2 ? t('mayoriaRachado') : '')
+      + '<br>' + fuertes + ' ' + t('conSostenido') + '</div>';
+    if (listaDirs.length){
+      const maxD = listaDirs[0][1];
+      blk += '<div style="margin-top:13px">'
+        + listaDirs.map(d => '<div class="fila"><span class="nom">'
+          + (DESDE[idioma] || 'de') + ' ' + d[0] + '</span>'
+          + '<span class="pista"><i style="width:' + (d[1] / maxD * 100).toFixed(0) + '%"></i></span>'
+          + '<span class="n">' + d[1] + '</span></div>').join('') + '</div>';
+    }
+    html += blk + '</div>';
+  }
+
+  /* la gravedad: aqui se ve si los incidentes son sustos o algo peor.
+     Es el dato que mas enseña, y el que hay que mirar sin morbo. */
+  /* la gravedad y las consecuencias: de menos a mas, sin morbo */
+  const porSev = {};
+  incidentes.forEach(i => { if (i.sev) porSev[i.sev] = (porSev[i.sev] || 0) + 1; });
+  if (Object.keys(porSev).length) html += bloque(t('gravedadTitulo'), 'monitor_heart', t('gravedadSub'),
+    ['near','incidente','accidente','grave','fatal']
+      .filter(k => porSev[k]).map(k => [nb(sevDe(k)), porSev[k]]));
+
+  const porCons = {};
+  incidentes.forEach(i => { if (i.cons) porCons[i.cons] = (porCons[i.cons] || 0) + 1; });
+  if (Object.keys(porCons).length) html += bloque(t('consecTitulo'), 'healing', t('consecSub'),
+    ['sin','leves','graves','danos','fatal']
+      .filter(k => porCons[k]).map(k => [nb(consDe(k)), porCons[k]]));
+
+  if (Object.keys(porFranja).length) html += bloque(t('horaTitulo'), 'schedule', t('horaSub'), Object.entries(porFranja).sort((a, b) => b[1] - a[1])
+      .map(f => [nb(franjaDe(f[0])) || f[0], f[1]]));
+
+  if (zonas.length) html += bloque(t('dondeTitulo'), 'place', t('dondeSub'), zonas.map(z => [escapa(z[0]), z[1].n]));
+
+  caja.innerHTML = html;
+}
+
+/* ---------- el viento real ---------- */
+function diaElegido(){ return $('fecha').value || null; }
+function horaDeFranja(f){
+  if (f === 'manana') return 9;
+  if (f === 'mediodia') return 13;
+  if (f === 'tarde') return 16;
+  if (f === 'noche') return 19;
+  return 13;
+}
+/* ==========================================================================
+   EL VIENTO DE ESE DIA
+   --------------------------------------------------------------------------
+   OJO CON LAS HORAS. Aqui se cuela un error que nadie ve:
+
+   - El IGC graba las horas en UTC (es el estandar del formato).
+   - Open-Meteo, si le pides timezone=auto, te devuelve las horas en la hora
+     LOCAL del sitio.
+   - En Mexico (UTC-6) eso son SEIS HORAS de desfase: si el vuelo fue a las
+     11:00 locales (17:00 UTC), se consultaba la hora 17 LOCAL, que son las
+     23:00 UTC. Se guardaba el viento de otra hora del dia. Y como el numero
+     sale igual de valido, nadie se entera.
+
+   Solucion: si la hora viene de un IGC (enUTC) se pide timezone=UTC y se busca
+   por la hora UTC. Si viene de la franja del dia (mañana/mediodia/tarde), que
+   ya esta en hora local, se pide timezone=auto.
+
+   Y el respaldo: el archivo historico de Open-Meteo lleva unos 5 dias de
+   retraso. Si alguien reporta algo de esta semana, el archivo NO tiene ese dia
+   y antes se quedaba sin viento en silencio. Ahora se prueba la API de
+   prevision con past_days, que si tiene los ultimos dias.
+   ========================================================================== */
+function sacaViento(d, hora, dia){
+  if (!d || !d.hourly || !d.hourly.time || !d.hourly.time.length) return null;
+  let i = -1;
+  if (dia){
+    /* cuando la API devuelve varios dias (el forecast), busco la hora exacta */
+    const clave = dia + 'T' + String(Math.floor(hora)).padStart(2, '0') + ':00';
+    i = d.hourly.time.indexOf(clave);
+    if (i < 0) return null;
+  } else {
+    i = Math.min(23, Math.max(0, Math.round(hora)));
+  }
+  const v = d.hourly.wind_speed_10m ? d.hourly.wind_speed_10m[i] : null;
+  if (v == null) return null;
+  const g = d.hourly.wind_gusts_10m ? d.hourly.wind_gusts_10m[i] : null;
+  const dr = d.hourly.wind_direction_10m ? d.hourly.wind_direction_10m[i] : null;
+  return { kmh: Math.round(v), racha: g != null ? Math.round(g) : null,
+           dir: dr != null ? Math.round(dr) : null };
+}
+
+async function vientoReal(lat, lon, dia, hora, enUTC){
+  const tz = enUTC ? 'UTC' : 'auto';
+  const par = '&hourly=wind_speed_10m,wind_gusts_10m,wind_direction_10m&timezone=' + tz;
+  const la = lat.toFixed(3), lo = lon.toFixed(3);
+
+  /* 1) el archivo historico: tiene todo, pero con ~5 dias de retraso */
+  try {
+    const r = await fetch('https://archive-api.open-meteo.com/v1/archive'
+      + '?latitude=' + la + '&longitude=' + lo
+      + '&start_date=' + dia + '&end_date=' + dia + par);
+    if (r.ok){
+      const d = await r.json();
+      const v = sacaViento(d, hora, null);   /* el archivo solo trae ese dia */
+      if (v) return v;
+    }
+  } catch(e){}
+
+  /* 2) el respaldo: si es de esta semana, el archivo todavia no lo tiene.
+     La prevision con past_days=7 si. Aqui SI hay que buscar por fecha, porque
+     vienen varios dias juntos. */
+  try {
+    const r = await fetch('https://api.open-meteo.com/v1/forecast'
+      + '?latitude=' + la + '&longitude=' + lo
+      + '&hourly=wind_speed_10m,wind_gusts_10m,wind_direction_10m'
+      + '&past_days=7&forecast_days=1&timezone=' + tz);
+    if (r.ok){
+      const d = await r.json();
+      return sacaViento(d, hora, dia);
+    }
+  } catch(e){}
+  return null;
+}
+
+/* ---------- el archivo IGC ---------- */
+function leeIGC(texto){
+  const lineas = texto.split(/\r?\n/);
+  const puntos = [];
+  let dia = null;
+  lineas.forEach(l => {
+    if (l.indexOf('HFDTE') === 0){
+      const m = l.match(/HFDTE(?:DATE:)?(\d{2})(\d{2})(\d{2})/);
+      if (m) dia = '20' + m[3] + '-' + m[2] + '-' + m[1];
+    }
+    if (l.charAt(0) === 'B' && l.length > 34){
+      const hh = parseInt(l.substr(1,2), 10), mi = parseInt(l.substr(3,2), 10);
+      const la = parseInt(l.substr(7,2), 10) + parseFloat(l.substr(9,5)) / 1000 / 60;
+      const lo = parseInt(l.substr(15,3), 10) + parseFloat(l.substr(18,5)) / 1000 / 60;
+      const alt = parseInt(l.substr(30,5), 10);
+      if (!isNaN(hh) && !isNaN(la) && !isNaN(lo))
+        puntos.push({ h:hh + mi/60, lat:la, lon:lo, alt: isNaN(alt) ? null : alt });
+    }
+  });
+  if (!puntos.length) return null;
+  let altMax = null, t0 = puntos[0].h, t1 = puntos[0].h;
+  puntos.forEach(p => {
+    if (p.alt != null && (altMax == null || p.alt > altMax)) altMax = p.alt;
+    if (p.h < t0) t0 = p.h;
+    if (p.h > t1) t1 = p.h;
+  });
+  /* Si el vuelo cruza medianoche (despegue a las 23:40 y aterrizaje a las
+     00:20), t1 seria MENOR que t0 y la duracion saldria NEGATIVA. Se suma un
+     dia. Caso raro, pero un numero negativo en la ficha queda fatal. */
+  if (t1 < t0) t1 += 24;
+  const medio = puntos[Math.floor(puntos.length / 2)];
+  return { dia, horaInicio:t0, horaFin:t1, minutos:Math.round((t1 - t0) * 60),
+           altMax, puntos:puntos.length, lat:medio.lat, lon:medio.lon };
+}
+
+/* ---------- los datos en vivo ---------- */
+function escucha(){
+  firebase.database().ref('skyreport/incidentes').on('value', snap => {
+    const d = snap.val() || {};
+    incidentes = Object.entries(d).map(([id, v]) => Object.assign({ id }, v));
+    /* si soy admin, la vista de admin tambien depende de estos datos */
+    if (typeof yoAdmin !== 'undefined' && yoAdmin){
+      try { pintaPendientes(); pintaTodos(); } catch(e){}
+    }
+    /* singular o plural, que '1 patrones' se ve muy mal */
+    const uno = n => n === 1;
+    /* Pam: los ceros parecen una plataforma abandonada. Un contador a 0 no se
+       enseña, y si no hay NADA se dice que esto acaba de empezar. */
+    const verStat = (id, v) => {
+      const n = $(id);
+      if (n) n.style.display = v > 0 ? '' : 'none';
+    };
+    $('nReportes').textContent = incidentes.length;
+    $('tReportes').textContent = uno(incidentes.length) ? t('evEvento') : t('evEventos');
+
+    /* sitios distintos (por zona de ~1 km) */
+    const sitios = new Set();
+    incidentes.forEach(i => { if (i.lat != null) sitios.add(i.lat.toFixed(2) + ',' + i.lon.toFixed(2)); });
+    $('nSitios').textContent = sitios.size;
+    $('tSitios').textContent = uno(sitios.size) ? t('evSitio') : t('evSitios');
+
+    /* patrones recurrentes: tipos que aparecen 3 veces o más */
+    const cuenta = {};
+    incidentes.forEach(i => { if (i.sit) cuenta[i.sit] = (cuenta[i.sit] || 0) + 1; });
+    const nPat = Object.values(cuenta).filter(n => n >= 3).length;
+    $('nPatrones').textContent = nPat;
+    $('tPatronesTxt').textContent = uno(nPat) ? t('evPatron') : t('evPatrones');
+
+    /* escondo los contadores que estan a cero, y si no hay nada lo digo */
+    verStat('stEventos', incidentes.length);
+    verStat('stSitios', sitios.size);
+    verStat('stPatrones', nPat);
+    const vacio = (incidentes.length === 0);
+    if ($('empezando')) $('empezando').style.display = vacio ? 'flex' : 'none';
+    if ($('filaStats')) $('filaStats').style.display = vacio ? 'none' : '';
+
+    /* el ranking de zonas de la derecha */
+    const zonas = {};
+    incidentes.forEach(i => {
+      if (i.lat == null) return;
+      const k = nombreSitio(i.lat, i.lon);   /* por NOMBRE, asi no se repite */
+      zonas[k] = (zonas[k] || 0) + 1;
+    });
+    const top = Object.entries(zonas).sort((a, b) => b[1] - a[1]).slice(0, 5);
+    $('zonasTop').innerHTML = top.length ? top.map((z, k) =>
+      '<div class="zf"><span>' + (k + 1) + '. ' + escapa(z[0])
+      + '</span><b>' + z[1] + '</b></div>').join('')
+      : '<div style="font-size:12px;color:var(--gris)">' + t('zonasNada') + '</div>';
+
+    pintaIncidentes();
+    pintaPatrones();
+    pintaCalorMini();
+  });
+}
+
+/* ---------- enviar ---------- */
+async function envia(){
+  const falta = [];
+  if (!sel.sev) falta.push(t('c1t').toLowerCase());
+  if (!sel.sit) falta.push(t('c2t').toLowerCase());
+  if (!sel.cons) falta.push(t('c3t').toLowerCase());
+  const fase = $('selFase').value;
+  $('selFase').dataset.v = fase;
+  if (!fase) falta.push(t('c4t').toLowerCase());
+  if (sel.lat == null) falta.push(t('c5t').toLowerCase());
+  if (!sel.franja) falta.push(t('c7t').toLowerCase());
+  const otro = $('otroTexto').value.trim();
+  if (sel.sit === 'otro' && !otro) falta.push(t('otroTitulo').toLowerCase());
+
+  if (falta.length){
+    aviso(t('faltaTitulo'), t('faltaTexto') + '<b>' + falta.join(', ') + '</b>' + t('faltaFin'));
+    return;
+  }
+
+  const dia = diaElegido();
+  const mes = dia ? dia.slice(0, 7) : null;
+  const relato = $('relato').value.trim();
+
+  $('bEnviar').disabled = true;
+  /* el viento no se pregunta: lo saco del clima real de ese dia */
+  let viento = null;
+  if (dia){
+    $('txtEstado').textContent = t('mirandoViento');
+    const hora = igc ? igc.horaInicio : horaDeFranja(sel.franja);
+    const lat = sel.lat, lon = sel.lon;
+    /* si la hora viene del IGC, esta en UTC (es el estandar del formato).
+       Si viene de la franja del dia, esta en hora local. */
+    viento = await vientoReal(lat, lon, dia, hora, !!igc);
+  }
+  $('txtEstado').textContent = t('enviando');
+
+  const dato = {
+    sev: sel.sev, sit: sel.sit, cons: sel.cons, fase: fase,
+    lat: sel.lat, lon: sel.lon, mes: mes, franja: sel.franja,
+    aire: sel.aire || null,          /* lo que sintio el piloto */
+    viento: viento,                  /* lo que habia de verdad (clima) */
+    igcMin: igc ? igc.minutos : null,
+    igcAltMax: igc ? igc.altMax : null,
+    relato: relato.slice(0, 1000),
+    otro: (sel.sit === 'otro') ? otro : null,
+    /* una fatalidad NO se publica al momento: queda pendiente de verificacion
+       (idea de Pam: alguien puede equivocarse de fecha, sitio o incluso
+       reportar un rumor). Los near miss entran directos. */
+    verif: (sel.sev === 'fatal' || sel.cons === 'fatal') ? 'pendiente' : 'ok',
+    creado: Date.now(), v: 3
+  };
+
+  try{
+    await firebase.database().ref('skyreport/incidentes').push(dato);
+    aviso(t('graciasTitulo'),
+      t('graciasTexto')
+      + (viento ? '<br><br>' + t('graciasViento') + '<b>' + textoViento(viento) + '</b>.' : '')
+      + '<br><br>' + t('graciasFin'));
+
+    /* limpio el formulario */
+    sel = { sev:null, sit:null, cons:null, franja:null, aire:null, lat:null, lon:null };
+    igc = null;
+    $('relato').value = '';
+    $('cuentaTxt').textContent = '0';
+    $('fecha').value = '';
+    $('selFase').value = '';
+    $('selFase').dataset.v = '';
+    $('otroTexto').value = '';
+    $('cajaOtro').classList.remove('on');
+    $('cajaFatalidad').classList.remove('on');
+    $('ficheroIGC').value = '';
+    $('bIGC').classList.remove('on');
+    $('bIGC').innerHTML = '<span class="mso">upload_file</span> ' + t('igcBoton');
+    $('igcInfo').classList.remove('on');
+    $('txtEstado').textContent = '';
+        ['opSev','opSit','opCons','opFranja','opAire'].forEach(id => {
+      $(id).querySelectorAll('button').forEach(b => b.classList.remove('on'));
+    });
+    if (marcaMia && mapaMarca){ mapaMarca.removeLayer(marcaMia); marcaMia = null; }
+    ponPestana('tMapa');
+  }catch(e){
+    $('txtEstado').textContent = '';
+    aviso(t('errorTitulo'), t('errorTexto') + '<br><br>'
+      + '<span style="font-size:12px;color:#6b7f88">' + escapa(e.message) + '</span>');
+  }
+  $('bEnviar').disabled = false;
+}
+
+/* ---------- pestañas ---------- */
+function ponPestana(id){
+  document.querySelectorAll('.nav button').forEach(b => b.classList.toggle('on', b.id === id));
+  const v = { tMapa:'vMapa', tReportar:'vReportar', tPatrones:'vPatrones', tAdmin:'vAdmin' }[id];
+  document.querySelectorAll('.vista').forEach(x => x.classList.toggle('on', x.id === v));
+  if (id === 'tMapa'){ creaMapaPrincipal(); setTimeout(() => mapaPrincipal.invalidateSize(), 130); }
+  if (id === 'tReportar'){ creaMapaMarca(); setTimeout(() => mapaMarca.invalidateSize(), 170); }
+  window.scrollTo(0, 0);
+}
+$('tMapa').onclick = () => ponPestana('tMapa');
+$('tReportar').onclick = () => ponPestana('tReportar');
+$('tPatrones').onclick = () => ponPestana('tPatrones');
+$('verMapa').onclick = e => { e.preventDefault(); ponPestana('tMapa'); };
+$('verPatrones').onclick = e => { e.preventDefault(); ponPestana('tPatrones'); };
+$('masPrivacidad').onclick = e => {
+  e.preventDefault();
+  aviso(t('privTitulo'), t('privTexto'));
+};
+
+/* ---------- el contador del relato ---------- */
+$('relato').addEventListener('input', e => {
+  $('cuentaTxt').textContent = e.target.value.length;
+});
+
+/* ---------- el IGC ---------- */
+$('bIGC').onclick = () => $('ficheroIGC').click();
+$('ficheroIGC').onchange = ev => {
+  const f = ev.target.files && ev.target.files[0];
+  if (!f) return;
+  const lector = new FileReader();
+  lector.onload = () => {
+    const d = leeIGC(String(lector.result));
+    if (!d){
+      $('igcInfo').innerHTML = '⚠️ No he podido leer el archivo. ¿Seguro que es un IGC?';
+      $('igcInfo').classList.add('on');
+      return;
+    }
+    igc = d;
+    $('bIGC').classList.add('on');
+    $('bIGC').innerHTML = '<span class="mso">check_circle</span> ' + escapa(f.name);
+    const h = Math.floor(d.horaInicio) + ':'
+            + String(Math.round((d.horaInicio % 1) * 60)).padStart(2, '0');
+    $('igcInfo').innerHTML = '🛫 Volaste <b>' + d.minutos + ' minutos</b>, despegando sobre las <b>'
+      + h + '</b>' + (d.altMax ? ', hasta <b>' + d.altMax + ' m</b>' : '') + '.'
+      + '<br>Con esto el viento sale de la hora exacta.';
+    $('igcInfo').classList.add('on');
+    if (d.dia && !$('fecha').value) $('fecha').value = d.dia;
+  };
+  lector.readAsText(f);
+};
+
+/* ==========================================================================
+   CAMBIAR DE IDIOMA (idea de Pam)
+   --------------------------------------------------------------------------
+   El boton de la cabecera, la memoria en el movil, y la deteccion automatica:
+   si el navegador viene en ingles, entra en ingles sin que nadie toque nada.
+   ========================================================================== */
+
+function ponIdioma(l, guardar){
+  if (!TXT[l]) l = 'es';
+  idioma = l;
+  try { if (guardar !== false) localStorage.setItem('sr_idioma', l); } catch(e){}
+  document.documentElement.lang = l;
+
+  /* los textos marcados en el HTML */
+  document.querySelectorAll('[data-i18n]').forEach(n => {
+    const t2 = t(n.dataset.i18n);
+    if (t2) n.innerHTML = t2;
+  });
+  document.querySelectorAll('[data-i18n-ph]').forEach(n => {
+    const t2 = t(n.dataset.i18nPh);
+    if (t2) n.placeholder = t2;
+  });
+
+  /* el selector */
+  if ($('bIdioma')) $('bIdioma').value = l;
+
+  /* las listas que se generan por codigo */
+  $('selFase').innerHTML = '<option value="">' + t('eligeFase') + '</option>'
+    + FASES.map(f => '<option value="' + f.id + '">' + nb(f) + '</option>').join('');
+  /* conservo lo que el usuario ya habia elegido y marcado */
+  const antesFase = $('selFase').dataset.v || '';
+  if (antesFase) $('selFase').value = antesFase;
+  pintaOps('opSev', SEVERIDAD, 'sev');
+  pintaOps('opSit', SITUACION, 'sit');
+  pintaOps('opCons', CONSEC, 'cons');
+  pintaOps('opFranja', FRANJAS, 'franja');
+  pintaOps('opAire', AIRES, 'aire');
+  ['opSev','opSit','opCons','opFranja','opAire'].forEach((id, i2) => {
+    const campo = ['sev','sit','cons','franja','aire'][i2];
+    if (sel[campo]){
+      const b = $(id).querySelector('button[data-id="' + sel[campo] + '"]');
+      if (b) b.classList.add('on');
+    }
+  });
+  $('cajaOtro').classList.toggle('on', sel.sit === 'otro');
+  $('cajaFatalidad').classList.toggle('on', sel.cons === 'fatal' || sel.sev === 'fatal');
+  $('bIGC').querySelector('[data-i18n]') && ($('bIGC').querySelector('[data-i18n]').innerHTML = t('igcBoton'));
+  $('filtros').innerHTML = '<button class="on" data-f="todos">'
+    + '<span class="mso">apps</span>' + t('todos') + '</button>'
+    + SEVERIDAD.map(x => '<button data-f="' + x.id + '"><span class="mso">' + x.e
+        + '</span>' + nb(x) + '</button>').join('');
+  $('filtros').querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.f === filtro));
+
+  /* y repinto lo que depende de los datos */
+  if (mapaPrincipal) pintaIncidentes();
+  if (typeof incidentes !== 'undefined' && incidentes.length) pintaPatrones();
+}
+
+$('bIdioma').onchange = ev => ponIdioma(ev.target.value);
+
+
+/* ==========================================================================
+   LA ADMINISTRACIÓN
+   --------------------------------------------------------------------------
+   Ver más arriba las decisiones de diseño. Resumen:
+   - Sin cuentas: una CLAVE larga que se da a quien se quiera y se revoca
+     borrándola. Coherente con una app que no tiene usuarios.
+   - Dos roles: SUPER (todo) y ZONA (solo lo de su zona).
+   - Todo lo que se hace queda en un REGISTRO que no se puede borrar.
+   - Borrar NO borra: se copia a la papelera antes.
+   - Y un admin NUNCA puede ver datos personales (no los hay) ni la ubicación
+     exacta (solo ve lo mismo que todo el mundo). Si pudiera, el anonimato no
+     valdría nada.
+   ========================================================================== */
+let yoAdmin = null;
+let admins = {};
+let logAcciones = [];
+
+/* una clave que se pueda leer por teléfono sin equivocarse: sin I, O, 0, 1 */
+function claveNueva(){
+  const abc = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let c = '';
+  for (let i = 0; i < 12; i++) c += abc[Math.floor(Math.random() * abc.length)];
+  return c.slice(0, 4) + '-' + c.slice(4, 8) + '-' + c.slice(8, 12);
+}
+
+/* ---------- quién soy y qué puedo ---------- */
+function esSuper(){ return yoAdmin && yoAdmin.rol === 'super'; }
+
+function puedeTocar(i){
+  if (!yoAdmin) return false;
+  if (esSuper()) return true;
+  if (yoAdmin.rol === 'zona' && i.lat != null){
+    /* solo lo de SU zona. La zona se compara con el nombre del sitio, así que
+       hay que escribirla igual que sale en el mapa (ej: 'Valle de Bravo'). */
+    return nombreSitio(i.lat, i.lon) === (yoAdmin.zona || '');
+  }
+  return false;
+}
+
+/* ---------- el registro: quién hizo qué ---------- */
+function anota(que, idEvento, detalle){
+  if (!yoAdmin) return;
+  firebase.database().ref('skyreport/log').push({
+    quien: yoAdmin.nombre || '?',
+    clave: yoAdmin.clave,
+    rol: yoAdmin.rol,
+    zona: yoAdmin.zona || null,
+    que: que,
+    evento: idEvento || null,
+    detalle: detalle || null,
+    cuando: firebase.database.ServerValue.TIMESTAMP,
+  });
+}
+
+/* ---------- entrar y salir ---------- */
+function entraAdmin(clave, callar){
+  clave = String(clave || '').trim().toUpperCase();
+  const a = admins[clave];
+  if (!a || a.activo === false){
+    const e = $('adErr');
+    if (e && !callar){ e.textContent = t('admClaveMal'); e.classList.add('on'); }
+    return false;
+  }
+  yoAdmin = Object.assign({ clave: clave }, a);
+  try { localStorage.setItem('sr_admin', clave); } catch(e){}
+  if ($('tAdmin')) $('tAdmin').style.display = '';
+  ponPestana('tAdmin');          /* y hay que IR a la vista, no solo pintarla */
+  pintaAdmin();
+  return true;
+}
+
+function salirAdmin(){
+  yoAdmin = null;
+  try { localStorage.removeItem('sr_admin'); } catch(e){}
+  if ($('tAdmin')) $('tAdmin').style.display = 'none';
+  ponPestana('tReportar');
+}
+
+/* ---------- las acciones ---------- */
+async function admVerificar(id){
+  const i = incidentes.find(x => x.id === id);
+  if (!i) return;
+  if (!puedeTocar(i)) return aviso(t('admTitulo'), t('admSinPermiso'));
+  await firebase.database().ref('skyreport/incidentes/' + id).update({
+    verif: 'ok', verifPor: yoAdmin.nombre || '?', verifTs: Date.now(),
+  });
+  anota('verificar', id);
+  aviso(t('admOk'), t('admPublicado'));
+}
+
+async function admRechazar(id){
+  const i = incidentes.find(x => x.id === id);
+  if (!i) return;
+  if (!puedeTocar(i)) return aviso(t('admTitulo'), t('admSinPermiso'));
+  await firebase.database().ref('skyreport/incidentes/' + id).update({
+    verif: 'rechazado', verifPor: yoAdmin.nombre || '?', verifTs: Date.now(),
+  });
+  anota('rechazar', id);
+  aviso(t('admOk'), t('admRechazado'));
+}
+
+async function admBorrar(id){
+  const i = incidentes.find(x => x.id === id);
+  if (!i) return;
+  if (!puedeTocar(i)) return aviso(t('admTitulo'), t('admSinPermiso'));
+  if (!confirm(t('admConfirmBorrar'))) return;
+  /* copia antes: borrar no es borrar */
+  await firebase.database().ref('skyreport/papelera/' + id).set(Object.assign({}, i, {
+    borradoPor: yoAdmin.nombre || '?', borradoTs: Date.now(),
+  }));
+  await firebase.database().ref('skyreport/incidentes/' + id).remove();
+  anota('borrar', id, (sitDe(i.sit).es || '') + ' · ' + (i.mes || ''));
+  aviso(t('admOk'), t('admBorrado'));
+}
+
+async function admCrear(){
+  if (!esSuper()) return;
+  const nombre = ($('adNuevoNombre').value || '').trim();
+  const zona = ($('adNuevoZona').value || '').trim();
+  const rol = $('adNuevoRol').value;
+  if (!nombre) return aviso(t('admTitulo'), t('admNombre'));
+  if (rol === 'zona' && !zona) return aviso(t('admTitulo'), t('admZona'));
+  const clave = claveNueva();
+  await firebase.database().ref('skyreport/admins/' + clave).set({
+    nombre: nombre, rol: rol, zona: (rol === 'zona' ? zona : null),
+    activo: true, creado: Date.now(), creadoPor: yoAdmin.nombre || '?',
+  });
+  anota('crear-admin', null, nombre + (zona ? ' (' + zona + ')' : '') + ' · ' + clave);
+  $('adNuevoNombre').value = ''; $('adNuevoZona').value = '';
+  aviso(t('admOk'), '🔑 <b>' + nombre + '</b><br><br>' + t('admTuClave') + ':<br>'
+    + '<span class="adClave">' + clave + '</span><br><br>'
+    + 'Dásela y que entre en <b>skyreport/?admin=' + clave + '</b>');
+}
+
+async function admRevocar(clave){
+  if (!esSuper()) return;
+  const a = admins[clave];
+  if (!a) return;
+  if (!confirm('¿Revocar la clave de ' + (a.nombre || clave) + '?')) return;
+  await firebase.database().ref('skyreport/admins/' + clave).update({ activo: false });
+  anota('revocar-admin', null, a.nombre || clave);
+}
+
+/* ---------- pintar ---------- */
+function pintaAdmin(){
+  if (!yoAdmin){
+    /* sin clave: la puerta */
+    $('vAdmin').innerHTML = '<div class="cuerpo" style="grid-template-columns:1fr">'
+      + '<div class="puerta">'
+      + '<h2><span class="mso">lock</span>' + t('admPuerta') + '</h2>'
+      + '<p>' + t('admPuertaAyuda') + '</p>'
+      + '<input type="text" id="adClave" placeholder="XXXX-XXXX-XXXX" autocomplete="off">'
+      + '<div class="err" id="adErr"></div>'
+      + '<button class="btn" id="adEntrar" style="width:100%;margin-top:14px;'
+      + 'justify-content:center">' + t('admPuerta') + '</button>'
+      + '</div></div>';
+    $('adEntrar').onclick = () => entraAdmin($('adClave').value);
+    $('adClave').onkeydown = ev => { if (ev.key === 'Enter') entraAdmin($('adClave').value); };
+    return;
+  }
+  /* con clave: la página entera */
+  const rol = esSuper() ? t('admRolSuper')
+            : (yoAdmin.rol === 'zona' ? t('admRolZona').replace('{z}', yoAdmin.zona || '')
+            : t('admRolVer'));
+  $('adQuien').innerHTML = t('admEres').replace('{n}', yoAdmin.nombre || '?')
+    .replace('{r}', rol) + ' · <span class="adClave">' + yoAdmin.clave + '</span>';
+  $('adAdmins').style.display = esSuper() ? '' : 'none';
+  pintaPendientes();
+  pintaTodos();
+  pintaAdmins();
+}
+
+function filaEvento(i, conVerificar){
+  const sit = sitDe(i.sit), sv = sevDe(i.sev);
+  const sitio = i.lat != null ? nombreSitio(i.lat, i.lon) : '—';
+  const puede = puedeTocar(i);
+  let btns = '';
+  if (conVerificar && puede){
+    btns += '<button class="adOk" onclick="admVerificar(\'' + i.id + '\')">'
+          + '<span class="mso">check_circle</span>' + t('admPub') + '</button>'
+          + '<button class="adNo" onclick="admRechazar(\'' + i.id + '\')">'
+          + '<span class="mso">cancel</span>' + t('admRech') + '</button>';
+  }
+  if (puede){
+    btns += '<button class="adDel" onclick="admBorrar(\'' + i.id + '\')">'
+          + '<span class="mso">delete</span>' + t('admBorrar') + '</button>';
+  }
+  return '<div class="adFila">'
+    + '<div class="adInfo">'
+    + '<div class="adTit"><span class="mso">' + sit.e + '</span>'
+    + ((i.sit === 'otro' && i.otro) ? escapa(i.otro) : nb(sit))
+    + ' <span class="etq sevEtq">' + nb(sv) + '</span></div>'
+    + '<div class="adMeta">' + sitio + ' · ' + (i.mes ? nombreMes(i.mes) : '—')
+    + ' · ' + nb(franjaDe(i.franja))
+    + (i.verif && i.verif !== 'ok' ? ' · <b>' + i.verif + '</b>' : '')
+    + (i.verifPor ? ' · por ' + escapa(i.verifPor) : '') + '</div>'
+    + (i.relato ? '<div class="adRelato">' + escapa(i.relato) + '</div>' : '')
+    + '</div>'
+    + '<div class="adBtns">' + btns + '</div>'
+    + '</div>';
+}
+
+function pintaPendientes(){
+  const pend = incidentes.filter(i => i.verif === 'pendiente');
+  $('adNPend').textContent = pend.length;
+  $('adListaPend').innerHTML = pend.length
+    ? pend.map(i => filaEvento(i, true)).join('')
+    : '<div class="vacioAdmin">' + t('admNadaPend') + '</div>';
+}
+
+function pintaTodos(){
+  const q = ($('adBusca') && $('adBusca').value || '').toLowerCase().trim();
+  let lista = incidentes.slice().reverse();
+  if (q){
+    lista = lista.filter(i => {
+      const txt = [(i.otro || ''), (i.relato || ''), nb(sitDe(i.sit)),
+                   nb(sevDe(i.sev)), (i.lat != null ? nombreSitio(i.lat, i.lon) : '')]
+                  .join(' ').toLowerCase();
+      return txt.indexOf(q) >= 0;
+    });
+  }
+  $('adNTotal').textContent = lista.length;
+  $('adListaTodos').innerHTML = lista.length
+    ? lista.map(i => filaEvento(i, i.verif === 'pendiente')).join('')
+    : '<div class="vacioAdmin">' + t('nada') + '</div>';
+}
+
+function pintaAdmins(){
+  if (!esSuper()) return;
+  const ks = Object.keys(admins);
+  $('adListaAdmins').innerHTML = ks.length
+    ? ks.map(k => {
+        const a = admins[k] || {};
+        return '<div class="adFila"><div class="adInfo">'
+          + '<div class="adTit">' + escapa(a.nombre || '?')
+          + (a.activo === false ? ' <span class="etq">' + t('admRevocar') + 'ado</span>' : '')
+          + '</div>'
+          + '<div class="adMeta">' + (a.rol === 'super' ? t('admRolSuper') : (a.zona || ''))
+          + ' · <span class="adClave">' + k + '</span></div></div>'
+          + '<div class="adBtns">'
+          + (a.activo === false ? ''
+              : '<button class="adNo" onclick="admRevocar(\'' + k + '\')">'
+                + '<span class="mso">block</span>' + t('admRevocar') + '</button>')
+          + '</div></div>';
+      }).join('')
+    : '<div class="vacioAdmin">—</div>';
+}
+
+function pintaLog(){
+  $('adListaLog').innerHTML = logAcciones.length
+    ? logAcciones.map(l => {
+        const cuando = l.cuando ? new Date(l.cuando).toLocaleString(idioma) : '';
+        const ic = l.que === 'verificar' ? 'check_circle'
+                 : l.que === 'rechazar' ? 'cancel'
+                 : l.que === 'borrar' ? 'delete'
+                 : l.que === 'crear-admin' ? 'person_add' : 'block';
+        return '<div class="adLogFila"><span class="mso">' + ic + '</span>'
+          + '<div><b>' + escapa(l.quien || '?') + '</b> · ' + escapa(l.que || '')
+          + (l.detalle ? ' · ' + escapa(l.detalle) : '') + '</div>'
+          + '<span class="cuando">' + cuando + '</span></div>';
+      }).join('')
+    : '<div class="vacioAdmin">' + t('admNadaLog') + '</div>';
+}
+
+/* ---------- enganchar ---------- */
+$('tAdmin').onclick = () => { ponPestana('tAdmin'); pintaAdmin(); };
+/* si no eres admin pero escribes la direccion con ?admin=, la clave se prueba
+   cuando llegue la lista de admins (arriba). Y si la clave no vale, el boton
+   del nav no aparece: nadie sospecha que existe esa pagina. */
+$('adSalir').onclick = salirAdmin;
+$('adCrear').onclick = admCrear;
+$('adBusca').oninput = pintaTodos;
+
+/* ---------- arranque ---------- */
+firebase.initializeApp({ databaseURL: FIRE + '/' });
+
+/* los admins y el registro se escuchan siempre (son pocos datos) */
+firebase.database().ref('skyreport/admins').on('value', s2 => {
+  admins = s2.val() || {};
+  if (yoAdmin){
+    const a = admins[yoAdmin.clave];
+    if (!a || a.activo === false){ salirAdmin(); }     /* si me revocaron, fuera */
+    else { yoAdmin = Object.assign({ clave: yoAdmin.clave }, a); pintaAdmin(); }
+  } else {
+    /* ¿hay una clave guardada de antes, o viene en la dirección? */
+    let k = null;
+    try { k = new URLSearchParams(location.search).get('admin'); } catch(e){}
+    if (!k){ try { k = localStorage.getItem('sr_admin'); } catch(e){} }
+    if (k && entraAdmin(k, true)) ponPestana('tAdmin');
+  }
+});
+firebase.database().ref('skyreport/log').limitToLast(80).on('value', s2 => {
+  logAcciones = [];
+  s2.forEach(h => logAcciones.push(Object.assign({ _k: h.key }, h.val())));
+  logAcciones.reverse();
+  if ($('adListaLog') && yoAdmin) pintaLog();
+});
+
+/* ==========================================================================
+   ¿EN QUÉ IDIOMA ABRIR? (idea de Pam: 'que dependa de donde te encuentres')
+   --------------------------------------------------------------------------
+   Por orden:
+     1) ?lang=fr en la direccion (para compartir un enlace ya en un idioma)
+     2) lo que la persona eligio la ultima vez
+     3) el idioma del NAVEGADOR (navigator.language)
+     4) el PAIS, deducido de la ZONA HORARIA del sistema
+   El punto 4 no pide GPS, no llama a ninguna API y es instantaneo: la zona
+   horaria ya dice en qué pais está el dispositivo (Europe/Paris -> francés).
+   Ningún permiso, ningún aviso al usuario.
+   ========================================================================== */
+const ZONA_IDIOMA = {
+  /* español */
+  'America/Mexico_City':'es', 'America/Monterrey':'es', 'America/Tijuana':'es',
+  'America/Bogota':'es', 'America/Lima':'es', 'America/Santiago':'es',
+  'America/Argentina':'es', 'America/Havana':'es', 'America/Caracas':'es',
+  'America/Guayaquil':'es', 'America/Asuncion':'es', 'America/Montevideo':'es',
+  'America/Guatemala':'es', 'America/El_Salvador':'es', 'America/Tegucigalpa':'es',
+  'America/Managua':'es', 'America/Costa_Rica':'es', 'America/Panama':'es',
+  'America/Santo_Domingo':'es', 'America/Puerto_Rico':'es', 'America/La_Paz':'es',
+  'Europe/Madrid':'es', 'Atlantic/Canary':'es', 'Africa/Equatorial_Guinea':'es',
+  /* francés */
+  'Europe/Paris':'fr', 'Europe/Brussels':'fr', 'Europe/Monaco':'fr', 'Europe/Luxembourg':'fr',
+  'Africa/Dakar':'fr', 'Africa/Abidjan':'fr', 'Africa/Casablanca':'fr', 'Africa/Algiers':'fr',
+  'Africa/Tunis':'fr', 'Africa/Bamako':'fr', 'Africa/Ouagadougou':'fr', 'Africa/Niamey':'fr',
+  'Africa/Libreville':'fr', 'Africa/Kinshasa':'fr', 'Indian/Reunion':'fr',
+  'America/Montreal':'fr', 'America/Toronto':'fr', 'America/Guadeloupe':'fr',
+  'America/Martinique':'fr', 'America/Cayenne':'fr',
+  /* alemán */
+  'Europe/Berlin':'de', 'Europe/Vienna':'de', 'Europe/Zurich':'de',
+  'Africa/Windhoek':'de',
+  /* portugués */
+  'Europe/Lisbon':'pt', 'Atlantic/Azores':'pt', 'Atlantic/Madeira':'pt',
+  'America/Sao_Paulo':'pt', 'America/Manaus':'pt', 'America/Fortaleza':'pt',
+  'America/Belem':'pt', 'America/Recife':'pt', 'America/Bahia':'pt',
+  'America/Cuiaba':'pt', 'America/Porto_Velho':'pt', 'America/Rio_Branco':'pt',
+  'Africa/Luanda':'pt', 'Africa/Maputo':'pt', 'Africa/Bissau':'pt',
+  'Africa/Praia':'pt', 'Asia/Macau':'pt', 'Asia/Dili':'pt',
+};
+function idiomaPorPais(){
+  let tz = '';
+  try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone || ''; } catch(e){ return null; }
+  if (!tz) return null;
+  if (ZONA_IDIOMA[tz]) return ZONA_IDIOMA[tz];
+  /* si no está exacto, pruebo por la parte de la ciudad o por el prefijo */
+  const partes = tz.split('/');
+  const zona = partes[0] + '/' + (partes[1] || '');
+  if (ZONA_IDIOMA[zona]) return ZONA_IDIOMA[zona];
+  for (const k in ZONA_IDIOMA){
+    if (tz.indexOf(k) === 0) return ZONA_IDIOMA[k];
+  }
+  return null;
+}
+
+/* el idioma del navegador, si lo reconozco */
+function idiomaDelNavegador(){
+  const l = (navigator.language || navigator.userLanguage || '').toLowerCase().slice(0, 2);
+  return TXT[l] ? l : null;
+}
+
+/* los atajos del icono (mantener pulsado el icono de la app en el móvil):
+   ?ir=reportar o ?ir=mapa, para entrar directo donde quieres. */
+try {
+  const ir = new URLSearchParams(location.search).get('ir');
+  if (ir === 'mapa') ponPestana('tMapa');
+  else if (ir === 'reportar') ponPestana('tReportar');
+} catch(e){}
+
+ponIdioma((function(){
+  try {                                        /* 1) ?lang= en la dirección */
+    const q = new URLSearchParams(location.search).get('lang');
+    if (q && TXT[q.toLowerCase()]) return q.toLowerCase();
+  } catch(e){}
+  try {                                        /* 2) lo que ya eligió */
+    const g = localStorage.getItem('sr_idioma');
+    if (g && TXT[g]) return g;
+  } catch(e){}
+  return idiomaDelNavegador()                  /* 3) el del navegador */
+      || idiomaPorPais()                       /* 4) el del país (por zona horaria) */
+      || 'en';                                 /* 5) inglés por defecto: es el idioma
+                                                    franco del parapente */
+})(), false);
+
+pintaOps('opSev', SEVERIDAD, 'sev');
+pintaOps('opSit', SITUACION, 'sit');
+pintaOps('opCons', CONSEC, 'cons');
+pintaOps('opFranja', FRANJAS, 'franja');
+pintaOps('opAire', AIRES, 'aire');
+
+$('bEnviar').onclick = envia;
+
+/* los filtros los pinta ponIdioma, asi que aqui no hay que hacer nada:
+   estaba duplicado y ademas usaba t.n, que ya no existe (ahora es nb(x)) */
+$('filtros').onclick = ev => {
+  const b = ev.target.closest('button');
+  if (!b) return;
+  $('filtros').querySelectorAll('button').forEach(x => x.classList.remove('on'));
+  b.classList.add('on');
+  filtro = b.dataset.f;
+  idSenalado = null;          /* al cambiar de filtro, quito el resalte *
+                               (si no, quedaria un punto marcado sin sentido) */
+  pintaIncidentes();
+};
+
+creaMapaMarca();
+creaMapaCalor();
+escucha();
+</script>
+<script>
+/* El service worker: es lo que hace que Android ofrezca INSTALAR de verdad
+   y que la app abra sin cobertura. Se registra despues de cargar, para no
+   retrasar nada. */
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function(){
+    navigator.serviceWorker.register('sw.js').catch(function(){});
+  });
+}
+
+/* El aviso de instalar. Android ofrece el dialogo nativo; iOS no lo tiene,
+   asi que ahi se explica el camino a mano (Compartir -> Añadir a inicio). */
+var avisoInstalar = null;
+window.addEventListener('beforeinstallprompt', function(ev){
+  ev.preventDefault();
+  avisoInstalar = ev;
+  var b = document.getElementById('bInstalar');
+  if (b) b.style.display = '';
+});
+window.addEventListener('appinstalled', function(){
+  var b = document.getElementById('bInstalar');
+  if (b) b.style.display = 'none';
+});
+function instalar(){
+  if (avisoInstalar){
+    avisoInstalar.prompt();
+    avisoInstalar.userChoice.then(function(){ avisoInstalar = null; });
+  } else {
+    /* iOS no tiene el dialogo: se explica a mano */
+    aviso(t('instTitulo'), t('instTexto'));
+  }
+}
+</script>
+</body>
+</html>
