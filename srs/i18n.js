@@ -30,7 +30,7 @@ const CLAVE = 'skyreport_idioma';
 const EN = {
   'nav.home': 'Home', 'nav.map': 'Map', 'nav.report': 'Report',
   'nav.signals': 'Signals', 'nav.sites': 'Sites', 'nav.methodology': 'Methodology',
-  'brand.tagline': 'Community safety intelligence for free flight',
+  'brand.tagline': 'A safety intelligence platform for free flight.',
   'common.of': 'of', 'common.reports': 'reports', 'common.report': 'report',
   'common.flightsLogged': 'flights logged', 'common.lastReport': 'Last report',
   'common.any': 'Any', 'common.apply': 'Apply', 'common.clear': 'Clear filters',
@@ -60,7 +60,7 @@ const EN = {
   'home.patternSummary': 'Pattern summary',
   'home.quickActions': 'Quick actions',
   'signals.title': 'Signals',
-  'signals.lede': 'A signal is a pattern SkyReport has found across several reports. It is not an accident and it is not a safety assessment — it is what the available data shows, written so you can disagree with it.',
+  'signals.lede': 'A signal is a pattern SkyReport has detected across several reports. It is not an accident and it is not a safety assessment: it is an observation based on the available data.',
   'signals.none': 'No signals yet.',
   'signals.noneHelp': 'Signals appear when at least three similar reports cluster.',
   'signals.rule': 'Rule',
@@ -414,12 +414,13 @@ const EN = {
   'signals.exp5': '{n} reserve deployments have been reported at this site in the last {d} days.',
   'signals.exp6': '{n} reports at this site were logged with wind at or above 20 km/h (average {m} km/h).',
   'signals.exp7': 'The most frequent event there is {e}.',
+  'brand.sub': 'Turns pilot reports into patterns, context and collective learning.',
 };
 
 const ES = {
   'nav.home': 'Inicio', 'nav.map': 'Mapa', 'nav.report': 'Reportar',
   'nav.signals': 'Señales', 'nav.sites': 'Sitios', 'nav.methodology': 'Metodología',
-  'brand.tagline': 'Inteligencia de seguridad comunitaria para vuelo libre',
+  'brand.tagline': 'Plataforma de inteligencia de seguridad para vuelo libre.',
   'common.of': 'de', 'common.reports': 'reportes', 'common.report': 'reporte',
   'common.flightsLogged': 'vuelos registrados', 'common.lastReport': 'Último reporte',
   'common.any': 'Cualquiera', 'common.apply': 'Aplicar', 'common.clear': 'Quitar filtros',
@@ -449,7 +450,7 @@ const ES = {
   'home.patternSummary': 'Resumen de patrones',
   'home.quickActions': 'Accesos rápidos',
   'signals.title': 'Señales',
-  'signals.lede': 'Una señal es un patrón que SkyReport ha encontrado entre varios reportes. No es un accidente ni una evaluación de seguridad: es lo que muestran los datos disponibles, escrito para que puedas estar en desacuerdo.',
+  'signals.lede': 'Una señal es un patrón que SkyReport ha detectado entre varios reportes. No es un accidente ni una evaluación de seguridad: es una observación basada en los datos disponibles.',
   'signals.none': 'Todavía no hay señales.',
   'signals.noneHelp': 'Las señales aparecen cuando se juntan al menos tres reportes parecidos.',
   'signals.rule': 'Regla',
@@ -803,12 +804,13 @@ const ES = {
   'signals.exp5': 'Se han reportado {n} despliegues de reserva en este sitio en los últimos {d} días.',
   'signals.exp6': '{n} reportes de este sitio se registraron con viento de 20 km/h o más (media {m} km/h).',
   'signals.exp7': 'El evento más frecuente allí es {e}.',
+  'brand.sub': 'Convierte reportes de pilotos en patrones, contexto y aprendizaje colectivo.',
 };
 
 const FR = {
   'nav.home': 'Accueil', 'nav.map': 'Carte', 'nav.report': 'Signaler',
   'nav.signals': 'Signaux', 'nav.sites': 'Sites',
-  'brand.tagline': 'Renseignement de sécurité communautaire pour le vol libre',
+  'brand.tagline': 'Plateforme de renseignement de sécurité pour le vol libre.',
   'common.reports': 'signalements',
   'common.back': 'Retour', 'common.continue': 'Continuer',
   'common.submit': 'Envoyer',
@@ -825,7 +827,7 @@ const FR = {
   'home.sitesActivity': 'Sites avec activité',
   'home.patternSummary': 'Résumé des tendances',
   'signals.title': 'Signaux',
-  'signals.lede': "Un signal est une tendance que SkyReport a trouvée dans plusieurs signalements. Ce n'est pas un accident et ce n'est pas une évaluation de sécurité.",
+  'signals.lede': "Un signal est un schéma que SkyReport a détecté dans plusieurs signalements. Ce n’est pas un accident et ce n’est pas une évaluation de sécurité : c’est une observation fondée sur les données disponibles.",
   'signals.related': '{n} signalements liés', 'signals.viewRelated': 'Voir les signalements liés',
   'signals.rule': 'Règle', 'signals.disclaimer': "Signal dérivé des données disponibles, pas une évaluation de sécurité définitive.",
   'strength.limited': 'Données limitées', 'strength.repeated': 'Tendance répétée',
@@ -1249,12 +1251,13 @@ const FR = {
   'signals.exp5': '{n} déclenchements de secours ont été signalés sur ce site ces {d} derniers jours.',
   'signals.exp6': '{n} signalements de ce site ont été enregistrés avec un vent de 20 km/h ou plus (moyenne {m} km/h).',
   'signals.exp7': 'L’événement le plus fréquent y est {e}.',
+  'brand.sub': 'Transforme les signalements des pilotes en schémas, contexte et apprentissage collectif.',
 };
 
 const DE = {
   'nav.home': 'Start', 'nav.map': 'Karte', 'nav.report': 'Melden',
   'nav.signals': 'Signale', 'nav.sites': 'Gebiete',
-  'brand.tagline': 'Sicherheitsinformationen aus der Community für Gleitschirmflieger',
+  'brand.tagline': 'Eine Sicherheitsinformations-Plattform für den Gleitschirmflug.',
   'common.reports': 'Meldungen',
   'common.back': 'Zurück', 'common.continue': 'Weiter',
   'common.submit': 'Senden',
@@ -1271,7 +1274,7 @@ const DE = {
   'home.sitesActivity': 'Gebiete mit Aktivität',
   'home.patternSummary': 'Musterübersicht',
   'signals.title': 'Signale',
-  'signals.lede': 'Ein Signal ist ein Muster, das SkyReport in mehreren Meldungen gefunden hat. Es ist kein Unfall und keine Sicherheitsbewertung.',
+  'signals.lede': 'Ein Signal ist ein Muster, das SkyReport in mehreren Meldungen erkannt hat. Es ist kein Unfall und keine Sicherheitsbewertung: es ist eine Beobachtung auf Basis der verfügbaren Daten.',
   'signals.related': '{n} zugehörige Meldungen', 'signals.viewRelated': 'Zugehörige Meldungen ansehen',
   'signals.rule': 'Regel', 'signals.disclaimer': 'Aus den verfügbaren Daten abgeleitetes Signal, keine abschließende Sicherheitsbewertung.',
   'strength.limited': 'Begrenzte Daten', 'strength.repeated': 'Wiederkehrendes Muster',
@@ -1695,12 +1698,13 @@ const DE = {
   'signals.exp5': '{n} Rettungsauslösungen wurden in diesem Gebiet in den letzten {d} Tagen gemeldet.',
   'signals.exp6': '{n} Meldungen in diesem Gebiet wurden bei Wind ab 20 km/h erfasst (Mittel {m} km/h).',
   'signals.exp7': 'Das häufigste Ereignis dort ist {e}.',
+  'brand.sub': 'Macht Pilotenmeldungen zu Mustern, Kontext und gemeinschaftlichem Lernen.',
 };
 
 const PT = {
   'nav.home': 'Início', 'nav.map': 'Mapa', 'nav.report': 'Reportar',
   'nav.signals': 'Sinais', 'nav.sites': 'Locais',
-  'brand.tagline': 'Inteligência de segurança comunitária para voo livre',
+  'brand.tagline': 'Plataforma de inteligência de segurança para voo livre.',
   'common.reports': 'relatos',
   'common.back': 'Voltar', 'common.continue': 'Continuar',
   'common.submit': 'Enviar',
@@ -1717,7 +1721,7 @@ const PT = {
   'home.sitesActivity': 'Locais com atividade',
   'home.patternSummary': 'Resumo de padrões',
   'signals.title': 'Sinais',
-  'signals.lede': 'Um sinal é um padrão que o SkyReport encontrou em vários relatos. Não é um acidente nem uma avaliação de segurança.',
+  'signals.lede': 'Um sinal é um padrão que o SkyReport detetou em vários relatos. Não é um acidente nem uma avaliação de segurança: é uma observação baseada nos dados disponíveis.',
   'signals.related': '{n} relatos relacionados', 'signals.viewRelated': 'Ver relatos relacionados',
   'signals.rule': 'Regra', 'signals.disclaimer': 'Sinal derivado dos dados disponíveis, não uma avaliação de segurança definitiva.',
   'strength.limited': 'Dados limitados', 'strength.repeated': 'Padrão repetido',
@@ -2141,6 +2145,7 @@ const PT = {
   'signals.exp5': 'Foram relatadas {n} aberturas de paraquedas neste local nos últimos {d} dias.',
   'signals.exp6': '{n} relatos deste local foram registados com vento de 20 km/h ou mais (média {m} km/h).',
   'signals.exp7': 'O evento mais frequente ali é {e}.',
+  'brand.sub': 'Converte relatos de pilotos em padrões, contexto e aprendizagem coletiva.',
 };
 
 /* ============================================================

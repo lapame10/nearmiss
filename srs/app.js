@@ -282,6 +282,7 @@ function vistaInicio() {
   <div class="hero">
     <h1>SkyReport</h1>
     <p class="lema">${escapa(t('brand.tagline'))}</p>
+    <p class="lema-sub">${escapa(t('brand.sub'))}</p>
     ${demo ? `<div class="etq watch mt2" style="font-size:12px">
       ${escapa(t('common.demo'))}</div>` : ''}
   </div>

@@ -386,3 +386,9 @@ input:focus,select:focus,textarea:focus{
 .acuse b{color:var(--green)}
 .acuse code{font-family:var(--fm);font-size:12px;color:var(--ink-2);
   word-break:break-all}
+
+/* ===== LA SEGUNDA LINEA DEL HOME ===== */
+.lema-sub{
+  font-size:14.5px;line-height:1.6;color:var(--ink-3);
+  max-width:620px;margin-top:8px;
+}
