@@ -129,8 +129,8 @@ function nuevoForm() {
   };
 }
 
-const PASOS = ['Type', 'Basics', 'Conditions', 'Equipment', 'IGC', 'Narrative'];
-const PASOS_VUELO = ['Type', 'Quick log'];
+const PASOS = ['report.step.type','report.step.basics','report.step.conditions','report.step.equipment','report.step.igc','report.step.narrative'];
+const PASOS_VUELO = ['report.step.quick'];
 
 /* ============================================================
    PINTAR
@@ -254,6 +254,9 @@ export function pintaReportar(arg) {
 
 function pintaPaso() {
   const rapido = F.tipo === 'safe_flight';
+  /* OJO: esto son CLAVES del diccionario, no texto. Antes eran cadenas en
+     ingles ('Type', 'Basics'...) y por eso los pasos se quedaban sin traducir
+     aunque el resto del formulario cambiara de idioma. */
   const listaPasos = rapido ? PASOS_VUELO : PASOS;
   const c = document.getElementById('rCuerpo');
   if (!c) return;
@@ -268,7 +271,7 @@ function pintaPaso() {
 
   html += `<div class="pasos mt2">${listaPasos.map((n, i) =>
     `<span class="paso-n${paso === i + 1 ? ' on' : paso > i + 1 ? ' hecho' : ''}">${
-      paso > i + 1 ? '✓ ' : (i + 1) + '. '}${escapa(n)}</span>`).join('')}</div>`;
+      paso > i + 1 ? '✓ ' : (i + 1) + '. '}${escapa(t(n))}</span>`).join('')}</div>`;
 
   html += rapido ? pasoVuelo() : [null, pasoTipo, pasoBasico, pasoCondiciones,
     pasoEquipo, pasoIGC, pasoNarrativa][paso]();
@@ -301,8 +304,9 @@ function pintaPaso() {
 function pasoTipo() {
   return `<section class="bloque"><div class="cab"><h2>${escapa(t('report.what'))}</h2></div>
     <div class="opciones col">
-      ${TIPOS_REPORTE.map(t => `<button class="op${F.tipo === t.id ? ' on' : ''}"
-        data-tipo="${t.id}"><b>${escapa(t.n)}</b><small>${escapa(t.d)}</small></button>`).join('')}
+      ${TIPOS_REPORTE.map(x => `<button class="op${F.tipo === x.id ? ' on' : ''}"
+        data-tipo="${x.id}"><b>${escapa(t('tp.' + x.id))}</b>
+        <small>${escapa(t('type.' + x.id + '.d'))}</small></button>`).join('')}
     </div></section>`;
 }
 
