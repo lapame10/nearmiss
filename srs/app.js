@@ -22,6 +22,7 @@ export const est = {
   vista: 'inicio',
   filtros: { site:'', pais:'', ev:'', fase:'', sev:'', viento:'', clase:'', desde:'', hasta:'' },
   modoMapa: 'reports',
+  capaMapa: 'terreno',
   sitioAbierto: null,
 };
 

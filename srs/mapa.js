@@ -10,8 +10,38 @@ import { SITES, EVENTOS, FASES, DIRECCIONES, TIPOS_ZONA } from './data.js';
 import { est, ir, aviso, escapa, nombreEv, nombreFase, fechaLarga, hace, sitio } from './app.js';
 import { distKm, excepciones, similares } from './signals.js';
 
-const TESELAS = 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png';
-const ATRIB = '&copy; OpenStreetMap &copy; CARTO';
+/* ===== LAS CAPAS DEL MAPA =====
+   OJO: CARTO ya NO es libre. Su tesela antigua contesta "API KEY REQUIRED" y
+   el mapa sale con el fondo vacio (Pam lo vio en su movil). Estas tres no
+   piden clave y son las que mejor le van al parapente:
+
+     Map      OpenStreetMap estandar: limpio, se lee todo
+     Terrain  OpenTopoMap: topografico, se ven crestas, valles y pendientes
+              — para leer el relieve de un sitio es la mejor
+     Satellite Esri World Imagery: foto real, para ver el terreno de verdad
+
+   Todas son de uso libre con atribucion. Si algun dia hiciera falta mas
+   trafico, se cambia aqui y ya. */
+const CAPAS = {
+  mapa: {
+    n: 'Map',
+    url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+    atrib: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    max: 19,
+  },
+  terreno: {
+    n: 'Terrain',
+    url: 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
+    atrib: '&copy; OpenTopoMap (CC-BY-SA) · &copy; OpenStreetMap',
+    max: 17,
+  },
+  satelite: {
+    n: 'Satellite',
+    url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+    atrib: 'Imagery &copy; Esri, Maxar, Earthstar Geographics',
+    max: 18,
+  },
+};
 
 let mapa = null, capa = null, marcadores = [];
 
@@ -32,10 +62,18 @@ function cargaLeaflet() {
   });
 }
 
-function base(id, centro = [20, 0], zoom = 3) {
+/** Crea un mapa con la capa elegida.
+    OJO con el invalidateSize: Leaflet mide el contenedor UNA vez, cuando se
+    crea. Si el div acaba de entrar en el DOM, o si el movil cambia de alto al
+    aparecer la barra del navegador, la medida se queda vieja y el mapa sale
+    gris o descuadrado. Por eso se repite la medida un momento despues y
+    tambien cuando cambia el tamano de la ventana. */
+function base(id, centro = [20, 0], zoom = 3, capa = 'mapa') {
   const L = window.L;
+  const c = CAPAS[capa] || CAPAS.mapa;
   const m = L.map(id, { zoomControl: true, attributionControl: true }).setView(centro, zoom);
-  L.tileLayer(TESELAS, { attribution: ATRIB, maxZoom: 18 }).addTo(m);
+  L.tileLayer(c.url, { attribution: c.atrib, maxZoom: c.max, crossOrigin: true }).addTo(m);
+  setTimeout(() => { try { m.invalidateSize(); } catch (e) {} }, 240);
   return m;
 }
 
@@ -80,6 +118,12 @@ export async function pintaMapa() {
       <button class="btn gh" id="mFiltros">Filters <span class="mono" id="nFiltros"></span></button>
     </div>
 
+    <div class="row wrap mt" style="gap:6px">
+      <span class="mini" style="align-self:center">Base</span>
+      ${Object.entries(CAPAS).map(([k, c]) =>
+        `<button class="paso-n${est.capaMapa === k ? ' on' : ''}" data-capa="${k}">${escapa(c.n)}</button>`).join('')}
+    </div>
+
     <div id="panelFiltros" class="card mt oculto"></div>
     <div class="mt"><div id="mapa"></div></div>
     <p class="mini mt" id="resumen"></p>
@@ -87,6 +131,9 @@ export async function pintaMapa() {
 
   document.querySelectorAll('[data-modo]').forEach(b => b.onclick = () => {
     est.modoMapa = b.dataset.modo; pintaMapa();
+  });
+  document.querySelectorAll('[data-capa]').forEach(b => b.onclick = () => {
+    est.capaMapa = b.dataset.capa; pintaMapa();
   });
   document.getElementById('mFiltros').onclick = () => {
     const p = document.getElementById('panelFiltros');
@@ -96,7 +143,9 @@ export async function pintaMapa() {
 
   const L = await cargaLeaflet();
   if (mapa) { mapa.remove(); mapa = null; }
-  mapa = base('mapa', [30, -20], 2);
+  /* 'mapa' es el id del div; la variable del modulo se llama igual, asi que
+     aqui hay que ir con cuidado de no pisarlas */
+  mapa = base('mapa', [30, -20], 2, est.capaMapa || 'mapa');
 
   const lista = filtra(est.reps);
   const capaDatos = L.layerGroup().addTo(mapa);

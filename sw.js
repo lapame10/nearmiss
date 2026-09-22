@@ -16,7 +16,7 @@
      Un reporte viejo o un viento viejo es peor que no tener nada.
    ========================================================================== */
 
-const CACHE = 'skyreport-v2';
+const CACHE = 'skyreport-v3';
 
 /* lo mínimo para que la app abra sin conexión */
 const BASE = [
