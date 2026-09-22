@@ -39,10 +39,15 @@
       <a href="#metodo"   data-ir="metodo">Methodology</a>
     </nav>
     <div class="acciones">
-      <button class="btn pri" id="bReportar">Report incident</button>
+      <select class="sel-idioma" id="selIdioma" title="Language"></select>
+      <button class="btn gh oculto" id="bSincroniza" title="Sync">↻</button>
+      <button class="btn pri" id="bReportar" data-i18n="home.reportEvent">Report an event</button>
     </div>
   </div>
 </header>
+
+<!-- ===== ESTADO DE LA RED (demo, sin conexión, pendientes) ===== -->
+<div class="estado-red" id="estadoRed"></div>
 
 <!-- ===== CONTENIDO ===== -->
 <main id="app" class="vista on"></main>
@@ -79,6 +84,12 @@
 <!-- ===== AVISO ===== -->
 <div id="aviso" role="status" aria-live="polite"></div>
 
+<!-- ===== AVISO DE VERSIÓN NUEVA ===== -->
+<div class="actualiza oculto" id="actualiza">
+  <span id="actualizaTxt">A new version of SkyReport is available.</span>
+  <button class="btn pri" id="bActualiza">Refresh</button>
+</div>
+
 <script type="module">
   import { arranca, ir } from './srs/app.js';
 
@@ -89,6 +100,33 @@
   });
 
   arranca();
+
+  /* ===== AVISO DE VERSIÓN NUEVA =====
+     Cuando el service worker tiene una versión esperando, se avisa y
+     se ofrece recargar. Sin esto, alguien puede quedarse semanas con
+     el index.html viejo en caché y no enterarse nunca. */
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js').then((reg) => {
+      const muestra = (w) => {
+        if (!w) return;
+        const caja = document.getElementById('actualiza');
+        if (caja) caja.classList.remove('oculto');
+        const b = document.getElementById('bActualiza');
+        if (b) b.onclick = () => {
+          w.postMessage({ tipo: 'SALTA_YA' });
+          w.addEventListener('statechange', () => location.reload());
+          setTimeout(() => location.reload(), 900);
+        };
+      };
+      if (reg.waiting) muestra(reg.waiting);
+      reg.addEventListener('updatefound', () => {
+        const w = reg.installing;
+        if (w) w.addEventListener('statechange', () => {
+          if (w.state === 'installed' && navigator.serviceWorker.controller) muestra(w);
+        });
+      });
+    }).catch(() => {});
+  }
 </script>
 
 </body>

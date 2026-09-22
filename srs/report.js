@@ -25,6 +25,12 @@ import {
 } from './data.js';
 import { est, cargaDatos, ir, aviso, escapa } from './app.js';
 import { EventSnapshot, DataCompleteness } from './app.js';
+import { t } from './i18n.js';
+import { parseIGC, posiblesAnomalias, ventanaEvento, horaBonita } from './igc.js';
+import { enviaReporte, enviaVuelo, enModoDemo } from './supabase.js';
+import { AJUSTES, red } from './config.js';
+/* hoyISO vive en data.js, que es donde están las fechas */
+import { hoyISO } from './data.js';
 
 /* ============================================================
    PREGUNTAS DINÁMICAS
@@ -99,11 +105,19 @@ const EXTRA = {
    ============================================================ */
 let F = nuevoForm();
 let paso = 1;
+
+/* El track parseado. Ya NO es un array suelto: lleva los puntos y
+   los metadatos (fecha, altitudes, duración) que saca el parser. */
 let track = null;
+/* Posibles anomalías: sitios donde MIRAR, no el evento. */
+let anomalias = [];
 
 function nuevoForm() {
   return {
-    tipo: 'incident', site: '', fecha: '2026-09-20', hora: '',
+    tipo: 'incident', site: '',
+    /* la fecha inicial es HOY, del reloj del dispositivo, en su
+       zona horaria local. Nada de constantes. */
+    fecha: hoyISO(), hora: '',
     lat: null, lon: null, zona: '',
     fase: '', evento: '', resultado: '', injury: 'none',
     windDir: '', windKmh: '', gustKmh: '',
@@ -121,6 +135,100 @@ const PASOS_VUELO = ['Type', 'Quick log'];
 /* ============================================================
    PINTAR
    ============================================================ */
+/* ============================================================
+   VUELO SIN INCIDENTES — ENTRADA PROPIA
+   ============================================================
+   Pam pidió que esto no estuviera escondido dentro del flujo de
+   reportar. Es el DENOMINADOR: sin vuelos registrados, los
+   reportes no se pueden poner en contexto. Si cuesta rellenarlo,
+   nadie lo rellena, así que son tres campos y ya.
+
+   Se guarda aparte, con su propia función, para que no pueda
+   fallar por culpa del formulario grande. */
+export function pintaVueloRapido() {
+  const cont = document.getElementById('app');
+  document.querySelectorAll('.vista').forEach(x => x.classList.remove('on'));
+  cont.classList.add('on');
+  const hoy = hoyISO();
+
+  cont.innerHTML = `<div class="cont" style="padding-top:10px;padding-bottom:40px">
+    <button class="btn gh mb" id="vVolver">← ${escapa(t('common.back'))}</button>
+
+    <div class="hero" style="padding:6px 0 0">
+      <h1>${escapa(t('safeFlight.title'))}</h1>
+      <p class="lema">${escapa(t('safeFlight.lede'))}</p>
+    </div>
+
+    <section class="bloque">
+      <div class="card">
+        <div class="campo"><label>${escapa(t('safeFlight.site'))}</label>
+          <select id="vSite" class="${F.vSite ? '' : ''}">
+            <option value="">${escapa(t('safeFlight.chooseSite'))}</option>
+            ${SITES.map(s => `<option value="${s.id}"${F.vSite === s.id ? ' selected' : ''}>${escapa(s.n)} — ${escapa(s.pais)}</option>`).join('')}
+          </select></div>
+
+        <div class="campo"><label>${escapa(t('safeFlight.date'))}</label>
+          <input type="date" id="vFecha" value="${escapa(F.vFecha || hoy)}"></div>
+
+        <div class="campo"><label>${escapa(t('safeFlight.type'))}</label>
+          <div class="opciones">
+            ${[['local','Local'],['soaring','Soaring'],['XC','XC'],
+               ['training','Training'],['competition','Competition'],['ground','Ground handling']]
+              .map(([v, n]) => `<button class="op${F.vTipo === v ? ' on' : ''}" data-vtipo="${v}">${n}</button>`).join('')}
+          </div></div>
+
+        <button class="btn pri grande bloque mt2" id="vEnviar">✓ ${escapa(t('safeFlight.log'))}</button>
+      </div>
+
+      <div class="card mt" style="background:var(--bg-2);border-style:dashed">
+        <p class="sub">${escapa(t('safeFlight.why'))}</p>
+        <p class="mini mt" id="vCuenta"></p>
+      </div>
+    </section>
+  </div>`;
+
+  const cuenta = () => {
+    const n = est.vuelos.filter(v => v.site === F.vSite).length;
+    const el = document.getElementById('vCuenta');
+    if (!el) return;
+    el.textContent = F.vSite
+      ? `${n} ${t('common.flightsLogged')} · ${sitioNombre(F.vSite)}` +
+        (n < AJUSTES.minVuelosParaTasa ? ` · ${t('site.sampleSmall')}` : '')
+      : '';
+  };
+
+  document.getElementById('vVolver').onclick = () => ir('inicio');
+  document.querySelectorAll('[data-vtipo]').forEach(b => b.onclick = () => {
+    F.vTipo = b.dataset.vtipo;
+    document.querySelectorAll('[data-vtipo]').forEach(x => x.classList.toggle('on', x.dataset.vtipo === F.vTipo));
+  });
+  const sel = document.getElementById('vSite');
+  sel.onchange = () => { F.vSite = sel.value; cuenta(); };
+  const fe = document.getElementById('vFecha');
+  fe.onchange = () => { F.vFecha = fe.value; };
+  cuenta();
+
+  document.getElementById('vEnviar').onclick = async () => {
+    if (!F.vSite || !F.vTipo) { aviso(t('safeFlight.needSite')); return; }
+    const b = document.getElementById('vEnviar');
+    b.disabled = true; b.textContent = '…';
+    /* el vuelo va a Supabase si está conectado; si no, se queda en
+       el teléfono y se dice. Nunca se pierde. */
+    const r = await enviaVuelo({ id: null, site: F.vSite, fecha: F.vFecha || hoy, tipo: F.vTipo });
+    const local = { id: r.id, site: F.vSite, fecha: F.vFecha || hoy, tipo: F.vTipo, anon: true,
+                    demo: enModoDemo() };
+    est.vuelos = [local, ...est.vuelos];
+    F.vSite = ''; F.vTipo = '';
+    aviso(r.ok ? t('safeFlight.logged') : t('status.offlineSaved'), 4200);
+    ir('inicio');
+  };
+}
+
+function sitioNombre(id) {
+  const s = SITES.find(x => x.id === id);
+  return s ? s.n : id;
+}
+
 export function pintaReportar(arg) {
   if (arg === 'igc') paso = 5;
   const cont = document.getElementById('app');
@@ -358,36 +466,86 @@ function pasoEquipo() {
 
 /* ---------- PASO 5: IGC ---------- */
 function pasoIGC() {
-  return `<section class="bloque"><div class="cab"><h2>Flight track</h2>
-    <span class="mini">optional</span></div>
+  const hayTrack = track && track.puntos && track.puntos.length;
+  return `<section class="bloque"><div class="cab"><h2>${escapa(t('igc.title'))}</h2>
+    <span class="mini">${escapa(t('common.optional'))}</span></div>
+
+  ${!hayTrack ? `
   <div class="card">
-    <div id="zonaDrop" style="border:2px dashed var(--line-2);border-radius:12px;padding:28px 16px;
-      text-align:center;background:var(--bg-2)">
-      <b>Drop an IGC file here</b>
-      <p class="mini mt">or tap to choose one</p>
+    <div id="zonaDrop" class="drop">
+      <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12 16V4"/><path d="m7 9 5-5 5 5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+      <b>${escapa(t('igc.drop'))}</b>
+      <p class="mini">${escapa(t('igc.orTap'))}</p>
       <input type="file" id="fIGC" accept=".igc" style="display:none">
-      <p class="mini mt2" id="igcEstado">${F.igc
-        ? `✓ ${escapa(F.igcNombre || 'track loaded')}` : 'No file yet'}</p>
     </div>
-    <div class="mt2">
-      <p class="sub">With a track, SkyReport can show what the wing was doing around the event:</p>
-      <div class="fila-etq mt">
-        <span class="etq">position</span><span class="etq">ground speed</span>
-        <span class="etq">climb / sink</span><span class="etq">heading</span>
-        <span class="etq">GPS altitude</span>
+    <div id="igcError" class="oculto mt" style="background:var(--red-bg);border:1px solid #e8c8c4;
+      border-radius:8px;padding:12px">
+      <b>${escapa(t('igc.cantParse'))}</b>
+      <p class="mini" id="igcMotivo"></p>
+      <div class="row wrap mt" style="gap:8px">
+        <button class="btn sec" id="igcOtro">${escapa(t('igc.tryAnother'))}</button>
+        <button class="btn gh" id="igcSin">${escapa(t('igc.continueWithout'))}</button>
       </div>
     </div>
-  </div>
+  </div>` : `
+  <div class="card">
+    <div class="entre">
+      <b>${escapa(t('igc.loaded', { n: track.meta.puntos, a: track.meta.desde, b: track.meta.hasta }))}</b>
+      <button class="btn gh" id="igcQuitar">✕</button>
+    </div>
+  </div>`}
+
+  ${F.igcVentana ? `
+  <!-- ===== CONFIRMAR EL MOMENTO DEL EVENTO =====
+       Esto es lo que hacía mal antes: se daba por hecho que el evento era el
+       punto de mayor caída. No tiene por qué: un cravat, un roce con otro ala,
+       un enganche en el despegue o un problema de líneas no se parecen en nada
+       a una caída fuerte. Así que SkyReport PROPONE sitios donde mirar y la
+       persona confirma dónde fue. Hasta que no confirma, no hay Black Box. -->
+  <div class="card mt" style="border-color:var(--blue-2)">
+    <h3>${escapa(t('igc.suggestTitle'))}</h3>
+    <p class="mini mb">${escapa(t('igc.suggestHelp'))}</p>
+
+    <div id="mapaEvento" style="height:250px;border-radius:10px;overflow:hidden;border:1px solid var(--line)"></div>
+
+    <div class="campo mt">
+      <label>${escapa(t('igc.confirm'))}</label>
+      <input type="range" id="sliderEvento" min="0" max="${track.puntos.length - 1}"
+             value="${F.igcPunto || 0}" step="1" class="slider">
+      <div class="entre mini mono mt">
+        <span id="horaDesde">${escapa(track.meta.desde)}</span>
+        <b id="horaElegida">${escapa(horaBonita((track.puntos[F.igcPunto || 0] || {}).hora))} UTC</b>
+        <span id="horaHasta">${escapa(track.meta.hasta)}</span>
+      </div>
+    </div>
+
+    ${anomalias.length ? `
+    <div class="mt2">
+      <h4>${escapa(t('igc.anomalies'))}</h4>
+      <p class="mini mb">${escapa(t('box.observation'))}</p>
+      ${anomalias.map(a => `<button class="op anom" data-irA="${a.t}">${escapa(a.txt)}</button>`).join('')}
+    </div>` : `<p class="mini mt">${escapa(t('igc.noAnomalies'))}</p>`}
+
+    <button class="btn pri grande bloque mt2" id="igcConfirma">
+      ✓ ${escapa(t('igc.confirm'))}</button>
+    ${F.igcConfirmado ? `<p class="mini mt centro" id="igcOk">
+      ${escapa(t('igc.confirmed', { h: horaBonita(F.igcHora) }))}</p>` : ''}
+  </div>` : ''}
+
+  ${F.igcConfirmado ? `
+  <div class="card mt">
+    <div class="cab"><h3>${escapa(t('box.title'))}</h3>
+      <span class="mini">${escapa(t('box.window'))}</span></div>
+    <div id="timeline"></div>
+    <div id="excepciones" class="mt"></div>
+  </div>` : ''}
+
   <div class="card mt" style="background:var(--bg-2)">
-    <h4>Privacy</h4>
-    <p class="sub mt">Your IGC is used to extract the conditions around the event. The original
-    file is not published, the track is not published, and coordinates are rounded to about
-    100 m before anything appears publicly.</p>
+    <h4>${escapa(t('igc.privacyTitle'))}</h4>
+    <p class="sub mt">${escapa(t('igc.privacy'))}</p>
   </div>
-  ${F.igc ? `<div class="card mt"><div class="cab"><h3>Track preview</h3>
-    <span class="mini">T-120 s → T+60 s</span></div>
-    <div id="mapaIGC" style="height:260px;border-radius:10px;overflow:hidden;
-      border:1px solid var(--line)"></div></div>` : ''}
   </section>`;
 }
 
@@ -476,14 +634,67 @@ function enganchaPaso() {
   const env = document.getElementById('rEnviar');
   if (env) env.onclick = envia;
 
-  /* el mapa de elegir punto y el de la pista */
+  /* el mapa de elegir punto */
   import('./mapa.js').then(m => {
     if (document.getElementById('mapaElegir')) m.mapaElegir(F, (la, lo) => {
       F.lat = la; F.lon = lo;
       const p = document.getElementById('pistaCoord');
-      if (p) p.textContent = `Chosen: ${la.toFixed(4)}, ${lo.toFixed(4)}`;
+      if (p) p.textContent = `${la.toFixed(4)}, ${lo.toFixed(4)}`;
     });
-    if (document.getElementById('mapaIGC')) m.mapaTrack(track || igcDemo(20.5, -100.1), 'mapaIGC');
+
+    /* ===== EL SELECTOR DEL MOMENTO DEL EVENTO =====
+       Con el track ya parseado, se pinta el mapa y un deslizador para
+       elegir el punto. Se puede mover el deslizador o tocar una de las
+       anomalías detectadas, que salta el marcador a ese momento — pero
+       ese momento no es "el evento": es un sitio donde mirar. */
+    const sl = document.getElementById('sliderEvento');
+    if (sl && track) {
+      const marca = m.mapaEvento(track.puntos, 'mapaEvento', (i) => {
+        F.igcPunto = i;
+        if (sl) sl.value = i;
+        pintaHora();
+      });
+      const pintaHora = () => {
+        const p = track.puntos[F.igcPunto || 0] || {};
+        const h = document.getElementById('horaElegida');
+        if (h) h.textContent = horaBonita(p.hora) + ' UTC';
+      };
+      sl.oninput = () => { F.igcPunto = +sl.value; pintaHora(); if (mueveMarca) mueveMarca(+sl.value); };
+      var mueveMarca = marca;
+
+      document.querySelectorAll('[data-irA]').forEach(b => b.onclick = () => {
+        const t = +b.dataset.irA;
+        let mejor = 0, d = Infinity;
+        track.puntos.forEach((p, i) => { const dd = Math.abs(p.t - t); if (dd < d) { d = dd; mejor = i; } });
+        F.igcPunto = mejor;
+        sl.value = mejor;
+        pintaHora();
+        if (mueveMarca) mueveMarca(mejor);
+      });
+
+      const conf = document.getElementById('igcConfirma');
+      if (conf) conf.onclick = () => {
+        const p = track.puntos[F.igcPunto || 0];
+        if (!p) { aviso(t('igc.needConfirm')); return; }
+        F.igcConfirmado = true;
+        F.igcHora = p.hora;
+        F.igcTs = p.t;
+        F.igcLat = p.lat;
+        F.igcLon = p.lon;
+        F.lat = F.lat == null ? p.lat : F.lat;
+        F.lon = F.lon == null ? p.lon : F.lon;
+        F.igcMeta = Object.assign({}, F.igcMeta, {
+          event_timestamp: p.hora, event_lat: p.lat, event_lon: p.lon,
+        });
+        aviso(t('igc.confirmed', { h: horaBonita(p.hora) }));
+        pintaPaso();
+        /* y la Black Box, montada alrededor de ESTE momento */
+        const v = ventanaEvento(track.puntos, p.t);
+        import('./mapa.js').then(mm => {
+          if (document.getElementById('timeline')) mm.pintaTimeline(track.puntos, 'timeline', 'excepciones', p.t);
+        });
+      };
+    }
   });
 
   /* IGC: arrastrar o elegir */
@@ -505,71 +716,83 @@ function enganchaPaso() {
   }
 }
 
+/* ============================================================
+   CARGAR UN IGC
+   ============================================================
+   Regla que no se rompe: si el archivo no se entiende, se dice.
+   NUNCA se mete un track de mentira y se hace pasar por el del
+   usuario. La versión anterior hacía justo eso, y es la peor
+   clase de error que puede tener esta app: alguien creería estar
+   viendo lo que hizo su ala cuando ve unos datos inventados.
+
+   Un track de demostración solo aparece si la app está en modo
+   demo, y entonces se avisa en pantalla. */
 async function cargaIGC(f) {
-  if (!/\.igc$/i.test(f.name)) { aviso('That does not look like an .igc file'); return; }
-  const texto = await f.text();
-  const lineas = texto.split('\n').filter(l => l.startsWith('B'));
-  const pts = [];
-  lineas.forEach(l => {
-    if (l.length < 35) return;
-    const hh = +l.slice(1, 3), mm = +l.slice(3, 5), ss = +l.slice(5, 7);
-    const la = +l.slice(7, 15) / 100000, lo = +l.slice(15, 24) / 100000;
-    const alt = +l.slice(30, 35);
-    if (!isFinite(la) || !isFinite(lo)) return;
-    pts.push({ t: hh * 3600 + mm * 60 + ss, lat: la, lon: lo, baroAlt: alt,
-      gpsAlt: alt, hs: 0, vs: 0, heading: 0 });
-  });
-  if (!pts.length) {
-    /* sin parser real: se usa un track de demostracion, pero se dice */
-    track = igcDemo(20.5, -100.1);
-    aviso('Track loaded as demonstration data');
-  } else {
-    /* velocidades y rumbos a partir de los puntos */
-    for (let i = 1; i < pts.length; i++) {
-      const a = pts[i - 1], b = pts[i];
-      const dt = Math.max(1, b.t - a.t);
-      const x = (b.lon - a.lon) * 111320 * Math.cos(b.lat * Math.PI / 180);
-      const y = (b.lat - a.lat) * 110540;
-      b.hs = Math.sqrt(x * x + y * y) / dt * 3.6;
-      b.vs = (b.baroAlt - a.baroAlt) / dt;
-      b.heading = (Math.atan2(x, y) * 180 / Math.PI + 360) % 360;
-    }
-    /* reetiqueto los tiempos como relativos al punto de mayor caida = EVENTO */
-    let peor = 0;
-    for (let i = 1; i < pts.length; i++) if (pts[i].vs < pts[peor].vs) peor = i;
-    const t0 = pts[peor].t;
-    track = pts.map(p => ({ ...p, t: p.t - t0 })).filter(p => p.t >= -120 && p.t <= 60);
-    aviso('IGC loaded: ' + pts.length + ' points');
-  }
-  F.igc = true; F.igcNombre = f.name;
+  const fallo = (motivo) => {
+    track = null; anomalias = [];
+    F.igc = false; F.igcVentana = false; F.igcConfirmado = false;
+    pintaPaso();
+    const e = document.getElementById('igcError');
+    const m = document.getElementById('igcMotivo');
+    if (e) e.classList.remove('oculto');
+    if (m) m.textContent = motivo;
+    const b = document.getElementById('igcOtro');
+    if (b) b.onclick = () => pintaPaso();
+    const c = document.getElementById('igcSin');
+    if (c) c.onclick = () => { F.igc = false; paso = 5; pintaPaso(); };
+  };
+
+  if (!/\.igc$/i.test(f.name)) { fallo(t('igc.notIgc')); return; }
+
+  let texto = '';
+  try { texto = await f.text(); }
+  catch (e) { fallo('The file could not be read.'); return; }
+
+  const r = parseIGC(texto);
+  if (!r.ok) { fallo(r.motivo || t('igc.cantParse')); return; }
+
+  track = { puntos: r.puntos, meta: r.meta, nombre: f.name };
+  anomalias = posiblesAnomalias(r.puntos);
+  F.igc = true;
+  F.igcNombre = f.name;
+  F.igcVentana = true;
+  F.igcConfirmado = false;
+  F.igcPunto = 0;
+  F.igcMeta = {
+    puntos: r.meta.puntos, desde: r.meta.desde, hasta: r.meta.hasta,
+    duracion_s: r.meta.duracionS, alt_max: r.meta.altMax, alt_min: r.meta.altMin,
+    tiene_barometrica: r.meta.tieneBarometrica, tiene_gps: r.meta.tieneGPS,
+    anomalias: anomalias.map(a => ({ tipo: a.tipo, hora: a.hora })),
+  };
+  aviso(t('igc.loaded', { n: r.meta.puntos, a: r.meta.desde, b: r.meta.hasta }), 5200);
   pintaPaso();
 }
 
 /* ============================================================
    ENVIAR
    ============================================================ */
-function envia() {
+async function envia() {
   guardaCampos();
 
   /* --- registro de vuelo sin incidentes: rapidisimo --- */
   if (F.tipo === 'safe_flight') {
     if (!F.site || !F.tipoVuelo) { aviso('Pick a site and a type of flight'); return; }
-    const v = { id: 'SF-' + Date.now(), site: F.site, fecha: F.fecha,
-      tipo: F.tipoVuelo, anon: true };
-    const previos = JSON.parse(localStorage.getItem(CLAVE_VUELOS) || '[]');
-    guardaLocal(CLAVE_VUELOS, [v, ...previos]);
-    est.vuelos = [v, ...est.vuelos];
+    const v = { id: null, site: F.site, fecha: F.fecha, tipo: F.tipoVuelo };
+    const r = await enviaVuelo(v);
+    est.vuelos = [{ ...v, id: r.id || 'local', anon: true, demo: enModoDemo() }, ...est.vuelos];
     F = nuevoForm(); paso = 1;
-    aviso('Flight logged — thank you');
+    aviso(r.ok ? t('safeFlight.logged') : t('status.offlineSaved'), 4400);
     ir('inicio');
     return;
   }
 
   /* --- reporte normal --- */
+  if (F.igcVentana && !F.igcConfirmado) { aviso(t('igc.needConfirm'), 4200); return; }
+
   const falta = [];
-  if (!F.site) falta.push('site');
-  if (!F.fase) falta.push('flight phase');
-  if (!F.evento) falta.push('event type');
+  if (!F.site) falta.push(t('report.site'));
+  if (!F.fase) falta.push(t('report.phase'));
+  if (!F.evento) falta.push(t('report.event'));
   if (falta.length) { aviso('Still needed: ' + falta.join(', ')); return; }
 
   const s = SITES.find(x => x.id === F.site) || {};
@@ -584,12 +807,15 @@ function envia() {
     altAgl: F.altAgl ? +F.altAgl : '',
     fecha: F.fecha || '2026-09-20',
   };
+  /* se guarda en el teléfono SIEMPRE (por si acaso) y además se
+     intenta enviar. Si no hay conexión, queda en la cola y se dice. */
   const previos = JSON.parse(localStorage.getItem(CLAVE_LOCAL) || '[]');
   guardaLocal(CLAVE_LOCAL, [rep, ...previos]);
+
+  const envio = await enviaReporte(rep, rep.completo);
   cargaDatos();
 
-  const { pct } = { pct: 0 };
-  F = nuevoForm(); paso = 1; track = null;
-  aviso('Report submitted' + (rep.igc ? ' — track attached' : ''));
+  F = nuevoForm(); paso = 1; track = null; anomalias = [];
+  aviso(envio.ok ? t('report.submittedPending') : t('status.offlineSaved'), 5200);
   ir('inicio');
 }

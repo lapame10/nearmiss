@@ -294,7 +294,10 @@ function pintaCalor(L, capa, lista) {
 function pintaSenales(L, capa) {
   const sigs = (est.filtros.site ? est.senales.filter(s => s.site === est.filtros.site) : est.senales);
   sigs.forEach(s => {
-    const col = s.nivel === 'elevated' ? '#98372f' : s.nivel === 'watch' ? '#a8742c' : '#2c4a6e';
+    /* el color describe la EVIDENCIA, no el peligro: azul para lo
+       repetido, ámbar para lo fuerte. Nunca rojo, que asusta. */
+    const fr = s.fuerza || s.nivel;
+    const col = fr === 'strong' ? '#a8742c' : fr === 'repeated' ? '#3d6390' : '#8c939b';
     L.circle([s.lat, s.lon], { radius: 2200, color: col, weight: 1.5,
       fillColor: col, fillOpacity: .1, dashArray: '5 5' }).addTo(capa);
     L.circleMarker([s.lat, s.lon], { radius: 9, fillColor: col, fillOpacity: .9,
@@ -337,6 +340,40 @@ export async function mapaElegir(F, cb) {
 }
 
 /* ============================================================
+   MAPA PARA ELEGIR EL MOMENTO DEL EVENTO
+   ============================================================
+   Devuelve una función para mover el marcador desde fuera (el
+   deslizador). El usuario toca el track o mueve el deslizador, y
+   aquí se mueve la marca. Importante: esto NO decide el evento,
+   solo deja señalarlo. */
+export async function mapaEvento(puntos, idCont, alElegir) {
+  const el = document.getElementById(idCont);
+  if (!el || !puntos || !puntos.length) return null;
+  const L = await cargaLeaflet();
+  const m = base(idCont, [puntos[0].lat, puntos[0].lon], 14);
+
+  L.polyline(puntos.map(p => [p.lat, p.lon]), { color: '#5a6169', weight: 3, opacity: .9 }).addTo(m);
+
+  const marca = L.circleMarker([puntos[0].lat, puntos[0].lon], {
+    radius: 8, fillColor: '#2c4a6e', fillOpacity: .95, color: '#fff', weight: 2.5,
+  }).addTo(m);
+
+  /* tocar el track elige el punto más cercano */
+  m.on('click', (e) => {
+    let mejor = 0, d = Infinity;
+    puntos.forEach((p, i) => {
+      const dd = Math.hypot(p.lat - e.latlng.lat, (p.lon - e.latlng.lng) * .95);
+      if (dd < d) { d = dd; mejor = i; }
+    });
+    marca.setLatLng([puntos[mejor].lat, puntos[mejor].lon]);
+    if (alElegir) alElegir(mejor);
+  });
+
+  m.fitBounds(L.latLngBounds(puntos.map(p => [p.lat, p.lon])).pad(.25));
+  return (i) => { const p = puntos[i]; if (p) marca.setLatLng([p.lat, p.lon]); };
+}
+
+/* ============================================================
    MAPA DEL TRACK + BLACK BOX
    ============================================================ */
 export async function mapaTrack(track, idCont) {
@@ -362,12 +399,22 @@ export async function mapaTrack(track, idCont) {
   return m;
 }
 
-export function pintaTimeline(track, idTimeline, idExcep) {
+export function pintaTimeline(track, idTimeline, idExcep, tEvento) {
   const cont = document.getElementById(idTimeline);
   if (!cont || !track || track.length < 3) return;
-  /* me quedo con un punto por cada marca de tiempo */
-  const marcas = [-120, -60, -30, 0, 30, 60].map(t =>
-    track.reduce((a, b) => Math.abs(b.t - t) < Math.abs(a.t - t) ? b : a));
+
+  /* ===== LA VENTANA SE MONTA ALREDEDOR DEL MOMENTO CONFIRMADO =====
+     Antes se usaba el punto de mayor caída, que es una suposición
+     mala: un cravat, un roce o un problema de líneas no tienen por
+     qué coincidir con una caída fuerte. Ahora el cero es el momento
+     que ha confirmado la persona. */
+  const cero = (tEvento != null) ? tEvento : track[Math.floor(track.length / 2)].t;
+  const marcas = [-120, -60, -30, 0, 30, 60].map(off => {
+    const objetivo = cero + off;
+    let mejor = null, d = Infinity;
+    for (const p of track) { const dd = Math.abs(p.t - objetivo); if (dd < d) { d = dd; mejor = p; } }
+    return (mejor && d <= 60) ? { ...mejor, off } : { off, vacio: true };
+  });
   const maxSpeed = Math.max(...track.map(p => p.hs), 1);
   const altMin = Math.min(...track.map(p => p.baroAlt));
   const altMax = Math.max(...track.map(p => p.baroAlt));
@@ -375,13 +422,16 @@ export function pintaTimeline(track, idTimeline, idExcep) {
   cont.innerHTML = `<div class="tabla-scroll" style="overflow-x:auto">
     <table class="tabla">
       <tr><th>T</th><th>Altitude</th><th>Speed</th><th>Climb / sink</th><th>Heading</th></tr>
-      ${marcas.map(p => `<tr${p.t === 0 ? ' style="background:var(--red-bg)"' : ''}>
-        <td class="mono"><b>${p.t === 0 ? 'EVENT' : `T${p.t > 0 ? '+' : ''}${p.t} s`}</b></td>
-        <td class="mono">${p.baroAlt} m</td>
-        <td class="mono">${p.hs.toFixed(0)} km/h</td>
-        <td class="mono" style="color:${p.vs < -3 ? 'var(--red)' : p.vs > 0 ? 'var(--green)' : 'inherit'}">
-          ${p.vs > 0 ? '+' : ''}${p.vs.toFixed(1)} m/s</td>
-        <td class="mono">${Math.round(p.heading)}°</td>
+      ${marcas.map(p => p.vacio ? `<tr>
+        <td class="mono"><b>${p.off === 0 ? 'EVENT' : `T${p.off > 0 ? '+' : ''}${p.off} s`}</b></td>
+        <td class="mono" colspan="4" style="color:var(--ink-3)">${escapa(nombreFase ? t('common.na') : 'N/A')}</td>
+      </tr>` : `<tr${p.off === 0 ? ' style="background:var(--blue-bg)"' : ''}>
+        <td class="mono"><b>${p.off === 0 ? 'EVENT' : `T${p.off > 0 ? '+' : ''}${p.off} s`}</b></td>
+        <td class="mono">${p.altPresion != null ? p.altPresion + ' m' : 'N/A'}</td>
+        <td class="mono">${p.hs != null ? p.hs.toFixed(0) + ' km/h' : 'N/A'}</td>
+        <td class="mono" style="color:${p.vs != null && p.vs < -3 ? 'var(--red)' : p.vs > 0 ? 'var(--green)' : 'inherit'}">
+          ${p.vs != null ? (p.vs > 0 ? '+' : '') + p.vs.toFixed(1) + ' m/s' : 'N/A'}</td>
+        <td class="mono">${p.heading != null ? Math.round(p.heading) + '°' : 'N/A'}</td>
       </tr>`).join('')}
     </table></div>
     <p class="mini mt">Speed on the ground, barometric altitude and heading. Not a flight
@@ -389,13 +439,14 @@ export function pintaTimeline(track, idTimeline, idExcep) {
 
   const ex = document.getElementById(idExcep);
   if (ex) {
-    const lista = excepciones(track);
+    /* las anomalías también se calculan sobre el momento confirmado */
+    const lista = excepciones(track.map(p => ({ ...p, t: p.t - cero })));
     ex.innerHTML = lista.length ? `
       <h4>Worth a look</h4>
       <p class="mini mb">Events flagged by simple thresholds, the way telemetry systems do it:
       do not show everything, show what stands out.</p>
       ${lista.map(e => `<div class="row" style="gap:8px;margin:6px 0">
-        <span class="etq watch mono">T${e.t > 0 ? '+' : ''}${e.t} s</span>
+        <span class="etq mono">T${e.t > 0 ? '+' : ''}${e.t} s</span>
         <span class="sub">${escapa(e.txt)}</span></div>`).join('')}`
       : `<p class="mini">No anomalies flagged in this track.</p>`;
   }
@@ -409,7 +460,8 @@ export async function mapaSenal(sig, id) {
   if (!el) return;
   const L = await cargaLeaflet();
   const m = base(id, [sig.lat, sig.lon], 13);
-  const col = sig.nivel === 'elevated' ? '#98372f' : sig.nivel === 'watch' ? '#a8742c' : '#2c4a6e';
+  const fr = sig.fuerza || sig.nivel;
+  const col = fr === 'strong' ? '#a8742c' : fr === 'repeated' ? '#3d6390' : '#8c939b';
   L.circle([sig.lat, sig.lon], { radius: 2000, color: col, weight: 1.5,
     fillColor: col, fillOpacity: .08, dashArray: '5 5' }).addTo(m);
   est.reps.filter(r => sig.reps.includes(r.id)).forEach(r => {

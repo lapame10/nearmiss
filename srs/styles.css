@@ -283,3 +283,106 @@ input:focus,select:focus,textarea:focus{
   h1{font-size:21px}
   .hero h1{font-size:25px}
 }
+
+
+/* ============================================================
+   LO NUEVO DE LA V2.1
+   ============================================================ */
+
+/* ===== BUSCADOR DE SITIOS ===== */
+.buscador{
+  display:flex;align-items:center;gap:10px;
+  background:var(--card);border:1.5px solid var(--line-2);border-radius:var(--r);
+  padding:13px 16px;box-shadow:var(--sombra);
+  transition:border-color .12s, box-shadow .12s;
+}
+.buscador:focus-within{border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-bg)}
+.buscador svg{color:var(--ink-3);flex:none}
+.buscador input{
+  border:none;background:transparent;padding:0;font-size:16px;width:100%;
+}
+.buscador input:focus{outline:none;box-shadow:none}
+
+/* ===== LAS DOS ACCIONES GRANDES ===== */
+.accion{
+  display:flex;flex-direction:column;align-items:flex-start;gap:5px;
+  padding:18px;text-align:left;border-radius:var(--r);
+}
+.accion b{font-size:16.5px;font-weight:650}
+.accion.ok{border-color:#cfdccf}
+.accion-ic{
+  width:40px;height:40px;border-radius:10px;display:flex;align-items:center;
+  justify-content:center;background:var(--blue-bg);color:var(--blue);margin-bottom:4px;
+}
+.accion-ic.ok{background:var(--green-bg);color:var(--green)}
+
+/* ===== ZONA DE ARRASTRAR EL IGC ===== */
+.drop{
+  border:2px dashed var(--line-2);border-radius:var(--r);padding:32px 18px;
+  text-align:center;background:var(--bg-2);cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;gap:7px;
+  color:var(--ink-2);transition:border-color .12s, background .12s;
+}
+.drop:hover{border-color:var(--blue-2);background:var(--bg)}
+.drop svg{color:var(--ink-3)}
+
+/* ===== DESLIZADOR DEL EVENTO ===== */
+.slider{
+  width:100%;-webkit-appearance:none;appearance:none;height:6px;border-radius:4px;
+  background:var(--gris-bg);outline:none;padding:0;margin:14px 0 4px;
+}
+.slider::-webkit-slider-thumb{
+  -webkit-appearance:none;appearance:none;width:28px;height:28px;border-radius:50%;
+  background:var(--blue);border:3px solid #fff;box-shadow:var(--sombra-2);cursor:pointer;
+}
+.slider::-moz-range-thumb{
+  width:28px;height:28px;border-radius:50%;background:var(--blue);
+  border:3px solid #fff;box-shadow:var(--sombra-2);cursor:pointer;border-color:#fff;
+}
+
+/* ===== ANOMALÍAS: observaciones, sin color de alarma ===== */
+.op.anom{
+  display:block;width:100%;margin:5px 0;text-align:left;font-size:13px;
+  background:var(--bg-2);border-color:var(--line);
+}
+.op.anom:hover{border-color:var(--blue-2);background:var(--blue-bg)}
+
+/* ===== ESTADO DE RED ===== */
+.estado-red{
+  max-width:1120px;margin:0 auto;padding:0 16px;
+  font-size:12.5px;line-height:1.5;color:var(--ink-2);
+}
+.estado-red:empty{display:none}
+.estado-red > span{
+  display:block;padding:9px 13px;margin-bottom:10px;border-radius:8px;
+  background:var(--bg-2);border:1px solid var(--line);
+}
+.estado-red.demo > span{background:var(--amber-bg);border-color:#e8d7b0;color:var(--amber)}
+.estado-red.aviso > span{background:var(--red-bg);border-color:#e8c8c4;color:var(--red)}
+.estado-red.pend > span{background:var(--blue-bg);border-color:#cfdcea;color:var(--blue)}
+
+/* ===== SELECTOR DE IDIOMA ===== */
+.sel-idioma{
+  border:1px solid var(--line-2);border-radius:var(--r-sm);background:var(--card);
+  padding:7px 9px;font-size:13px;color:var(--ink-2);font-family:inherit;cursor:pointer;
+}
+.sel-idioma:focus{outline:none;border-color:var(--blue)}
+
+/* ===== AVISO DE ACTUALIZACIÓN ===== */
+.actualiza{
+  position:fixed;left:50%;transform:translateX(-50%);
+  bottom:calc(78px + env(safe-area-inset-bottom));z-index:210;
+  background:var(--card);border:1px solid var(--line-2);border-radius:var(--r);
+  box-shadow:var(--sombra-2);padding:12px 15px;display:flex;align-items:center;gap:12px;
+  max-width:92vw;font-size:13.5px;
+}
+@media (min-width:820px){ .actualiza{bottom:20px} }
+
+/* ===== ACUSE DE ENVÍO ===== */
+.acuse{
+  background:var(--green-bg);border:1px solid #cfdccf;border-radius:var(--r);
+  padding:14px;
+}
+.acuse b{color:var(--green)}
+.acuse code{font-family:var(--fm);font-size:12px;color:var(--ink-2);
+  word-break:break-all}

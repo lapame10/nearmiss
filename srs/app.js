@@ -6,11 +6,18 @@
 import {
   SITES, EVENTOS, FASES, TIPOS_REPORTE, SEVERIDAD, RESULTADOS,
   DIRECCIONES, TIPOS_ZONA, DEMO, todosLosReportes, todosLosVuelos, igcDemo,
+  hoyISO, haceDiasISO, diasEntre, FECHA_DEMO,
 } from './data.js';
 import {
   detectaSenales, similares, statsSite, patronesSite, completitud,
-  distKm, NIVEL_TXT, nombreSitio,
+  distKm, FUERZA_TXT, contextoExposicion, nombreSitio,
 } from './signals.js';
+import { t, ponIdioma, idioma, detectaIdioma, idiomasDisponibles, traducePantalla } from './i18n.js';
+import { haySupabase, red, AJUSTES } from './config.js';
+import {
+  conecta, enModoDemo, leeReportes, leeVuelos, leeSitios, leeZonas,
+  deFilaReporte, deFilaVuelo, pendientes, sincroniza, vigilaConexion,
+} from './supabase.js';
 
 /* ============================================================
    ESTADO
@@ -30,6 +37,29 @@ export function cargaDatos() {
   est.reps = todosLosReportes();
   est.vuelos = todosLosVuelos();
   est.senales = detectaSenales(est.reps);
+}
+
+/** Trae de Supabase y sustituye los datos locales.
+ *
+ *  IMPORTANTE: cuando Supabase está conectado, los datos de
+ *  DEMOSTRACIÓN se apagan. Nunca se suman. Si se mezclaran, las
+ *  estadísticas de un sitio inventado se leerían como si fueran de
+ *  la comunidad, y eso es exactamente lo que no queremos. */
+export async function cargaDesdeSupabase() {
+  if (!haySupabase()) { red.modo = 'demo'; return { ok: false }; }
+  const c = await conecta();
+  if (!c.ok) return c;
+
+  const [rs, vs] = await Promise.all([leeReportes(), leeVuelos()]);
+  if (rs.ok) est.reps = rs.datos.map(deFilaReporte);
+  if (vs.ok) est.vuelos = vs.datos.map(deFilaVuelo);
+  if (!AJUSTES.permitirDemoConSupabase) {
+    /* nada de demo junto a datos reales */
+    est.reps = est.reps.filter(r => !r.demo);
+    est.vuelos = est.vuelos.filter(v => !v.demo);
+  }
+  est.senales = detectaSenales(est.reps);
+  return { ok: true, reportes: est.reps.length, vuelos: est.vuelos.length };
 }
 
 /* ============================================================
@@ -62,7 +92,9 @@ export function fechaLarga(iso) {
 }
 
 export function hace(iso) {
-  const dd = Math.round((new Date('2026-09-20') - new Date(iso)) / 86400000);
+  /* la fecha de hoy sale del reloj, no de una constante */
+  const hoy = hoyISO();
+  const dd = Math.round((new Date(hoy + 'T12:00:00') - new Date(iso + 'T12:00:00')) / 86400000);
   if (dd <= 0) return 'today';
   if (dd === 1) return 'yesterday';
   if (dd < 30) return `${dd} days ago`;
@@ -134,22 +166,44 @@ export function ReportCard({ rep, chico = false }) {
 }
 
 /** Tarjeta de senal. NUNCA dice que algo sea peligroso. */
+/* ============================================================
+   TARJETA DE SEÑAL
+   ============================================================
+   Pam pidió quitar el aire de "score de riesgo" y poner delante
+   los datos objetivos. Ahora lo primero que se lee son números
+   comprobables: cuántos, en cuánta área, en cuántos días, con qué
+   condiciones. La etiqueta de fuerza va al final y describe
+   EVIDENCIA, no peligro. */
 export function SignalCard({ sig }) {
   const s = sitio(sig.site);
+  const ctx = contextoExposicion(sig, est.reps, est.vuelos, AJUSTES.minVuelosParaTasa);
+  const fr = sig.fuerza || sig.nivel || 'limited';
   return `<article class="card clic" data-sig="${escapa(sig.id)}">
     <div class="entre">
-      <span class="etq ${sig.nivel === 'elevated' ? 'elev' : sig.nivel === 'watch' ? 'watch' : 'info'}">
-        ${escapa(NIVEL_TXT[sig.nivel])}</span>
-      <span class="mini mono">${escapa(sig.regla)}</span>
+      <span class="etq ${fr === 'strong' ? 'watch' : fr === 'repeated' ? 'info' : ''}">
+        ${escapa(t('strength.' + fr))}</span>
+      <span class="mini mono">${escapa(t('signals.rule'))} ${escapa(sig.regla)}</span>
     </div>
     <h3 class="mt">${escapa(sig.titulo)}</h3>
     <p class="sub">${escapa(s.n || '—')}${sig.zona ? ' · ' + escapa(sig.zona) : ''}</p>
     <dl class="dl mt">
-      <dt>Reports</dt><dd>${sig.n}</dd>
-      <dt>Period</dt><dd>${escapa(fechaLarga(sig.desde))} – ${escapa(fechaLarga(sig.hasta))}</dd>
-      ${sig.condicion ? `<dt>Main condition</dt><dd>${escapa(sig.condicion)}</dd>` : ''}
+      <dt>${escapa(t('signals.related', { n: sig.n }))}</dt>
+      <dd>${escapa(fechaLarga(sig.desde))} – ${escapa(fechaLarga(sig.hasta))}</dd>
+      ${sig.radioKm != null ? `<dt>${escapa(t('signals.area', { km: sig.radioKm }))}</dt>
+        <dd>${escapa(t('signals.period', { n: sig.dias || '—' }))}</dd>` : ''}
+      ${sig.condicion ? `<dt>${escapa(sig.condicion)}</dt>
+        <dd>${(sig.franja && sig.franja.tramo)
+          ? escapa(t('signals.between', {
+              n: sig.franja.n,
+              a: String(sig.franja.tramo).split('-')[0] + ':00',
+              b: String(sig.franja.tramo).split('-')[1] + ':00' })) : ''}</dd>` : ''}
+      ${ctx.suficiente
+        ? `<dt>${escapa(t('signals.exposureTitle'))}</dt>
+           <dd>${escapa(t('signals.exposure', { n: ctx.reportes, v: ctx.vuelos.toLocaleString(idioma()) }))}</dd>`
+        : `<dt>${escapa(t('signals.exposureTitle'))}</dt>
+           <dd class="mini">${escapa(t('signals.exposureLimited'))}</dd>`}
     </dl>
-    <div class="mt2"><span class="btn gh">View signal →</span></div>
+    <div class="mt2"><span class="btn gh">${escapa(t('signals.viewRelated'))} →</span></div>
   </article>`;
 }
 
@@ -204,107 +258,190 @@ export function EventSnapshot({ rep, nSimilares = 0 }) {
    ============================================================ */
 function vistaInicio() {
   const reps = est.reps.filter(r => r.tipo !== 'safe_flight');
-  const sigs = est.senales.slice(0, 4);
-  const recientes = reps.slice().sort((a, b) => b.fecha.localeCompare(a.fecha)).slice(0, 4);
+  const sigs = est.senales.slice(0, 3);
+  /* los reportes más recientes, por fecha de verdad */
+  const recientes = reps.slice().sort((a, b) => String(b.fecha).localeCompare(String(a.fecha))).slice(0, 3);
 
+  /* resumen: con la fecha REAL de hoy, no una constante */
+  const hace30 = haceDiasISO(30);
+  const ult30 = reps.filter(r => r.fecha >= hace30).length;
   const cuentaEv = {};
   reps.forEach(r => { cuentaEv[r.evento] = (cuentaEv[r.evento] || 0) + 1; });
-  const [evMas, nEv] = Object.entries(cuentaEv).sort((a, b) => b[1] - a[1])[0] || ['—', 0];
+  const [evMas, nEv] = Object.entries(cuentaEv).sort((a, b) => b[1] - a[1])[0] || ['', 0];
   const cuentaFa = {};
   reps.forEach(r => { cuentaFa[r.fase] = (cuentaFa[r.fase] || 0) + 1; });
-  const [faMas] = Object.entries(cuentaFa).sort((a, b) => b[1] - a[1])[0] || ['—'];
+  const [faMas] = Object.entries(cuentaFa).sort((a, b) => b[1] - a[1])[0] || [''];
   const cuentaVi = {};
   reps.filter(r => r.windDir).forEach(r => { cuentaVi[r.windDir] = (cuentaVi[r.windDir] || 0) + 1; });
-  const [viMas] = Object.entries(cuentaVi).sort((a, b) => b[1] - a[1])[0] || ['—'];
-  const ult30 = reps.filter(r => (new Date('2026-09-20') - new Date(r.fecha)) / 86400000 <= 30).length;
+  const [viMas] = Object.entries(cuentaVi).sort((a, b) => b[1] - a[1])[0] || [''];
+
+  const demo = enModoDemo();
 
   return `
   <div class="hero">
     <h1>SkyReport</h1>
-    <p class="lema">Community safety intelligence for free flight.</p>
-    <div class="cta">
-      <button class="btn pri grande" data-ir="reportar">Report incident</button>
-      <button class="btn sec grande" data-ir="mapa">Explore map</button>
-    </div>
-    ${DEMO ? `<p class="mini mt2">This build shows demonstration data. It is not a record of real accidents.</p>` : ''}
+    <p class="lema">${escapa(t('brand.tagline'))}</p>
+    ${demo ? `<div class="etq watch mt2" style="font-size:12px">
+      ${escapa(t('common.demo'))}</div>` : ''}
   </div>
 
-  <section class="bloque">
-    <div class="cab">
-      <div><h2>Recent signals</h2>
-        <p class="mini">Patterns found across several reports. An observation, not a verdict.</p></div>
-      <button class="btn gh" data-ir="senales">All signals →</button>
+  <!-- ===== 1. BUSCAR UN SITIO — lo primero, para el que abre antes de volar ===== -->
+  <section class="bloque" style="margin-top:20px">
+    <h2>${escapa(t('home.searchTitle'))}</h2>
+    <div class="buscador mt">
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="2.2" stroke-linecap="round" aria-hidden="true">
+        <circle cx="11" cy="11" r="7"/><path d="m20 20-3.6-3.6"/></svg>
+      <input type="search" id="buscaSitio" autocomplete="off"
+             placeholder="${escapa(t('home.searchPlaceholder'))}">
     </div>
-    <div class="grid g2">${sigs.map(s => SignalCard({ sig: s })).join('')}</div>
+    <div id="buscaResultados"></div>
   </section>
 
+  <!-- ===== 2. LAS DOS ACCIONES ===== -->
   <section class="bloque">
-    <div class="cab">
-      <div><h2>Sites with activity</h2></div>
-      <button class="btn gh" data-ir="sitios">All sites →</button>
+    <div class="grid g2">
+      <button class="card clic accion" data-ir="reportar">
+        <span class="accion-ic">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="2" stroke-linecap="round" aria-hidden="true">
+            <path d="M12 9v4"/><path d="M12 17h.01"/>
+            <path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg>
+        </span>
+        <b>${escapa(t('home.reportEvent'))}</b>
+        <span class="mini">${escapa(t('home.reportEventSub'))}</span>
+      </button>
+      <button class="card clic accion ok" data-ir="vuelo">
+        <span class="accion-ic ok">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="m4.5 12.5 5 5L20 7"/></svg>
+        </span>
+        <b>${escapa(t('home.flewToday'))}</b>
+        <span class="mini">${escapa(t('home.flewTodaySub'))}</span>
+      </button>
     </div>
-    <div class="grid g2">${SITES.map(s => SiteCard({ s })).join('')}</div>
+    ${red.pendientes ? `<div class="card mt" style="background:var(--amber-bg);border-color:#e8d7b0">
+      <p class="sub">${escapa(t('status.pending', { n: red.pendientes }))}</p></div>` : ''}
   </section>
 
+  <!-- ===== 3. ACTIVIDAD RECIENTE ===== -->
   <section class="bloque">
-    <div class="cab"><h2>Pattern summary</h2></div>
+    <div class="cab">
+      <h2>${escapa(t('home.recentActivity'))}</h2>
+      <button class="btn gh" data-ir="mapa">${escapa(t('nav.map'))} →</button>
+    </div>
+    ${recientes.length
+      ? `<div class="grid g2">${recientes.map(r => ReportCard({ rep: r, chico: true })).join('')}</div>`
+      : `<p class="sub">${escapa(t('site.noReports'))}</p>`}
+  </section>
+
+  <!-- ===== 4. SEÑALES ===== -->
+  <section class="bloque">
+    <div class="cab">
+      <div><h2>${escapa(t('home.recentSignals'))}</h2>
+        <p class="mini">${escapa(t('signals.lede')).slice(0, 96)}…</p></div>
+      <button class="btn gh" data-ir="senales">${escapa(t('nav.signals'))} →</button>
+    </div>
+    ${sigs.length
+      ? `<div class="grid g2">${sigs.map(x => SignalCard({ sig: x })).join('')}</div>`
+      : `<p class="sub">${escapa(t('signals.none'))}</p>`}
+  </section>
+
+  <!-- ===== 5. SITIOS ===== -->
+  <section class="bloque">
+    <div class="cab"><h2>${escapa(t('home.sitesActivity'))}</h2>
+      <button class="btn gh" data-ir="sitios">${escapa(t('nav.sites'))} →</button></div>
+    <div class="grid g2">${SITES.map(x => SiteCard({ s: x })).join('')}</div>
+  </section>
+
+  <!-- ===== 6. RESUMEN ===== -->
+  <section class="bloque">
+    <div class="cab"><h2>${escapa(t('home.patternSummary'))}</h2>
+      <span class="mini">${escapa(t('strength.explain'))}</span></div>
     <div class="card">
       <div class="mets">
-        <div class="met"><b>${nEv}</b><span>${escapa(nombreEv(evMas))} most reported</span></div>
-        <div class="met"><b>${ult30}</b><span>reports in last 30 days</span></div>
-        <div class="met"><b>${est.senales.length}</b><span>signals detected</span></div>
-        <div class="met"><b style="font-size:17px">${escapa(nombreFase(faMas))}</b><span>most common phase</span></div>
-        <div class="met"><b style="font-size:17px">${escapa(viMas)}</b><span>most reported wind</span></div>
-        <div class="met"><b>${est.vuelos.length}</b><span>flights logged</span></div>
+        <div class="met"><b>${nEv}</b><span>${escapa(nombreEv(evMas))}</span></div>
+        <div class="met"><b>${ult30}</b><span>${escapa(t('common.reports'))} · 30 d</span></div>
+        <div class="met"><b>${est.senales.length}</b><span>${escapa(t('nav.signals')).toLowerCase()}</span></div>
+        <div class="met"><b style="font-size:16px">${escapa(nombreFase(faMas))}</b>
+          <span>${escapa(t('site.mostPhase')).toLowerCase()}</span></div>
+        <div class="met"><b style="font-size:16px">${escapa(viMas || '—')}</b>
+          <span>${escapa(t('site.mostWind')).toLowerCase()}</span></div>
+        <div class="met"><b>${est.vuelos.length.toLocaleString(idioma())}</b>
+          <span>${escapa(t('common.flightsLogged'))}</span></div>
       </div>
     </div>
-  </section>
-
-  <section class="bloque">
-    <div class="cab"><h2>Recently reported</h2>
-      <button class="btn gh" data-ir="mapa">Explore map →</button></div>
-    <div class="grid g2">${recientes.map(r => ReportCard({ rep: r })).join('')}</div>
-  </section>
-
-  <section class="bloque">
-    <div class="cab"><h2>Quick actions</h2></div>
-    <div class="grid g4">
-      <button class="card clic centro" data-ir="reportar" style="padding:18px">
-        <b>New report</b><p class="mini">Structured, step by step</p></button>
-      <button class="card clic centro" data-ir="reportar" data-paso="igc" style="padding:18px">
-        <b>Upload IGC</b><p class="mini">Add a track to a report</p></button>
-      <button class="card clic centro" data-ir="mapa" style="padding:18px">
-        <b>Explore map</b><p class="mini">Reports, heatmap, signals</p></button>
-      <button class="card clic centro" data-ir="senales" style="padding:18px">
-        <b>View signals</b><p class="mini">${est.senales.length} active</p></button>
-    </div>
   </section>`;
+}
+
+/* ============================================================
+   EL BUSCADOR DE SITIOS
+   ============================================================
+   Va aparte del resto de la pintura porque necesita escuchar
+   mientras se escribe. Filtra por nombre, país y región, y admite
+   tildes de menos (gente que escribe "penon" por "Peñón"). */
+export function montaBuscador() {
+  const inp = document.getElementById('buscaSitio');
+  const caja = document.getElementById('buscaResultados');
+  if (!inp || !caja) return;
+
+  const sinTildes = (x) => (x || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
+  const pinta = (lista) => {
+    if (!inp.value.trim()) { caja.innerHTML = ''; return; }
+    if (!lista.length) {
+      caja.innerHTML = `<p class="sub mt">${escapa(t('home.searchNoResults'))}</p>`;
+      return;
+    }
+    caja.innerHTML = `<div class="grid g2 mt">${lista.slice(0, 6).map(s => SiteCard({ s })).join('')}</div>`;
+    caja.querySelectorAll('[data-site]').forEach(c => {
+      c.onclick = () => { est.tabSitio = 'overview'; ir('sitio', c.dataset.site); };
+    });
+  };
+
+  const busca = () => {
+    const q = sinTildes(inp.value.trim());
+    if (!q) return pinta([]);
+    const lista = SITES.filter(s =>
+      sinTildes(s.n).includes(q) || sinTildes(s.pais).includes(q) || sinTildes(s.region).includes(q));
+    pinta(lista);
+  };
+  inp.addEventListener('input', busca);
+  inp.addEventListener('focus', busca);
+  if (inp.value) busca();
 }
 
 /* ============================================================
    VISTA: SEÑALES
    ============================================================ */
 function vistaSenales() {
-  const porNivel = { elevated: [], watch: [], informational: [] };
-  est.senales.forEach(s => porNivel[s.nivel].push(s));
-  const grupo = (t, lista) => !lista.length ? '' : `
+  /* OJO: las claves son limited / repeated / strong. Antes eran
+     elevated / watch / informational, que además sonaba a semáforo
+     de peligro. Si se cambia aquí, hay que cambiarlo en signals.js. */
+  const grupos = { strong: [], repeated: [], limited: [] };
+  est.senales.forEach(s => {
+    const f = s.fuerza || s.nivel || 'limited';
+    (grupos[f] || grupos.limited).push(s);
+  });
+  const bloque = (clave, lista) => !lista.length ? '' : `
     <section class="bloque">
-      <div class="cab"><h2>${t}</h2><span class="mini mono">${lista.length}</span></div>
+      <div class="cab">
+        <div><h2>${escapa(t('strength.' + clave))}</h2>
+          ${clave === 'strong' ? `<p class="mini">${escapa(t('strength.explain'))}</p>` : ''}</div>
+        <span class="mini mono">${lista.length}</span>
+      </div>
       <div class="grid g2">${lista.map(s => SignalCard({ sig: s })).join('')}</div>
     </section>`;
   return `
   <div class="hero" style="padding-top:20px">
-    <h1>Signals</h1>
-    <p class="lema">A signal is a pattern SkyReport has found across several reports.
-    It is not an accident and it is not a safety assessment — it is what the available
-    data shows, written so you can disagree with it.</p>
+    <h1>${escapa(t('signals.title'))}</h1>
+    <p class="lema">${escapa(t('signals.lede'))}</p>
   </div>
-  ${est.senales.length ? `
-    ${grupo('Elevated', porNivel.elevated)}
-    ${grupo('Watch', porNivel.watch)}
-    ${grupo('Informational', porNivel.informational)}`
-    : `<div class="card centro" style="padding:36px"><p class="sub">No signals yet.</p>
-       <p class="mini">Signals appear when at least three similar reports cluster.</p></div>`}`;
+  ${est.senales.length
+    ? bloque('strong', grupos.strong) + bloque('repeated', grupos.repeated) + bloque('limited', grupos.limited)
+    : `<div class="card centro" style="padding:36px"><p class="sub">${escapa(t('signals.none'))}</p>
+       <p class="mini">${escapa(t('signals.noneHelp'))}</p></div>`}`;
 }
 
 function vistaSenal(id) {
@@ -316,9 +453,9 @@ function vistaSenal(id) {
   <button class="btn gh mb" data-ir="senales">← Signals</button>
   <div class="hero" style="padding:8px 0">
     <div class="entre">
-      <span class="etq ${sig.nivel === 'elevated' ? 'elev' : sig.nivel === 'watch' ? 'watch' : 'info'}">
-        ${escapa(NIVEL_TXT[sig.nivel])}</span>
-      <span class="mini mono">Rule ${escapa(sig.regla)}</span>
+      <span class="etq ${(sig.fuerza||sig.nivel) === 'strong' ? 'watch' : 'info'}">
+        ${escapa(t('strength.' + (sig.fuerza || sig.nivel || 'limited')))}</span>
+      <span class="mini mono">${escapa(t('signals.rule'))} ${escapa(sig.regla)}</span>
     </div>
     <h1 style="font-size:26px;margin-top:10px">${escapa(sig.titulo)}</h1>
     <p class="lema">${escapa(sig.explicacion)}</p>
@@ -348,8 +485,8 @@ function vistaSenal(id) {
   </section>
 
   <div class="card" style="background:var(--bg-2);border-style:dashed">
-    <p class="mini">This is a data-derived signal based on available reports, not a
-    definitive safety assessment.</p>
+    <p class="mini">${escapa(t('signals.disclaimer'))}</p>
+    <p class="mini mt">${escapa(t('strength.explain'))}</p>
   </div>`;
 }
 
@@ -676,6 +813,7 @@ function engancha() {
   });
   const v = $('#volver');
   if (v) v.onclick = () => history.back();
+  if (est.vista === 'inicio') montaBuscador();
 }
 
 export function ir(vista, arg) {
@@ -684,6 +822,7 @@ export function ir(vista, arg) {
   if (location.hash !== hash) history.pushState(null, '', hash);
   est.vista = vista;
   if (vista === 'reportar') { import('./report.js').then(m => m.pintaReportar(arg)); return; }
+  if (vista === 'vuelo')    { import('./report.js').then(m => m.pintaVueloRapido()); return; }
   if (vista === 'mapa')     { import('./mapa.js').then(m => m.pintaMapa()); return; }
   $$('.vista').forEach(x => x.classList.remove('on'));
   $('#app').classList.add('on');
@@ -697,10 +836,59 @@ export function desdeHash() {
   return [v || 'inicio', a || null];
 }
 
+/** Pinta el estado de la red en la cabecera. Discreto: una línea
+ *  pequeña que solo aparece cuando hay algo que contar. */
+export function pintaEstadoRed() {
+  const el = document.getElementById('estadoRed');
+  if (!el) return;
+  const demo = enModoDemo();
+  const p = red.pendientes;
+  let txt = '', clase = '';
+  if (red.modo === 'sin-conexion') { txt = t('status.unavailable'); clase = 'aviso'; }
+  else if (demo) { txt = t('status.demo'); clase = 'demo'; }
+  else if (p) { txt = t('status.pending', { n: p }); clase = 'pend'; }
+
+  el.className = 'estado-red' + (clase ? ' ' + clase : '');
+  el.innerHTML = txt ? `<span>${escapa(txt)}</span>` : '';
+  const b = document.getElementById('bSincroniza');
+  if (b) b.classList.toggle('oculto', !(p && red.modo === 'comunidad'));
+}
+
 export function arranca() {
+  ponIdioma(detectaIdioma(), false);
   cargaDatos();
   const [v, a] = desdeHash();
   ir(v, a);
+
+  /* el idioma y el estado de la red, en la cabecera */
+  const sel = document.getElementById('selIdioma');
+  if (sel) {
+    sel.innerHTML = idiomasDisponibles().map(x =>
+      `<option value="${x.id}"${idioma() === x.id ? ' selected' : ''}>${escapa(x.n)}</option>`).join('');
+    sel.onchange = () => {
+      ponIdioma(sel.value);
+      pinta(est.vista, est.sitioAbierto);
+      pintaEstadoRed();
+    };
+  }
+  const bs = document.getElementById('bSincroniza');
+  if (bs) bs.onclick = async () => {
+    bs.textContent = '…';
+    const r = await sincroniza();
+    red.pendientes = r.quedan;
+    bs.textContent = '↻';
+    pintaEstadoRed();
+    aviso(r.enviados ? `Enviados ${r.enviados}.` : t('status.offlineSaved'));
+  };
+
+  pintaEstadoRed();
+  /* si hay Supabase configurado, se traen los datos de la comunidad */
+  if (haySupabase()) {
+    cargaDesdeSupabase().then(r => { pintaEstadoRed(); if (r.ok) ir('inicio'); });
+  }
+  vigilaConexion(() => { pintaEstadoRed(); pinta(est.vista, est.sitioAbierto); });
+  window.addEventListener('online', pintaEstadoRed);
+  window.addEventListener('offline', pintaEstadoRed);
   window.addEventListener('popstate', () => {
     const [v2, a2] = desdeHash();
     est.tabSitio = 'overview';

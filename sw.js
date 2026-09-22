@@ -1,123 +1,190 @@
-/* ==========================================================================
-   SERVICE WORKER de SkyReport
-   --------------------------------------------------------------------------
-   Sin esto, Android NO deja instalar la app de verdad (solo "añadir a
-   pantalla de inicio", que abre el navegador con la barra). Y no funciona sin
-   cobertura.
+/* ============================================================
+   SkyReport — Service Worker
+   ============================================================
+   EL PROBLEMA QUE RESUELVE ESTE ARCHIVO
+   -------------------------------------
+   La app ya lleva varias versiones. Si el service worker guarda el
+   index.html y los módulos y los sirve siempre desde la copia, la
+   gente se queda con una versión vieja y no hay forma de que la
+   nueva llegue: hay que decirle "borra la caché" a mano. Eso es
+   inaceptable para una app que va a cambiar.
 
-   La estrategia importa, y la elegí por un motivo concreto:
+   LA ESTRATEGIA
+   -------------
+     HTML y JS de la app  → RED PRIMERO. Se pide a GitHub Pages; si
+                            responde, se usa y se guarda una copia.
+                            Si no hay red, se tira de la copia.
+                            Así una versión nueva aparece en cuanto
+                            se publica.
+     Iconos, fuentes      → COPIA PRIMERO. No cambian casi nunca y
+     y las teselas del        son lo que hace que la app abra rápido
+     mapa                     y funcione sin cobertura en el sitio
+                              de vuelo.
+     Supabase             → NUNCA se guarda. Los datos de la
+                            comunidad tienen que ser siempre los de
+                            ahora, nunca una copia de ayer.
 
-   - El HTML y el JavaScript van NETWORK-FIRST (primero la red, la copia solo
-     si no hay red). Porque si se sirve la copia primero, Pam se queda con una
-     version vieja y no ve los cambios. Eso ya nos pasó cuatro veces hoy.
-   - Los iconos, las fuentes y Leaflet van CACHE-FIRST (la copia primero),
-     porque no cambian nunca y así carga instantáneo.
-   - Y los datos (Firebase, Open-Meteo) NUNCA se cachean: siempre a la red.
-     Un reporte viejo o un viento viejo es peor que no tener nada.
-   ========================================================================== */
+   Al cambiar VERSION se borran todas las cachés viejas solas.
+   ============================================================ */
 
-const CACHE = 'skyreport-v3';
+const VERSION = 'skyreport-cache-v5';
 
-/* lo mínimo para que la app abra sin conexión */
+/* Qué se guarda al instalar, para que la app abra sin conexión */
 const BASE = [
   './',
   './index.html',
-  './manifest.json',
-  './logo.png',
+  './srs/styles.css',
+  './srs/app.js',
+  './srs/data.js',
+  './srs/signals.js',
+  './srs/report.js',
+  './srs/mapa.js',
+  './srs/igc.js',
+  './srs/i18n.js',
+  './srs/config.js',
+  './srs/supabase.js',
   './icono-192.png',
   './icono-512.png',
+  './manifest.json',
 ];
 
-/* ---------- instalar: guardar lo mínimo ---------- */
+/* ============================================================
+   INSTALAR
+   ============================================================ */
 self.addEventListener('install', ev => {
   ev.waitUntil(
-    caches.open(CACHE)
-      .then(c => c.addAll(BASE).catch(() => {}))
+    caches.open(VERSION)
+      /* addAll falla entero si UNA falla, así que van una a una */
+      .then(c => Promise.all(BASE.map(u => c.add(u).catch(() => null))))
       .then(() => self.skipWaiting())
   );
 });
 
-/* ---------- activar: borrar las copias viejas ---------- */
+/* ============================================================
+   ACTIVAR — borra las cachés viejas
+   ============================================================ */
 self.addEventListener('activate', ev => {
   ev.waitUntil(
     caches.keys()
-      .then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k))))
+      .then(ks => Promise.all(ks.filter(k => k !== VERSION).map(k => caches.delete(k))))
       .then(() => self.clients.claim())
   );
 });
 
-/* Las teselas del mapa son MUCHAS y pueden llenar el telefono. Se quedan con
-   las 600 mas recientes y se tiran las viejas: sobra para los sitios de vuelo
-   habituales y no se come el almacenamiento. */
-const MAX_TESELAS = 600;
-async function limpiaTeselas(){
-  const c = await caches.open(CACHE);
-  const ks = await c.keys();
-  const teselas = ks.filter(r => /opentopomap|tile\.openstreetmap/.test(r.url));
-  if (teselas.length <= MAX_TESELAS) return;
-  for (const r of teselas.slice(0, teselas.length - MAX_TESELAS)) await c.delete(r);
-}
+/* ============================================================
+   MENSAJE DESDE LA PÁGINA
+   ============================================================ */
 self.addEventListener('message', ev => {
-  if (ev.data === 'limpia-teselas') limpiaTeselas();
+  if (ev.data && ev.data.tipo === 'SALTA_YA') {
+    self.skipWaiting();
+  }
 });
 
-/* ---------- ¿es un dato que hay que pedir siempre a la red? ---------- */
-function esDato(url){
-  return url.hostname.indexOf('firebaseio') >= 0
-      || url.hostname.indexOf('open-meteo') >= 0
-      || url.hostname.indexOf('archive-api') >= 0;
-}
-
-/* ---------- ¿es algo que nunca cambia? ---------- */
-function esFijo(url, req){
-  return req.destination === 'image'
-      || req.destination === 'font'
-      || /\.(png|jpg|jpeg|svg|woff2?|ico)$/i.test(url.pathname)
-      || url.hostname.indexOf('unpkg') >= 0
-      || url.hostname.indexOf('gstatic') >= 0
-      || url.hostname.indexOf('fonts.googleapis') >= 0
-      /* las TESELAS del mapa (OpenTopoMap). Van cache-first para que el mapa
-         se vea donde ya has estado, aunque no haya cobertura: es justo el caso
-         de reportar desde un despegue sin señal. Antes no se cacheaban y el
-         mapa se quedaba en blanco. */
-      || url.hostname.indexOf('opentopomap') >= 0
-      || url.hostname.indexOf('tile.openstreetmap') >= 0;
-}
-
+/* ============================================================
+   INTERCEPTAR PETICIONES
+   ============================================================ */
 self.addEventListener('fetch', ev => {
   const req = ev.request;
   if (req.method !== 'GET') return;
 
   let url;
-  try { url = new URL(req.url); } catch(e) { return; }
-  if (url.protocol !== 'http:' && url.protocol !== 'https:') return;
+  try { url = new URL(req.url); } catch (e) { return; }
 
-  /* los datos, siempre a la red: nunca una copia */
-  if (esDato(url)) return;
+  /* --- Supabase y cualquier API: siempre a la red, sin copia --- */
+  if (/supabase\.co|supabase\.in/.test(url.hostname)) return;
 
-  /* lo fijo: la copia primero, y si no está, la red (y se guarda) */
-  if (esFijo(url, req)){
-    ev.respondWith(
-      caches.match(req).then(copia => copia || fetch(req).then(r => {
-        if (r && r.status === 200){
-          const c = r.clone();
-          caches.open(CACHE).then(x => x.put(req, c)).catch(() => {});
-        }
-        return r;
-      }))
-    );
+  /* --- teselas del mapa: copia primero, y se limitan --- */
+  if (/tile\.opentopomap\.org|tile\.openstreetmap\.org|arcgisonline\.com/.test(url.hostname)) {
+    ev.respondWith(copiaPrimero(req));
     return;
   }
 
-  /* el HTML y el JS: la red primero, la copia solo si no hay red.
-     Así las actualizaciones llegan siempre. */
-  ev.respondWith(
-    fetch(req).then(r => {
-      if (r && r.status === 200 && url.origin === location.origin){
-        const c = r.clone();
-        caches.open(CACHE).then(x => x.put(req, c)).catch(() => {});
-      }
-      return r;
-    }).catch(() => caches.match(req).then(copia => copia || caches.match('./index.html')))
-  );
+  /* --- Leaflet desde el CDN: copia primero --- */
+  if (/unpkg\.com|jsdelivr\.net/.test(url.hostname)) {
+    ev.respondWith(copiaPrimero(req));
+    return;
+  }
+
+  /* --- el resto: si es de la propia app, red primero --- */
+  if (url.origin === location.origin) {
+    const esApp = /\.(html|js|css|json)$/i.test(url.pathname) || url.pathname.endsWith('/');
+    ev.respondWith(esApp ? redPrimero(req) : copiaPrimero(req));
+    return;
+  }
+
+  /* --- cualquier otra cosa: que siga su curso --- */
 });
+
+/* ============================================================
+   ESTRATEGIAS
+   ============================================================ */
+
+/** Red primero: pide, y si contesta usa eso. Si falla, la copia.
+ *  Es lo que hace que una versión nueva llegue sola. */
+async function redPrimero(req) {
+  try {
+    const r = await fetch(req, { cache: 'no-store' });
+    if (r && r.ok) {
+      const c = await caches.open(VERSION);
+      c.put(req, r.clone());
+      return r;
+    }
+    throw new Error('bad response');
+  } catch (e) {
+    const c = await caches.match(req);
+    if (c) return c;
+    /* sin red y sin copia: al menos que se vea algo */
+    if (req.mode === 'navigate') {
+      const idx = await caches.match('./index.html');
+      if (idx) return idx;
+    }
+    return new Response('Offline', { status: 503, statusText: 'Offline' });
+  }
+}
+
+/** Copia primero: rápido y sirve sin cobertura. */
+async function copiaPrimero(req) {
+  const c = await caches.match(req);
+  if (c) {
+    /* se refresca por detrás, sin hacer esperar a nadie */
+    fetch(req).then(r => {
+      if (r && r.ok) caches.open(VERSION).then(cc => cc.put(req, r));
+    }).catch(() => {});
+    return c;
+  }
+  try {
+    const r = await fetch(req);
+    if (r && r.ok) {
+      const cc = await caches.open(VERSION);
+      cc.put(req, r.clone());
+      limitarTeselas();
+    }
+    return r;
+  } catch (e) {
+    return new Response('', { status: 503 });
+  }
+}
+
+/* ============================================================
+   LÍMITE DE TESELAS
+   ============================================================
+   Los mapas llenan la caché enseguida. Se guardan las últimas y
+   el resto se van borrando, para que la app no acabe ocupando
+   cientos de megas en el teléfono de nadie. */
+const MAX_TESELAS = 500;
+let ultimaLimpieza = 0;
+
+async function limitarTeselas() {
+  const ahora = Date.now();
+  if (ahora - ultimaLimpieza < 60000) return;      /* como mucho, una vez por minuto */
+  ultimaLimpieza = ahora;
+  try {
+    const c = await caches.open(VERSION);
+    const ks = await c.keys();
+    const teselas = ks.filter(r =>
+      /opentopomap|tile\.openstreetmap|arcgisonline/.test(r.url));
+    if (teselas.length > MAX_TESELAS) {
+      for (const r of teselas.slice(0, teselas.length - MAX_TESELAS)) await c.delete(r);
+    }
+  } catch (e) { /* da igual */ }
+}

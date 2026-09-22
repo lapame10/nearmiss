@@ -14,7 +14,7 @@
    caja negra seria peor que no tener nada.
    ============================================================ */
 
-import { EVENTOS, FASES, SITES, DIRECCIONES } from './data.js';
+import { EVENTOS, FASES, SITES, DIRECCIONES, diasEntre } from './data.js';
 
 /* ---------- utilidades ---------- */
 const dias = (a, b) => Math.abs((new Date(a) - new Date(b)) / 86400000);
@@ -36,18 +36,39 @@ const zonaDe = (rep) => {
   return s ? (s.zonas || []).find(z => z.id === rep.zona) : null;
 };
 
-/** cuantos mas reportes, mas peso. Nunca "peligro". */
-function nivel(n, extra = 0) {
+/* ============================================================
+   FUERZA DEL PATRÓN — NO ES UN NIVEL DE PELIGRO
+   ============================================================
+   Antes esto se llamaba "elevated / watch / informational", que
+   suena a semáforo y da a entender que la app está diciendo que
+   un sitio es peligroso. No es eso y no puede serlo: SkyReport no
+   tiene forma de saberlo.
+
+   Lo único que puede describir es CUÁNTA EVIDENCIA RELACIONADA
+   existe. Eso es todo. Estos tres nombres dicen exactamente eso y
+   nada más:
+
+     limited    pocos reportes: puede ser casualidad
+     repeated   se repite: merece una mirada
+     strong     se repite mucho y con condiciones en común
+
+   Con MÁS reportes no se sabe si es más peligroso: también puede
+   ser que simplemente haya más gente volando y más gente
+   reportando. Por eso el nombre habla de evidencia, no de riesgo. */
+export function fuerza(n, extra = 0) {
   const t = n + extra;
-  if (t >= 6 || extra >= 2) return 'elevated';
-  if (t >= 4 || extra >= 1) return 'watch';
-  return 'informational';
+  if (t >= 6 || extra >= 2) return 'strong';
+  if (t >= 4 || extra >= 1) return 'repeated';
+  return 'limited';
 }
-export const NIVEL_TXT = {
-  informational: 'Informational',
-  watch: 'Watch',
-  elevated: 'Elevated',
+export const FUERZA_TXT = {
+  limited: 'Limited data',
+  repeated: 'Repeated pattern',
+  strong: 'Strong repeated pattern',
 };
+/* compatibilidad: el nombre viejo sigue funcionando */
+export const NIVEL_TXT = FUERZA_TXT;
+function nivel(n, extra = 0) { return fuerza(n, extra); }
 
 /* ============================================================
    REGLAS
@@ -92,7 +113,11 @@ function r1_clusterLocal(reps) {
         n: grupo.length,
         desde: fechas[0], hasta: fechas[fechas.length - 1],
         condicion: nV >= Math.ceil(grupo.length / 2) && vMas ? `${vMas} wind` : null,
-        nivel: nivel(grupo.length, graves >= 1 && grupo.some(g => g.reserve) ? 2 : (graves >= 2 ? 1 : 0)),
+        fuerza: fuerza(grupo.length, graves >= 1 && grupo.some(g => g.reserve) ? 2 : (graves >= 2 ? 1 : 0)),
+        nivel: fuerza(grupo.length, 0),
+        radioKm: radio(grupo),
+        dias: diasEntre(fechas[0], fechas[fechas.length - 1]) + 1,
+        franja: franjaComun(grupo),
         reps: grupo.map(g => g.id),
         lat: a.lat, lon: a.lon,
       });
@@ -122,7 +147,8 @@ function r2_mismoViento(reps) {
       site, zona: null, zonaTipo: null,
       n: grupo.length, desde: fechas[0], hasta: fechas[fechas.length - 1],
       condicion: `${dir} wind`,
-      nivel: nivel(grupo.length),
+      fuerza: fuerza(grupo.length), nivel: fuerza(grupo.length),
+      radioKm: radio(grupo), dias: diasEntre(fechas[0], fechas[fechas.length - 1]) + 1,
       reps: grupo.map(g => g.id),
       lat: grupo[0].lat, lon: grupo[0].lon,
     });
@@ -157,7 +183,8 @@ function r3_mismaZona(reps) {
       site, zona: z.n, zonaTipo: z.t,
       n: grupo.length, desde: fechas[0], hasta: fechas[fechas.length - 1],
       condicion: dir ? `${dir} wind` : null,
-      nivel: nivel(grupo.length),
+      fuerza: fuerza(grupo.length), nivel: fuerza(grupo.length),
+      radioKm: radio(grupo), dias: diasEntre(fechas[0], fechas[fechas.length - 1]) + 1,
       reps: grupo.map(g => g.id),
       lat: z.lat, lon: z.lon,
     });
@@ -200,7 +227,12 @@ function r4_franja(reps) {
       site, zona: null, zonaTipo: null,
       n: grupo.length, desde: fechas[0], hasta: fechas[fechas.length - 1],
       condicion: `Time of day`,
-      nivel: nivel(grupo.length),
+      fuerza: fuerza(grupo.length), nivel: fuerza(grupo.length),
+      radioKm: radio(grupo), dias: diasEntre(fechas[0], fechas[fechas.length - 1]) + 1,
+      /* OJO: la franja SIEMPRE va como objeto {tramo, n}, nunca como
+         string suelto. Antes R4 la ponía como texto y R1 como objeto, y la
+         tarjeta de señal reventaba al pintar. */
+      franja: { tramo, n: grupo.length },
       reps: grupo.map(g => g.id),
       lat: lista[0].lat, lon: lista[0].lon,
     });
@@ -229,7 +261,8 @@ function r5_reservas(reps) {
       site, zona: null, zonaTipo: null,
       n: grupo.length, desde: fechas[0], hasta: fechas[fechas.length - 1],
       condicion: dir ? `${dir} wind` : null,
-      nivel: 'elevated',
+      fuerza: 'strong', nivel: 'strong',
+      radioKm: radio(grupo), dias: diasEntre(fechas[0], fechas[fechas.length - 1]) + 1,
       reps: grupo.map(g => g.id),
       lat: grupo[0].lat, lon: grupo[0].lon,
     });
@@ -256,7 +289,8 @@ function r6_vientoFuerte(reps) {
       site, zona: null, zonaTipo: null,
       n: grupo.length, desde: fechas[0], hasta: fechas[fechas.length - 1],
       condicion: `${media} km/h average`,
-      nivel: nivel(grupo.length, 1),
+      fuerza: fuerza(grupo.length, 1), nivel: fuerza(grupo.length, 1),
+      radioKm: radio(grupo), dias: diasEntre(fechas[0], fechas[fechas.length - 1]) + 1,
       reps: grupo.map(g => g.id),
       lat: grupo[0].lat, lon: grupo[0].lon,
     });
@@ -265,6 +299,74 @@ function r6_vientoFuerte(reps) {
 }
 
 /* ---------- helpers de conteo ---------- */
+
+/** Radio aproximado del grupo, en km: la distancia maxima entre dos
+ *  de sus reportes. Sirve para poder decir "1.4 km area" en vez de
+ *  una cifra que nadie sabe interpretar. */
+function radio(grupo) {
+  let max = 0;
+  for (let i = 0; i < grupo.length; i++)
+    for (let j = i + 1; j < grupo.length; j++) {
+      const d = distKm(grupo[i].lat, grupo[i].lon, grupo[j].lat, grupo[j].lon);
+      if (d > max) max = d;
+    }
+  return +max.toFixed(1);
+}
+
+/** La franja horaria en la que cayeron mas reportes del grupo. */
+function franjaComun(grupo) {
+  const c = {};
+  grupo.forEach(r => {
+    if (!r.hora) return;
+    const h = parseInt(r.hora.slice(0, 2), 10);
+    const t = h < 10 ? '06-10' : h < 13 ? '10-13' : h < 16 ? '13-16' : h < 19 ? '16-19' : '19-22';
+    c[t] = (c[t] || 0) + 1;
+  });
+  const e = Object.entries(c).sort((a, b) => b[1] - a[1])[0];
+  if (!e || e[1] < 2) return null;
+  return { tramo: e[0], n: e[1] };
+}
+
+/* ============================================================
+   CONTEXTO DE EXPOSICIÓN — EL DENOMINADOR
+   ============================================================
+   Esto es lo que evita el error más fácil y más grave de una
+   plataforma así: decir que un sitio es peligroso porque tiene
+   más reportes. Un sitio con 5.000 vuelos al año y 50 reportes
+   puede estar mejor que uno con 200 vuelos y 10 reportes.
+
+   Si hay vuelos registrados suficientes, se enseña la cifra. Si
+   no los hay, se dice CLARAMENTE que el dato es limitado, en vez
+   de callarse o de dejar que cada uno interprete lo que quiera.
+
+   OJO con el sesgo que queda incluso teniendo denominador: los
+   vuelos registrados son los que alguien se molestó en registrar.
+   Por eso la interfaz siempre lleva la explicación al lado. */
+export function contextoExposicion(sig, repes, vuelos, minVuelos = 30) {
+  const ids = new Set(sig.reps);
+  const rs = (repes || []).filter(r => ids.has(r.id));
+  const dias = sig.dias || 30;
+
+  /* los vuelos del MISMO sitio y en un periodo parecido */
+  const delSitio = (vuelos || []).filter(v => v.site === sig.site);
+  const fechaFin = sig.hasta || null;
+  const comparables = fechaFin
+    ? delSitio.filter(v => {
+        const dd = Math.abs(diasEntre(v.fecha, fechaFin));
+        return dd <= Math.max(dias, 45);
+      })
+    : delSitio;
+
+  const hayDatos = comparables.length >= minVuelos;
+  return {
+    reportes: rs.length,
+    vuelos: comparables.length,
+    vuelosTotalesSitio: delSitio.length,
+    suficiente: hayDatos,
+    /* solo se calcula la tasa si hay muestra; si no, null */
+    tasa: hayDatos ? +(rs.length / comparables.length * 1000).toFixed(1) : null,
+  };
+}
 function cuenta(arr) {
   const c = {};
   arr.forEach(x => { if (x) c[x] = (c[x] || 0) + 1; });
@@ -303,7 +405,8 @@ export function detectaSenales(reps) {
     fin.push(s);
   });
   /* orden: primero las graves, luego por numero de reportes */
-  const peso = { elevated: 0, watch: 1, informational: 2 };
+  /* el orden usa los nombres NUEVOS (limited/repeated/strong) */
+  const peso = { strong: 0, repeated: 1, limited: 2 };
   return fin.sort((a, b) => (peso[a.nivel] - peso[b.nivel]) || (b.n - a.n));
 }
 

@@ -172,16 +172,52 @@ export const SITES = [
    el archivo siga siendo legible.
    ============================================================ */
 
-/** 2026-09-20 menos d dias, en formato ISO corto */
+/* ============================================================
+   FECHAS: NUNCA HARDCODEADAS EN LA LÓGICA REAL
+   ============================================================
+   La fecha de HOY sale del reloj del dispositivo, en su zona
+   horaria local. Ojo con el detalle de siempre:
+
+       new Date().toISOString().slice(0,10)   ← MAL
+
+   Eso convierte a UTC primero. En México (UTC-6), a las 19:00 del
+   día 5 eso ya devuelve el día 6. Un formulario que se rellena
+   por la tarde aparecería con la fecha de mañana.
+
+   La forma buena es leer los componentes locales uno a uno. */
+export function hoyISO(f = new Date()) {
+  const p = (n) => String(n).padStart(2, '0');
+  return `${f.getFullYear()}-${p(f.getMonth() + 1)}-${p(f.getDate())}`;
+}
+
+/** Fecha de hoy menos n días, también en local. */
+export function haceDiasISO(n) {
+  const f = new Date();
+  f.setDate(f.getDate() - n);
+  return hoyISO(f);
+}
+
+/** Días entre dos fechas ISO (b - a). Sin líos de zonas. */
+export function diasEntre(a, b) {
+  const pa = new Date(a + 'T00:00:00'), pb = new Date(b + 'T00:00:00');
+  return Math.round((pb - pa) / 86400000);
+}
+
+/* Los datos de DEMOSTRACIÓN sí llevan fechas fijas relativas a una
+   fecha de referencia, para que la demo se vea igual siempre y no
+   se vaya desplazando. Están separados a propósito de lo de arriba:
+   lo productivo usa el reloj, la demo usa esta constante. */
+export const FECHA_DEMO = '2026-09-20';
 const d = (dias) => {
-  const x = new Date(Date.UTC(2026, 8, 20));
-  x.setUTCDate(x.getUTCDate() - dias);
-  return x.toISOString().slice(0, 10);
+  const x = new Date(FECHA_DEMO + 'T12:00:00');
+  x.setDate(x.getDate() - dias);
+  return hoyISO(x);
 };
 
 let _n = 0;
 const R = (o) => ({
   id: 'DEMO-' + String(++_n).padStart(3, '0'),
+  demo: true,                    /* ← marcados como demostración, uno a uno */
   tipo: 'incident',
   pais: null,
   zona: null,
@@ -380,7 +416,7 @@ const VUELOS = [
 
 export const SAFE_LOGS = VUELOS.map(([site, dias, tipo], n) => ({
   id: 'SF-DEMO-' + String(n + 1).padStart(3, '0'),
-  site, fecha: d(dias), tipo, anon: true,
+  site, fecha: d(dias), tipo, anon: true, demo: true,
 }));
 
 /* ============================================================
