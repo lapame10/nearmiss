@@ -392,3 +392,30 @@ input:focus,select:focus,textarea:focus{
   font-size:14.5px;line-height:1.6;color:var(--ink-3);
   max-width:620px;margin-top:8px;
 }
+
+
+/* ============================================================
+   LA BARRA DE ABAJO NO DEBE TAPAR EL CONTENIDO
+   ============================================================
+   Pam mando una captura donde el boton 'Continuar' del formulario
+   quedaba debajo de la barra y no se podia pulsar. La barra es
+   position:fixed, asi que hay que dejarle sitio abajo al contenido.
+
+   Se le suma env(safe-area-inset-bottom) porque en el iPhone la
+   barra de gestos del sistema ocupa unos 34 px mas. */
+#app{ padding-bottom: calc(84px + env(safe-area-inset-bottom)); }
+@media (min-width:820px){
+  /* en escritorio no hay barra abajo: no hace falta el hueco */
+  #app{ padding-bottom:24px; }
+}
+
+/* ===== ICONOS DE LA BARRA ===== */
+.tabbar a span{ line-height:1.15 }
+.tabbar .tab-ic{
+  width:30px;height:30px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  background:var(--blue-bg);color:var(--blue);
+  margin-bottom:1px;
+}
+.tabbar a.on .tab-ic{ background:var(--blue);color:#fff }
+.tabbar .tab-ic svg{ display:block }
