@@ -102,10 +102,11 @@ export function hace(iso) {
   return t('ago.months', { n: Math.round(dd / 30) });
 }
 
-export const nombreEv = (id) => (EVENTOS.find(e => e.id === id) || {}).n || id || '—';
-export const nombreFase = (id) => (FASES.find(e => e.id === id) || {}).n || id || '—';
-export const nombreRes = (id) => (RESULTADOS.find(e => e.id === id) || {}).n || id || '—';
-export const nombreTipo = (id) => (TIPOS_REPORTE.find(e => e.id === id) || {}).n || id;
+/* Los nombres salen del diccionario, para que cambien con el idioma. */
+export const nombreEv = (id) => t('ev.' + id);
+export const nombreFase = (id) => t('fa.' + id);
+export const nombreRes = (id) => t('rs.' + id);
+export const nombreTipo = (id) => t('tp.' + id);
 export const sitio = (id) => SITES.find(s => s.id === id) || {};
 export const zonaDe = (rep) => {
   const s = SITES.find(x => x.id === rep.site) || {};

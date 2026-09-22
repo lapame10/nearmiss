@@ -29,8 +29,10 @@ export function distKm(la1, lo1, la2, lo2) {
   return 2 * R * Math.asin(Math.sqrt(x));
 }
 
-const nombreEv = (id) => (EVENTOS.find(e => e.id === id) || {}).n || id;
-const nombreFase = (id) => (FASES.find(e => e.id === id) || {}).n || id;
+/* Los nombres de evento, fase y resultado salen del diccionario, para
+   que la app entera cambie de idioma y no solo la mitad. */
+const nombreEv = (id) => t('ev.' + id);
+const nombreFase = (id) => t('fa.' + id);
 export const nombreSitio = (id) => (SITES.find(s => s.id === id) || {}).n || id;
 const zonaDe = (rep) => {
   const s = SITES.find(x => x.id === rep.site);
@@ -104,10 +106,9 @@ function r1_clusterLocal(reps) {
       out.push({
         id: 'SIG-' + ev + '-' + a.site + '-' + a.id,
         regla: 'R1',
-        explicacion: `${grupo.length} ${nombreEv(ev).toLowerCase()} reports within ` +
-          `${distKm(a.lat, a.lon, grupo[grupo.length - 1].lat, grupo[grupo.length - 1].lon).toFixed(1)} km ` +
-          `of each other in the last ${Math.round(Math.max(...grupo.map(g => dias(fechas[fechas.length - 1], g.fecha)))) + 1} days.`,
-        titulo: `Cluster of ${nombreEv(ev).toLowerCase()} reports`,
+        explicacion: t('signals.exp1', { n: grupo.length, e: nombreEv(ev).toLowerCase(),
+          km: radio(grupo), a: fechas[0], b: fechas[fechas.length - 1], g: graves }),
+        titulo: t('sg.r1') + ' · ' + nombreEv(ev),
         site: a.site,
         zona: z ? z.n : null,
         zonaTipo: z ? z.t : null,
@@ -142,9 +143,9 @@ function r2_mismoViento(reps) {
     out.push({
       id: 'SIG-V-' + k,
       regla: 'R2',
-      explicacion: `${grupo.length} ${nombreEv(ev).toLowerCase()} reports at this site ` +
-        `were logged with ${dir} wind.`,
-      titulo: `${nombreEv(ev)} under ${dir} wind`,
+      explicacion: t('signals.exp2', { n: grupo.length, e: nombreEv(ev).toLowerCase(),
+        d: dir, o: otrasDirs }),
+      titulo: t('sg.r2') + ' · ' + nombreEv(ev),
       site, zona: null, zonaTipo: null,
       n: grupo.length, desde: fechas[0], hasta: fechas[fechas.length - 1],
       condicion: `${dir} wind`,
@@ -178,9 +179,8 @@ function r3_mismaZona(reps) {
     out.push({
       id: 'SIG-Z-' + k,
       regla: 'R3',
-      explicacion: `${grupo.length} reports have been logged in the ${z.n} zone. ` +
-        `The most frequent event there is ${nombreEv(evMas).toLowerCase()}.`,
-      titulo: `Repeated reports in ${z.n}`,
+      explicacion: t('signals.exp3', { n: grupo.length, z: z.n }),
+      titulo: t('sg.r3') + ` · ${z.n}`,
       site, zona: z.n, zonaTipo: z.t,
       n: grupo.length, desde: fechas[0], hasta: fechas[fechas.length - 1],
       condicion: dir ? `${dir} wind` : null,
@@ -222,9 +222,9 @@ function r4_franja(reps) {
     out.push({
       id: 'SIG-H-' + site + '-' + tramo,
       regla: 'R4',
-      explicacion: `${pct}% of the reports at this site were logged between ` +
-        `${tramo.replace('-', ':00 and ')}:00.`,
-      titulo: `Reports concentrate between ${tramo.replace('-', ':00–')}:00`,
+      explicacion: t('signals.exp4', { p: pct, a: tramo.split('-')[0] + ':00',
+        b: tramo.split('-')[1] + ':00' }),
+      titulo: t('sg.r4') + ` · ${tramo.replace('-', ':00–')}:00`,
       site, zona: null, zonaTipo: null,
       n: grupo.length, desde: fechas[0], hasta: fechas[fechas.length - 1],
       condicion: `Time of day`,
@@ -256,9 +256,8 @@ function r5_reservas(reps) {
     out.push({
       id: 'SIG-R-' + site,
       regla: 'R5',
-      explicacion: `${grupo.length} reserve deployments have been reported at this site ` +
-        `between ${fechas[0]} and ${fechas[fechas.length - 1]}.`,
-      titulo: 'Reserve deployments reported',
+      explicacion: t('signals.exp5', { n: grupo.length, d: dias }),
+      titulo: t('sg.r5'),
       site, zona: null, zonaTipo: null,
       n: grupo.length, desde: fechas[0], hasta: fechas[fechas.length - 1],
       condicion: dir ? `${dir} wind` : null,
@@ -284,9 +283,8 @@ function r6_vientoFuerte(reps) {
     out.push({
       id: 'SIG-W-' + site,
       regla: 'R6',
-      explicacion: `${grupo.length} reports at this site were logged with wind at or above ` +
-        `20 km/h (average ${media} km/h).`,
-      titulo: 'Reports associated with wind above 20 km/h',
+      explicacion: t('signals.exp6', { n: grupo.length, m: media }),
+      titulo: t('sg.r6'),
       site, zona: null, zonaTipo: null,
       n: grupo.length, desde: fechas[0], hasta: fechas[fechas.length - 1],
       condicion: `${media} km/h average`,
