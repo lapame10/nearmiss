@@ -460,3 +460,9 @@ input:focus,select:focus,textarea:focus{
 }
 /* el boton de dentro no debe capturar el foco: ya lo tiene la tarjeta */
 .card.clic .btn{ pointer-events:none }
+
+/* ===== EL LOGO DE LA CABECERA ===== */
+.marca{ display:inline-flex; align-items:center; gap:7px; }
+.marca-ic{
+  width:26px;height:26px;display:block;
+}

@@ -6,27 +6,56 @@
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#16323b",
-  "theme_color": "#16323b",
+  "background_color": "#f7f5f1",
+  "theme_color": "#2e4a6f",
   "lang": "es",
-  "categories": ["sports", "safety", "utilities"],
+  "categories": [
+    "sports",
+    "safety",
+    "utilities"
+  ],
   "icons": [
-    { "src": "icono-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
-    { "src": "icono-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
-    { "src": "icono-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+    {
+      "src": "icono-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icono-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    }
   ],
   "shortcuts": [
     {
       "name": "Reportar un evento",
       "short_name": "Reportar",
       "url": "./?ir=reportar",
-      "icons": [{ "src": "icono-192.png", "sizes": "192x192" }]
+      "icons": [
+        {
+          "src": "icono-192.png",
+          "sizes": "192x192"
+        }
+      ]
     },
     {
       "name": "Ver el mapa",
       "short_name": "Mapa",
       "url": "./?ir=mapa",
-      "icons": [{ "src": "icono-192.png", "sizes": "192x192" }]
+      "icons": [
+        {
+          "src": "icono-192.png",
+          "sizes": "192x192"
+        }
+      ]
     }
   ]
 }
