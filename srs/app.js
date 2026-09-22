@@ -95,11 +95,11 @@ export function hace(iso) {
   /* la fecha de hoy sale del reloj, no de una constante */
   const hoy = hoyISO();
   const dd = Math.round((new Date(hoy + 'T12:00:00') - new Date(iso + 'T12:00:00')) / 86400000);
-  if (dd <= 0) return 'today';
-  if (dd === 1) return 'yesterday';
-  if (dd < 30) return `${dd} days ago`;
-  if (dd < 60) return 'last month';
-  return `${Math.round(dd / 30)} months ago`;
+  if (dd <= 0) return t('ago.today');
+  if (dd === 1) return t('ago.yesterday');
+  if (dd < 30) return t('ago.days', { n: dd });
+  if (dd < 60) return t('ago.month');
+  return t('ago.months', { n: Math.round(dd / 30) });
 }
 
 export const nombreEv = (id) => (EVENTOS.find(e => e.id === id) || {}).n || id || '—';
@@ -217,7 +217,7 @@ export function SiteCard({ s }) {
         <h3>${escapa(s.n)}</h3>
         <p class="mini">${escapa(s.pais)} · ${escapa(s.region)}</p>
       </div>
-      ${sigs ? `<span class="etq watch">${sigs} signal${sigs > 1 ? 's' : ''}</span>` : ''}
+      ${sigs ? `<span class="etq watch">${escapa(t(sigs > 1 ? 'site.signalsPlural' : 'site.signalsShort', { n: sigs }))}</span>` : ''}
     </div>
     <div class="mets mt">
       <div class="met"><b>${st.total}</b><span>${escapa(t('common.reports'))}</span></div>
@@ -508,10 +508,10 @@ function vistaSitio(id, tab = 'overview') {
   if (!s) return `<p class="sub">${escapa(t('site.notFound'))}</p>`;
   const st = statsSite(id, est.reps, est.vuelos);
   const sigs = est.senales.filter(x => x.site === id);
-  const tabs = [['overview','site.overview'],['reports','site.reports'],['signals','nav.signals'],
-    ['map','site.map'],['patterns','site.patterns']];
+  const tabs = [['overview','site.tabOverview'],['reports','site.tabReports'],
+    ['signals','site.tabSignals'],['map','site.tabMap'],['patterns','site.tabPatterns']];
   const T = (k) => `<button class="paso-n${tab === k ? ' on' : ''}" data-sitetab="${k}">${
-    escapa(t('site.' + k))}</button>`;
+    escapa(t('site.tab' + k.charAt(0).toUpperCase() + k.slice(1)))}</button>`;
 
   let cuerpo = '';
 

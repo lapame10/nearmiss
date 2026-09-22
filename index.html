@@ -31,12 +31,12 @@
       SkyReport
     </a>
     <nav>
-      <a href="#inicio"   data-ir="inicio">Home</a>
-      <a href="#mapa"     data-ir="mapa">Map</a>
-      <a href="#reportar" data-ir="reportar">Report</a>
-      <a href="#senales"  data-ir="senales">Signals</a>
-      <a href="#sitios"   data-ir="sitios">Sites</a>
-      <a href="#metodo"   data-ir="metodo">Methodology</a>
+      <a href="#inicio"   data-ir="inicio" data-i18n="nav.home">Home</a>
+      <a href="#mapa"     data-ir="mapa" data-i18n="nav.map">Map</a>
+      <a href="#reportar" data-ir="reportar" data-i18n="nav.report">Report</a>
+      <a href="#senales"  data-ir="senales" data-i18n="nav.signals">Signals</a>
+      <a href="#sitios"   data-ir="sitios" data-i18n="nav.sites">Sites</a>
+      <a href="#metodo"   data-ir="metodo" data-i18n="nav.methodology">Methodology</a>
     </nav>
     <div class="acciones">
       <select class="sel-idioma" id="selIdioma" title="Language"></select>
@@ -100,6 +100,18 @@
   });
 
   arranca();
+
+  /* ===== LA NAVEGACION DE LA CABECERA =====
+     Estaba escrita en el HTML y por eso se quedaba siempre en ingles,
+     aunque cambiaras de idioma. Ahora lleva data-i18n y se traduce. */
+  import('./srs/i18n.js').then(m => {
+    m.traducePantalla(document);
+    /* el boton de la cabecera tambien */
+    const b = document.getElementById('bReportar');
+    if (b) b.textContent = m.t('home.reportEvent');
+    const sel = document.getElementById('selIdioma');
+    if (sel) sel.title = m.t('nav.language');
+  });
 
   /* ===== AVISO DE VERSIÓN NUEVA =====
      Cuando el service worker tiene una versión esperando, se avisa y
