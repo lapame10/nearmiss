@@ -394,12 +394,13 @@ export async function mapaTrack(track, idCont) {
   /* el evento */
   const ev = track.find(p => p.t === 0) || track[0];
   L.circleMarker([ev.lat, ev.lon], { radius: 9, fillColor: '#98372f', fillOpacity: .95,
-    color: '#fff', weight: 2.5 }).addTo(m).bindTooltip('Event', { permanent: true, direction: 'top' });
+    color: '#fff', weight: 2.5 }).addTo(m).bindTooltip('EVENT', { permanent: true, direction: 'top' });
   /* las marcas de tiempo */
-  [-120, -60, -30, 30, 60].forEach(t => {
-    const p = track.find(x => x.t === t) || track.reduce((a, b) => Math.abs(b.t - t) < Math.abs(a.t - t) ? b : a);
+  /* el parametro se llama 'seg' y no 't', para no tapar la funcion de traducir */
+  [-120, -60, -30, 30, 60].forEach(seg => {
+    const p = track.find(x => x.t === seg) || track.reduce((a, b) => Math.abs(b.t - seg) < Math.abs(a.t - seg) ? b : a);
     if (p) L.circleMarker([p.lat, p.lon], { radius: 4, fillColor: '#fff', fillOpacity: 1,
-      color: '#5a6169', weight: 1.5 }).addTo(m).bindTooltip(`T${t > 0 ? '+' : ''}${t} s`, { direction: 'top' });
+      color: '#5a6169', weight: 1.5 }).addTo(m).bindTooltip(`T${seg > 0 ? '+' : ''}${seg} s`, { direction: 'top' });
   });
   m.fitBounds(L.latLngBounds(track.map(p => [p.lat, p.lon])).pad(.2));
   return m;

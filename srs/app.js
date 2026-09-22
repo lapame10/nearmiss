@@ -588,7 +588,7 @@ function vistaSitio(id, tab = 'overview') {
     <p class="lema">${escapa(s.pais)} · ${escapa(s.region)} · ${s.alt} m</p>
     <p class="sub mt">${escapa(s.desc)}</p>
   </div>
-  <div class="row wrap mt2" style="gap:6px">${tabs.map(t => T(t[0])).join('')}</div>
+  <div class="row wrap mt2" style="gap:6px">${tabs.map(x => T(x[0])).join('')}</div>
   <section class="bloque">${cuerpo}</section>`;
 }
 
