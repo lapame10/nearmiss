@@ -94,11 +94,29 @@ export function aviso(txt, ms = 3200) {
   }, ms);
 }
 
+/* ============================================================
+   FECHAS LARGAS, EN EL IDIOMA QUE TOQUE
+   ============================================================
+   Antes los meses estaban en un array en ingles, asi que la fecha salia
+   '22 Sep 2026' en cualquier idioma: en espanol, en frances o en aleman.
+
+   Se les escapo a mis comprobadores porque no es texto dentro de una
+   plantilla, es un array de datos: el comprobador mira el HTML de las vistas
+   y ahi solo ve la llamada a fechaLarga(), no lo que devuelve.
+
+   Ahora usa Intl, que ademas acierta con el orden de cada pais (en aleman es
+   '22. Sept. 2026', en ingles '22 Sep 2026'). */
 export function fechaLarga(iso) {
   if (!iso) return '—';
-  const [a, m, d] = iso.split('-').map(Number);
-  const M = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  return `${d} ${M[m - 1]} ${a}`;
+  try {
+    const [a, mes, d] = iso.split('-').map(Number);
+    return new Intl.DateTimeFormat(idioma() + '-u-nu-latn', {
+      day: 'numeric', month: 'short', year: 'numeric',
+    }).format(new Date(a, mes - 1, d));
+  } catch (e) {
+    /* si el navegador no puede, al menos que no salga vacio */
+    return iso;
+  }
 }
 
 export function hace(iso) {
@@ -169,8 +187,8 @@ export function ReportCard({ rep, chico = false }) {
       <span class="etq">${escapa(nombreFase(rep.fase))}</span>
       <span class="etq">${escapa(nombreRes(rep.resultado))}</span>
       ${rep.windDir ? `<span class="etq">${rep.windDir} ${rep.windKmh || '?'} km/h</span>` : ''}
-      ${rep.reserve ? '<span class="etq sev">Reserve</span>' : ''}
-      ${rep.igc ? '<span class="etq ok">IGC</span>' : ''}
+      ${rep.reserve ? `<span class="etq sev">${escapa(t('common.reserve'))}</span>` : ''}
+      ${rep.igc ? `<span class="etq ok">${escapa(t('snapshot.igc'))}</span>` : ''}
     </div>
     ${chico ? '' : `<div class="mt">${DataCompleteness({ rep, corto: true })}</div>`}
   </article>`;
@@ -374,7 +392,7 @@ function vistaInicio() {
     <div class="card">
       <div class="mets">
         <div class="met"><b>${nEv}</b><span>${escapa(nombreEv(evMas))}</span></div>
-        <div class="met"><b>${ult30}</b><span>${escapa(t('common.reports'))} · 30 d</span></div>
+        <div class="met"><b>${ult30}</b><span>${escapa(t('common.reports'))} · ${escapa(t('home.days30'))}</span></div>
         <div class="met"><b>${est.senales.length}</b><span>${escapa(t('nav.signals')).toLowerCase()}</span></div>
         <div class="met"><b style="font-size:16px">${escapa(nombreFase(faMas))}</b>
           <span>${escapa(t('site.mostPhase')).toLowerCase()}</span></div>
@@ -540,8 +558,8 @@ function vistaSitio(id, tab = 'overview') {
       </div>
       <div class="mt2">
         <dl class="dl">
-          <dt>${escapa(t('site.mostEvent'))}</dt><dd>${st.masEvento ? escapa(st.masEvento.n) + ` (${st.masEvento.c})` : '—'}</dd>
-          <dt>${escapa(t('site.mostPhase'))}</dt><dd>${st.masFase ? escapa(st.masFase.n) + ` (${st.masFase.c})` : '—'}</dd>
+          <dt>${escapa(t('site.mostEvent'))}</dt><dd>${st.masEvento ? escapa(nombreEv(st.masEvento.id)) + ` (${st.masEvento.c})` : '—'}</dd>
+          <dt>${escapa(t('site.mostPhase'))}</dt><dd>${st.masFase ? escapa(nombreFase(st.masFase.id)) + ` (${st.masFase.c})` : '—'}</dd>
           <dt>${escapa(t('site.mostWind'))}</dt><dd>${st.masViento ? escapa(st.masViento.id) + ` (${st.masViento.c})` : '—'}</dd>
           <dt>${escapa(t('common.lastReport'))}</dt><dd>${st.ultimo ? escapa(fechaLarga(st.ultimo.fecha)) : '—'}</dd>
         </dl>
@@ -883,7 +901,7 @@ export function arranca() {
     red.pendientes = r.quedan;
     bs.textContent = '↻';
     pintaEstadoRed();
-    aviso(r.enviados ? `Enviados ${r.enviados}.` : t('status.offlineSaved'));
+    aviso(r.enviados ? t('status.sent', { n: r.enviados }) : t('status.offlineSaved'));
   };
 
   traducePantalla(document);

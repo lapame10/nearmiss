@@ -415,6 +415,8 @@ const EN = {
   'signals.exp6': '{n} reports at this site were logged with wind at or above 20 km/h (average {m} km/h).',
   'signals.exp7': 'The most frequent event there is {e}.',
   'brand.sub': 'Turns pilot reports into patterns, context and collective learning.',
+  'home.days30': '30 j',
+  'status.sent': 'Sent {n}.',
 };
 
 const ES = {
@@ -805,6 +807,8 @@ const ES = {
   'signals.exp6': '{n} reportes de este sitio se registraron con viento de 20 km/h o más (media {m} km/h).',
   'signals.exp7': 'El evento más frecuente allí es {e}.',
   'brand.sub': 'Convierte reportes de pilotos en patrones, contexto y aprendizaje colectivo.',
+  'home.days30': '30 d',
+  'status.sent': 'Enviados {n}.',
 };
 
 const FR = {
@@ -1252,6 +1256,8 @@ const FR = {
   'signals.exp6': '{n} signalements de ce site ont été enregistrés avec un vent de 20 km/h ou plus (moyenne {m} km/h).',
   'signals.exp7': 'L’événement le plus fréquent y est {e}.',
   'brand.sub': 'Transforme les signalements des pilotes en schémas, contexte et apprentissage collectif.',
+  'home.days30': '30 T',
+  'status.sent': '{n} envoyés.',
 };
 
 const DE = {
@@ -1699,6 +1705,8 @@ const DE = {
   'signals.exp6': '{n} Meldungen in diesem Gebiet wurden bei Wind ab 20 km/h erfasst (Mittel {m} km/h).',
   'signals.exp7': 'Das häufigste Ereignis dort ist {e}.',
   'brand.sub': 'Macht Pilotenmeldungen zu Mustern, Kontext und gemeinschaftlichem Lernen.',
+  'home.days30': '30 d',
+  'status.sent': '{n} gesendet.',
 };
 
 const PT = {
@@ -2146,6 +2154,8 @@ const PT = {
   'signals.exp6': '{n} relatos deste local foram registados com vento de 20 km/h ou mais (média {m} km/h).',
   'signals.exp7': 'O evento mais frequente ali é {e}.',
   'brand.sub': 'Converte relatos de pilotos em padrões, contexto e aprendizagem coletiva.',
+  'home.days30': '30 d',
+  'status.sent': '{n} enviados.',
 };
 
 /* ============================================================
