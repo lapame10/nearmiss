@@ -8,6 +8,7 @@
 
 import { SITES, EVENTOS, FASES, DIRECCIONES, TIPOS_ZONA } from './data.js';
 import { est, ir, aviso, escapa, nombreEv, nombreFase, fechaLarga, hace, sitio } from './app.js';
+import { t, idioma } from './i18n.js';
 import { distKm, excepciones, similares } from './signals.js';
 
 /* ===== LAS CAPAS DEL MAPA =====
@@ -111,18 +112,19 @@ export async function pintaMapa() {
   document.getElementById('app').classList.add('on');
   cont.innerHTML = `<div class="cont" style="padding-top:10px;padding-bottom:40px">
     <div class="hero" style="padding:4px 0 0">
-      <h1>Map</h1>
-      <p class="lema">Reports, heat concentration and signals. Filter it down to the conditions you care about.</p>
+      <h1>${escapa(t('map.title'))}</h1>
+      <p class="lema">${escapa(t('map.lede'))}</p>
     </div>
 
     <div class="row wrap mt2" style="gap:6px">
-      ${[['reports','Reports'],['heatmap','Heatmap'],['signals','Signals']].map(([v, n]) =>
-        `<button class="paso-n${est.modoMapa === v ? ' on' : ''}" data-modo="${v}">${n}</button>`).join('')}
-      <button class="btn gh" id="mFiltros">Filters <span class="mono" id="nFiltros"></span></button>
+      ${['reports','heatmap','signals'].map(v =>
+        `<button class="paso-n${est.modoMapa === v ? ' on' : ''}" data-modo="${v}">${
+          escapa(t('map.' + v))}</button>`).join('')}
+      <button class="btn gh" id="mFiltros">${escapa(t('map.filters'))} <span class="mono" id="nFiltros"></span></button>
     </div>
 
     <div class="row wrap mt" style="gap:6px">
-      <span class="mini" style="align-self:center">Base</span>
+      <span class="mini" style="align-self:center">${escapa(t('map.base'))}</span>
       ${Object.entries(CAPAS).map(([k, c]) =>
         `<button class="paso-n${est.capaMapa === k ? ' on' : ''}" data-capa="${k}">${escapa(c.n)}</button>`).join('')}
     </div>
@@ -167,8 +169,8 @@ export async function pintaMapa() {
 function documentoResumen(lista, nf) {
   const r = document.getElementById('resumen');
   if (!r) return;
-  r.innerHTML = `<b>${lista.length}</b> reports shown${nf ? ` · ${nf} filter${nf > 1 ? 's' : ''} active` : ''}.
-    Rounded to about 100 m.`;
+  r.innerHTML = `<b>${lista.length}</b> ${escapa(t('map.shown', { n: '' }).replace('{n}', '').trim() || t('map.shown', { n: lista.length }))}${
+    nf ? ' · ' + escapa(t('map.filtersActive', { n: nf })) : ''}. ${escapa(t('map.rounded'))}`;
 }
 
 function pintaFiltros() {
@@ -176,24 +178,24 @@ function pintaFiltros() {
   const f = est.filtros;
   const sel = (id, etq, ops, val) => `<div class="campo" style="min-width:150px;flex:1">
     <label>${etq}</label>
-    <select data-f="${id}"><option value="">Any</option>
+    <select data-f="${id}"><option value="">${escapa(t('common.any'))}</option>
       ${ops.map(([v, n]) => `<option value="${escapa(v)}"${val === v ? ' selected' : ''}>${escapa(n)}</option>`).join('')}
     </select></div>`;
   const paises = [...new Set(SITES.map(s => s.pais))];
   p.innerHTML = `<div class="row wrap" style="gap:12px;align-items:flex-end">
-    ${sel('site', 'Site', SITES.map(s => [s.id, s.n]), f.site)}
-    ${sel('pais', 'Country', paises.map(x => [x, x]), f.pais)}
-    ${sel('ev', 'Event type', EVENTOS.map(e => [e.id, e.n]), f.ev)}
-    ${sel('fase', 'Flight phase', FASES.map(x => [x.id, x.n]), f.fase)}
-    ${sel('sev', 'Outcome', [['lesion','With injury'],['sinlesion','No injury'],['reserva','Reserve deployment']], f.sev)}
-    ${sel('viento', 'Wind direction', DIRECCIONES.map(d => [d, d]), f.viento)}
-    ${sel('clase', 'Wing class', ['A','B','C','D','CCC','Competition'].map(c => [c, c]), f.clase)}
-    <div class="campo" style="min-width:140px;flex:1"><label>From</label>
+    ${sel('site', t('map.flyingSite'), SITES.map(s => [s.id, s.n]), f.site)}
+    ${sel('pais', t('map.country'), paises.map(x => [x, x]), f.pais)}
+    ${sel('ev', t('common.eventType'), EVENTOS.map(e => [e.id, e.n]), f.ev)}
+    ${sel('fase', t('common.phase'), FASES.map(x => [x.id, x.n]), f.fase)}
+    ${sel('sev', t('common.outcome'), [['lesion', t('map.injury')],['sinlesion', t('map.noInjury')],['reserva', t('map.reserveOnly')]], f.sev)}
+    ${sel('viento', t('map.windDir'), DIRECCIONES.map(d => [d, d]), f.viento)}
+    ${sel('clase', t('map.wingClass'), ['A','B','C','D','CCC','Competition'].map(c => [c, c]), f.clase)}
+    <div class="campo" style="min-width:140px;flex:1"><label>${escapa(t('map.from'))}</label>
       <input type="date" data-f="desde" value="${escapa(f.desde)}"></div>
-    <div class="campo" style="min-width:140px;flex:1"><label>To</label>
+    <div class="campo" style="min-width:140px;flex:1"><label>${escapa(t('map.to'))}</label>
       <input type="date" data-f="hasta" value="${escapa(f.hasta)}"></div>
   </div>
-  <div class="row mt"><button class="btn sec" id="fLimpiar">Clear filters</button>
+  <div class="row mt"><button class="btn sec" id="fLimpiar">${escapa(t('common.clearFilters'))}</button>
     <button class="btn pri" id="fAplicar">Apply</button></div>`;
 
   p.querySelectorAll('[data-f]').forEach(e => e.addEventListener('change', () => {
@@ -237,7 +239,7 @@ function pintaReportes(L, capa, lista) {
         radius: Math.min(30, 13 + g.length / 6),
         fillColor: grave ? '#98372f' : '#2c4a6e', fillOpacity: .82,
         color: '#fff', weight: 2,
-      }).addTo(capa).bindTooltip(`${g.length} reports`, { permanent: true, direction: 'center', className: 'etqCl' })
+      }).addTo(capa).bindTooltip(`${g.length} ${t('common.reports')}`, { permanent: true, direction: 'center', className: 'etqCl' })
         .on('click', () => mapa.setView([la, lo], Math.min(13, mapa.getZoom() + 3)));
       return;
     }
@@ -265,7 +267,7 @@ function marcador(L, capa, rep) {
     ${escapa((sitio(rep.site) || {}).n || '')}${z ? ' · ' + escapa(z.n) : ''}<br>
     <span style="color:#5a6169;font-size:12px">${escapa(nombreFase(rep.fase))} ·
     ${rep.windDir ? rep.windDir + ' ' + rep.windKmh + ' km/h' : 'no wind recorded'}</span><br>
-    <a href="#reporte/${escapa(rep.id)}" style="font-weight:650">View report →</a>
+    <a href="#reporte/${escapa(rep.id)}" style="font-weight:650">${escapa(t('common.viewReport'))} →</a>
   </div>`);
   marcadores.push(m);
 }
@@ -310,7 +312,7 @@ function pintaSenales(L, capa) {
         <span style="color:#8c939b;font-size:12px">${s.n} reports ·
         ${escapa(fechaLarga(s.desde))} – ${escapa(fechaLarga(s.hasta))}</span><br>
         ${escapa(s.explicacion)}<br>
-        <a href="#senal/${escapa(s.id)}" style="font-weight:650">View signal →</a>
+        <a href="#senal/${escapa(s.id)}" style="font-weight:650">${escapa(t('common.viewSignal'))} →</a>
       </div>`);
   });
   if (sigs.length) {
@@ -424,34 +426,33 @@ export function pintaTimeline(track, idTimeline, idExcep, tEvento) {
 
   cont.innerHTML = `<div class="tabla-scroll" style="overflow-x:auto">
     <table class="tabla">
-      <tr><th>T</th><th>Altitude</th><th>Speed</th><th>Climb / sink</th><th>Heading</th></tr>
+      <tr><th>T</th><th>${escapa(t('box.altitude'))}</th><th>${escapa(t('box.speed'))}</th>
+        <th>${escapa(t('box.climb'))}</th><th>${escapa(t('box.heading'))}</th></tr>
       ${marcas.map(p => p.vacio ? `<tr>
         <td class="mono"><b>${p.off === 0 ? 'EVENT' : `T${p.off > 0 ? '+' : ''}${p.off} s`}</b></td>
-        <td class="mono" colspan="4" style="color:var(--ink-3)">${escapa(nombreFase ? t('common.na') : 'N/A')}</td>
+        <td class="mono" colspan="4" style="color:var(--ink-3)">${escapa(t('common.na'))}</td>
       </tr>` : `<tr${p.off === 0 ? ' style="background:var(--blue-bg)"' : ''}>
         <td class="mono"><b>${p.off === 0 ? 'EVENT' : `T${p.off > 0 ? '+' : ''}${p.off} s`}</b></td>
-        <td class="mono">${p.altPresion != null ? p.altPresion + ' m' : 'N/A'}</td>
-        <td class="mono">${p.hs != null ? p.hs.toFixed(0) + ' km/h' : 'N/A'}</td>
+        <td class="mono">${p.altPresion != null ? p.altPresion + ' m' : escapa(t('common.na'))}</td>
+        <td class="mono">${p.hs != null ? p.hs.toFixed(0) + ' km/h' : escapa(t('common.na'))}</td>
         <td class="mono" style="color:${p.vs != null && p.vs < -3 ? 'var(--red)' : p.vs > 0 ? 'var(--green)' : 'inherit'}">
-          ${p.vs != null ? (p.vs > 0 ? '+' : '') + p.vs.toFixed(1) + ' m/s' : 'N/A'}</td>
-        <td class="mono">${p.heading != null ? Math.round(p.heading) + '°' : 'N/A'}</td>
+          ${p.vs != null ? (p.vs > 0 ? '+' : '') + p.vs.toFixed(1) + ' m/s' : escapa(t('common.na'))}</td>
+        <td class="mono">${p.heading != null ? Math.round(p.heading) + '°' : escapa(t('common.na'))}</td>
       </tr>`).join('')}
     </table></div>
-    <p class="mini mt">Speed on the ground, barometric altitude and heading. Not a flight
-    recorder — a reconstruction from the IGC around the event.</p>`;
+    <p class="mini mt">${escapa(t('box.note'))}</p>`;
 
   const ex = document.getElementById(idExcep);
   if (ex) {
     /* las anomalías también se calculan sobre el momento confirmado */
     const lista = excepciones(track.map(p => ({ ...p, t: p.t - cero })));
     ex.innerHTML = lista.length ? `
-      <h4>Worth a look</h4>
-      <p class="mini mb">Events flagged by simple thresholds, the way telemetry systems do it:
-      do not show everything, show what stands out.</p>
+      <h4>${escapa(t('box.worthLook'))}</h4>
+      <p class="mini mb">${escapa(t('box.exceptionsHelp'))}</p>
       ${lista.map(e => `<div class="row" style="gap:8px;margin:6px 0">
         <span class="etq mono">T${e.t > 0 ? '+' : ''}${e.t} s</span>
         <span class="sub">${escapa(e.txt)}</span></div>`).join('')}`
-      : `<p class="mini">No anomalies flagged in this track.</p>`;
+      : `<p class="mini">${escapa(t('box.noAnomalies'))}</p>`;
   }
 }
 
@@ -491,6 +492,6 @@ export async function mapaSitio(siteId, id) {
     L.circleMarker([r.lat, r.lon], { radius: 6, fillColor: colorDe(r), fillOpacity: .9,
       color: '#fff', weight: 1.5 }).addTo(m)
       .bindPopup(`<b>${escapa(nombreEv(r.evento))}</b><br>
-        <a href="#reporte/${escapa(r.id)}">View report →</a>`);
+        <a href="#reporte/${escapa(r.id)}">${escapa(t('common.viewReport'))} →</a>`);
   });
 }

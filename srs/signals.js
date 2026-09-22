@@ -15,6 +15,7 @@
    ============================================================ */
 
 import { EVENTOS, FASES, SITES, DIRECCIONES, diasEntre } from './data.js';
+import { t } from './i18n.js';
 
 /* ---------- utilidades ---------- */
 const dias = (a, b) => Math.abs((new Date(a) - new Date(b)) / 86400000);
@@ -530,32 +531,36 @@ export function patronesSite(site, reps) {
   const out = [];
   if (R.length < 3) return out;
 
+  /* Las frases se construyen con t() y datos, para que salgan en el
+     idioma que tenga puesto la persona. */
   const porFase = Object.entries(cuenta(R.map(r => r.fase))).sort((a, b) => b[1] - a[1]);
   if (porFase[0]) out.push({
-    txt: `${Math.round(porFase[0][1] / R.length * 100)}% of the reports happened during ` +
-         `${nombreFase(porFase[0][0]).toLowerCase()}.`,
+    txt: t('site.patternPhase', {
+      p: Math.round(porFase[0][1] / R.length * 100),
+      f: nombreFase(porFase[0][0]).toLowerCase(),
+    }),
   });
 
   const porDir = Object.entries(cuenta(R.map(r => r.windDir).filter(Boolean))).sort((a, b) => b[1] - a[1]);
   if (porDir[0] && porDir[0][1] >= 2) out.push({
-    txt: `${porDir[0][1]} of ${R.length} reports were logged with ${porDir[0][0]} wind.`,
+    txt: t('site.patternWind', { n: porDir[0][1], t: R.length, d: porDir[0][0] }),
   });
 
   const tarde = R.filter(r => r.hora && parseInt(r.hora.slice(0, 2), 10) >= 13).length;
   if (tarde >= 3) out.push({
-    txt: `${Math.round(tarde / R.length * 100)}% of the reports were logged after 13:00.`,
+    txt: t('site.patternTime', { p: Math.round(tarde / R.length * 100) }),
   });
 
   const porZona = Object.entries(cuenta(R.map(r => r.zona).filter(Boolean))).sort((a, b) => b[1] - a[1]);
   if (porZona[0] && porZona[0][1] >= 3) {
     const s = SITES.find(x => x.id === site);
     const z = s && (s.zonas || []).find(x => x.id === porZona[0][0]);
-    if (z) out.push({ txt: `${porZona[0][1]} reports happened in the ${z.n} zone.` });
+    if (z) out.push({ txt: t('site.patternZone', { n: porZona[0][1], z: z.n }) });
   }
 
   const porEv = Object.entries(cuenta(R.map(r => r.evento))).sort((a, b) => b[1] - a[1]);
   if (porEv[0] && porEv[0][1] >= 2) out.push({
-    txt: `${nombreEv(porEv[0][0])} is the most frequently reported event (${porEv[0][1]} reports).`,
+    txt: t('site.patternEvent', { e: nombreEv(porEv[0][0]), n: porEv[0][1] }),
   });
 
   return out;

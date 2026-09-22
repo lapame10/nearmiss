@@ -118,10 +118,10 @@ export const zonaDe = (rep) => {
 
 /** Etiqueta de severidad. El rojo SOLO para lesiones graves o fatales. */
 export function Severidad({ id }) {
-  if (!id || id === 'none') return `<span class="etq ok">No injury</span>`;
-  if (id === 'minor')  return `<span class="etq">Minor injury</span>`;
-  if (id === 'serious') return `<span class="etq sev">Serious injury</span>`;
-  if (id === 'fatal')   return `<span class="etq sev">Fatality · pending verification</span>`;
+  if (!id || id === 'none') return `<span class="etq ok">${escapa(t('common.noInjury'))}</span>`;
+  if (id === 'minor')  return `<span class="etq">${escapa(t('common.minorInjury'))}</span>`;
+  if (id === 'serious') return `<span class="etq sev">${escapa(t('common.seriousInjury'))}</span>`;
+  if (id === 'fatal')   return `<span class="etq sev">${escapa(t('common.fatalPending'))}</span>`;
   return `<span class="etq">${escapa(id)}</span>`;
 }
 
@@ -135,12 +135,12 @@ export function DataCompleteness({ rep, corto = false }) {
     </div>`;
   }
   return `<div>
-    <div class="entre mb"><span class="mini">Data completeness</span>
+    <div class="entre mb"><span class="mini">${escapa(t('common.dataCompleteness'))}</span>
       <b class="mono">${pct}%</b></div>
     <div class="barra"><i style="width:${pct}%"></i></div>
     <div class="fila-etq">${detalle.map(d =>
       `<span class="etq${d.ok ? ' ok' : ''}">${d.ok ? '✓' : '·'} ${escapa(d.n)}</span>`).join('')}</div>
-    <p class="mini mt">How much we can learn from this report. Not an assessment of the pilot.</p>
+    <p class="mini mt">${escapa(t('common.completenessNote'))}</p>
   </div>`;
 }
 
@@ -220,11 +220,11 @@ export function SiteCard({ s }) {
       ${sigs ? `<span class="etq watch">${sigs} signal${sigs > 1 ? 's' : ''}</span>` : ''}
     </div>
     <div class="mets mt">
-      <div class="met"><b>${st.total}</b><span>reports</span></div>
-      <div class="met"><b>${st.vuelos}</b><span>flights logged</span></div>
-      <div class="met"><b>${st.masEvento ? escapa(st.masEvento.n) : '—'}</b><span>most reported</span></div>
+      <div class="met"><b>${st.total}</b><span>${escapa(t('common.reports'))}</span></div>
+      <div class="met"><b>${st.vuelos}</b><span>${escapa(t('common.flightsLogged'))}</span></div>
+      <div class="met"><b>${st.masEvento ? escapa(nombreEv(st.masEvento.id)) : '—'}</b><span>${escapa(t('common.mostReported'))}</span></div>
     </div>
-    <p class="mini mt">Last report: ${st.ultimo ? escapa(hace(st.ultimo.fecha)) : '—'}</p>
+    <p class="mini mt">${escapa(t('common.lastReport'))}: ${st.ultimo ? escapa(hace(st.ultimo.fecha)) : '—'}</p>
   </article>`;
 }
 
@@ -236,19 +236,19 @@ export function EventSnapshot({ rep, nSimilares = 0 }) {
     (rep.gustKmh ? `–${rep.gustKmh}` : '') + ' km/h' : '—';
   return `<div class="snap">
     <div class="cabeza">
-      <b>Event snapshot</b>
+      <b>${escapa(t('snapshot.title'))}</b>
       <span class="mini mono">${escapa(rep.id)}</span>
     </div>
     <div class="cuerpo">
-      <div class="linea"><span>Event</span><span>${escapa(nombreEv(rep.evento))}</span></div>
-      <div class="linea"><span>Phase</span><span>${escapa(nombreFase(rep.fase))}</span></div>
-      <div class="linea"><span>Outcome</span><span>${escapa(nombreRes(rep.resultado))}</span></div>
-      <div class="linea"><span>Altitude</span><span>${escapa(alt)}</span></div>
-      <div class="linea"><span>Wind</span><span>${escapa(viento)}</span></div>
-      <div class="linea"><span>Site</span><span>${escapa(sitio(rep.site).n || '—')}${
+      <div class="linea"><span>${escapa(t('snapshot.event'))}</span><span>${escapa(nombreEv(rep.evento))}</span></div>
+      <div class="linea"><span>${escapa(t('snapshot.phase'))}</span><span>${escapa(nombreFase(rep.fase))}</span></div>
+      <div class="linea"><span>${escapa(t('snapshot.outcome'))}</span><span>${escapa(nombreRes(rep.resultado))}</span></div>
+      <div class="linea"><span>${escapa(t('snapshot.altitude'))}</span><span>${escapa(alt)}</span></div>
+      <div class="linea"><span>${escapa(t('snapshot.wind'))}</span><span>${escapa(viento)}</span></div>
+      <div class="linea"><span>${escapa(t('snapshot.site'))}</span><span>${escapa(sitio(rep.site).n || '—')}${
         z ? ' · ' + escapa(z.n) : ''}</span></div>
-      <div class="linea"><span>Nearby similar reports</span><span>${nSimilares}</span></div>
-      <div class="linea"><span>IGC</span><span>${rep.igc ? 'Available' : 'Not available'}</span></div>
+      <div class="linea"><span>${escapa(t('snapshot.similar'))}</span><span>${nSimilares}</span></div>
+      <div class="linea"><span>${escapa(t('snapshot.igc'))}</span><span>${rep.igc ? escapa(t('snapshot.available')) : escapa(t('snapshot.notAvailable'))}</span></div>
     </div>
   </div>`;
 }
@@ -446,11 +446,11 @@ function vistaSenales() {
 
 function vistaSenal(id) {
   const sig = est.senales.find(s => s.id === id);
-  if (!sig) return `<p class="sub">Signal not found.</p>`;
+  if (!sig) return `<p class="sub">${escapa(t('sig.notFound'))}</p>`;
   const reps = est.reps.filter(r => sig.reps.includes(r.id));
   const z = sig.zona;
   return `
-  <button class="btn gh mb" data-ir="senales">← Signals</button>
+  <button class="btn gh mb" data-ir="senales">← ${escapa(t('nav.signals'))}</button>
   <div class="hero" style="padding:8px 0">
     <div class="entre">
       <span class="etq ${(sig.fuerza||sig.nivel) === 'strong' ? 'watch' : 'info'}">
@@ -464,29 +464,30 @@ function vistaSenal(id) {
   <section class="bloque">
     <div class="card">
       <div class="mets">
-        <div class="met"><b>${sig.n}</b><span>related reports</span></div>
-        <div class="met"><b style="font-size:16px">${escapa(fechaLarga(sig.desde))}</b><span>first</span></div>
-        <div class="met"><b style="font-size:16px">${escapa(fechaLarga(sig.hasta))}</b><span>last</span></div>
+        <div class="met"><b>${sig.n}</b><span>${escapa(t('sig.relatedReports'))}</span></div>
+        <div class="met"><b style="font-size:16px">${escapa(fechaLarga(sig.desde))}</b><span>${escapa(t('sig.first'))}</span></div>
+        <div class="met"><b style="font-size:16px">${escapa(fechaLarga(sig.hasta))}</b><span>${escapa(t('sig.lastReport'))}</span></div>
         ${sig.condicion ? `<div class="met"><b style="font-size:16px">${escapa(sig.condicion)}</b>
-          <span>main condition</span></div>` : ''}
+          <span>${escapa(t('sig.mainCondition'))}</span></div>` : ''}
       </div>
-      ${z ? `<p class="mt"><b>Zone:</b> ${escapa(z)}</p>` : ''}
+      ${z ? `<p class="mt"><b>${escapa(t('sig.zone'))}:</b> ${escapa(z)}</p>` : ''}
     </div>
   </section>
 
   <section class="bloque">
-    <div class="cab"><h2>Where</h2></div>
+    <div class="cab"><h2>${escapa(t('sig.where'))}</h2></div>
     <div id="mapaSenal" style="height:300px;border-radius:12px;overflow:hidden;border:1px solid var(--line)"></div>
   </section>
 
   <section class="bloque">
-    <div class="cab"><h2>Related reports</h2><span class="mini mono">${reps.length}</span></div>
+    <div class="cab"><h2>${escapa(t('sig.relatedTitle'))}</h2><span class="mini mono">${reps.length}</span></div>
     <div class="grid g2">${reps.map(r => ReportCard({ rep: r, chico: true })).join('')}</div>
   </section>
 
   <div class="card" style="background:var(--bg-2);border-style:dashed">
     <p class="mini">${escapa(t('signals.disclaimer'))}</p>
     <p class="mini mt">${escapa(t('strength.explain'))}</p>
+    <p class="mini mt">${escapa(t('sig.ruleExplain'))}</p>
   </div>`;
 }
 
@@ -496,21 +497,21 @@ function vistaSenal(id) {
 function vistaSitios() {
   return `
   <div class="hero" style="padding-top:20px">
-    <h1>Sites</h1>
-    <p class="lema">What has been reported at each place, and where within it.</p>
+    <h1>${escapa(t('site.title'))}</h1>
+    <p class="lema">${escapa(t('site.lede'))}</p>
   </div>
   <div class="grid g2">${SITES.map(s => SiteCard({ s })).join('')}</div>`;
 }
 
 function vistaSitio(id, tab = 'overview') {
   const s = SITES.find(x => x.id === id);
-  if (!s) return `<p class="sub">Site not found.</p>`;
+  if (!s) return `<p class="sub">${escapa(t('site.notFound'))}</p>`;
   const st = statsSite(id, est.reps, est.vuelos);
   const sigs = est.senales.filter(x => x.site === id);
-  const tabs = [['overview', 'Overview'], ['reports', 'Reports'], ['signals', 'Signals'],
-    ['map', 'Map'], ['patterns', 'Patterns']];
-  const T = (t) => `<button class="paso-n${tab === t ? ' on' : ''}" data-sitetab="${t}">${
-    escapa(tabs.find(x => x[0] === t)[1])}</button>`;
+  const tabs = [['overview','site.overview'],['reports','site.reports'],['signals','nav.signals'],
+    ['map','site.map'],['patterns','site.patterns']];
+  const T = (k) => `<button class="paso-n${tab === k ? ' on' : ''}" data-sitetab="${k}">${
+    escapa(t('site.' + k))}</button>`;
 
   let cuerpo = '';
 
@@ -518,31 +519,29 @@ function vistaSitio(id, tab = 'overview') {
     cuerpo = `
     <div class="card">
       <div class="mets">
-        <div class="met"><b>${st.total}</b><span>total reports</span></div>
-        <div class="met"><b>${st.nearMiss}</b><span>near misses</span></div>
-        <div class="met"><b>${st.reservas}</b><span>reserve deployments</span></div>
-        <div class="met"><b>${st.duras}</b><span>hard landings</span></div>
-        <div class="met"><b>${st.lesiones}</b><span>with injury</span></div>
-        <div class="met"><b>${st.vuelos}</b><span>flights logged</span></div>
+        <div class="met"><b>${st.total}</b><span>${escapa(t('site.total'))}</span></div>
+        <div class="met"><b>${st.nearMiss}</b><span>${escapa(t('site.nearMiss'))}</span></div>
+        <div class="met"><b>${st.reservas}</b><span>${escapa(t('site.reserve'))}</span></div>
+        <div class="met"><b>${st.duras}</b><span>${escapa(t('site.hard'))}</span></div>
+        <div class="met"><b>${st.lesiones}</b><span>${escapa(t('site.injury'))}</span></div>
+        <div class="met"><b>${st.vuelos}</b><span>${escapa(t('site.flights'))}</span></div>
       </div>
       <div class="mt2">
         <dl class="dl">
-          <dt>Most common event</dt><dd>${st.masEvento ? escapa(st.masEvento.n) + ` (${st.masEvento.c})` : '—'}</dd>
-          <dt>Most common phase</dt><dd>${st.masFase ? escapa(st.masFase.n) + ` (${st.masFase.c})` : '—'}</dd>
-          <dt>Most reported wind</dt><dd>${st.masViento ? escapa(st.masViento.id) + ` (${st.masViento.c})` : '—'}</dd>
-          <dt>Last report</dt><dd>${st.ultimo ? escapa(fechaLarga(st.ultimo.fecha)) : '—'}</dd>
+          <dt>${escapa(t('site.mostEvent'))}</dt><dd>${st.masEvento ? escapa(st.masEvento.n) + ` (${st.masEvento.c})` : '—'}</dd>
+          <dt>${escapa(t('site.mostPhase'))}</dt><dd>${st.masFase ? escapa(st.masFase.n) + ` (${st.masFase.c})` : '—'}</dd>
+          <dt>${escapa(t('site.mostWind'))}</dt><dd>${st.masViento ? escapa(st.masViento.id) + ` (${st.masViento.c})` : '—'}</dd>
+          <dt>${escapa(t('common.lastReport'))}</dt><dd>${st.ultimo ? escapa(fechaLarga(st.ultimo.fecha)) : '—'}</dd>
         </dl>
       </div>
     </div>
     <div class="card mt">
-      <h3>Reports per 1,000 logged flights</h3>
+      <h3>${escapa(t('common.reportsPer1000'))}</h3>
       ${st.por1000 == null
-        ? `<p class="sub mt">${st.vuelos} flights logged at this site. That is still too small a
-           sample to compare rates — a single busy week would move the number.</p>
-           <p class="mini mt">This is exactly why safe flight logs matter: without a denominator,
-           "100 incidents" says nothing.</p>`
-        : `<p class="sub mt"><b style="font-size:24px">${st.por1000}</b> per 1,000 logged flights,
-           from ${st.vuelos} logged flights.${st.muestraPequena ? ' The sample is still limited.' : ''}</p>`}
+        ? `<p class="sub mt">${escapa(t('site.rateLimited', { n: st.vuelos }))}</p>
+           <p class="mini mt">${escapa(t('common.whyDenominator'))}</p>`
+        : `<p class="sub mt">${escapa(t('site.rateValue', { r: st.por1000, n: st.vuelos }))}${
+            st.muestraPequena ? ' ' + escapa(t('site.sampleSmall')) : ''}</p>`}
     </div>`;
   }
 
@@ -550,24 +549,25 @@ function vistaSitio(id, tab = 'overview') {
     const lista = st.reps.slice().sort((a, b) => b.fecha.localeCompare(a.fecha));
     cuerpo = lista.length
       ? `<div class="grid g2">${lista.map(r => ReportCard({ rep: r })).join('')}</div>`
-      : `<p class="sub">No reports at this site yet.</p>`;
+      : `<p class="sub">${escapa(t('site.noReports'))}</p>`;
   }
 
   if (tab === 'signals') {
     cuerpo = sigs.length
       ? `<div class="grid g2">${sigs.map(x => SignalCard({ sig: x })).join('')}</div>`
-      : `<p class="sub">No signals at this site yet.</p>`;
+      : `<p class="sub">${escapa(t('site.noSignals'))}</p>`;
   }
 
   if (tab === 'map') {
     cuerpo = `<div id="mapaSitio" style="height:380px;border-radius:12px;overflow:hidden;border:1px solid var(--line)"></div>
-      <div class="card mt"><b>Zones</b>
+      <div class="card mt"><b>${escapa(t('site.zones'))}</b>
         <div class="fila-etq mt">${(s.zonas || []).map(z => {
           const n = st.reps.filter(r => r.zona === z.id).length;
-          const t = (TIPOS_ZONA.find(x => x.id === z.t) || {}).n || z.t;
-          return `<span class="etq${n ? ' info' : ''}">${escapa(z.n)} · ${escapa(t)}${n ? ' · ' + n : ''}</span>`;
+          const tt = (TIPOS_ZONA.find(x => x.id === z.t) || {}).n || z.t;
+          return `<span class="etq${n ? ' info' : ''}">${escapa(z.n)} · ${escapa(tt)}${
+            n ? ' · ' + escapa(t('site.zonesCount', { n })) : ''}</span>`;
         }).join('')}</div>
-        <p class="mini mt">Zones let us say "behind this ridge" instead of just naming the site.</p>
+        <p class="mini mt">${escapa(t('site.zonesNote'))}</p>
       </div>`;
   }
 
@@ -575,13 +575,12 @@ function vistaSitio(id, tab = 'overview') {
     const p = patronesSite(id, est.reps);
     cuerpo = p.length
       ? `<div class="grid g2">${p.map(x => `<div class="card"><p>${escapa(x.txt)}</p></div>`).join('')}</div>
-         <p class="mini mt">These are descriptions of the reports, not causes. Correlation here does
-         not imply causation.</p>`
-      : `<p class="sub">Not enough reports at this site yet to describe patterns.</p>`;
+         <p class="mini mt">${escapa(t('site.patternsNote'))}</p>`
+      : `<p class="sub">${escapa(t('site.notEnough'))}</p>`;
   }
 
   return `
-  <button class="btn gh mb" data-ir="sitios">← Sites</button>
+  <button class="btn gh mb" data-ir="sitios">← ${escapa(t('site.title'))}</button>
   <div class="hero" style="padding:6px 0 2px">
     <h1>${escapa(s.n)}</h1>
     <p class="lema">${escapa(s.pais)} · ${escapa(s.region)} · ${s.alt} m</p>
@@ -596,12 +595,12 @@ function vistaSitio(id, tab = 'overview') {
    ============================================================ */
 function vistaReporte(id) {
   const rep = est.reps.find(r => r.id === id);
-  if (!rep) return `<p class="sub">Report not found.</p>`;
+  if (!rep) return `<p class="sub">${escapa(t('rep.notFound'))}</p>`;
   const s = sitio(rep.site), z = zonaDe(rep);
   const sims = similares(rep, est.reps);
 
   return `
-  <button class="btn gh mb" id="volver">← Back</button>
+  <button class="btn gh mb" id="volver">← ${escapa(t('common.back'))}</button>
   <div class="hero" style="padding:6px 0 2px">
     <span class="eyebrow">${escapa(fechaLarga(rep.fecha))}${rep.hora ? ' · ' + escapa(rep.hora) : ''}</span>
     <h1>${escapa(nombreEv(rep.evento))}</h1>
@@ -614,71 +613,69 @@ function vistaReporte(id) {
 
   ${rep.igc ? `
   <section class="bloque">
-    <div class="cab"><h2>Flight track</h2>
-      <span class="mini">IGC available</span></div>
+    <div class="cab"><h2>${escapa(t('detail.track'))}</h2>
+      <span class="mini">${escapa(t('rep.igcAvailable'))}</span></div>
     <div id="mapaTrack" style="height:320px;border-radius:12px;overflow:hidden;border:1px solid var(--line)"></div>
     <div class="card mt">
-      <div class="cab"><h3>Event timeline</h3>
+      <div class="cab"><h3>${escapa(t('box.title'))}</h3>
         <span class="mini">T-120 s → T+60 s</span></div>
       <div id="timeline"></div>
       <div id="excepciones" class="mt"></div>
     </div>
   </section>` : `
   <section class="bloque">
-    <div class="card"><p class="sub">No IGC for this report.</p>
-      <p class="mini mt">Adding a track lets SkyReport reconstruct what the wing was doing
-      around the event — speed, sink rate, heading.</p></div>
+    <div class="card"><p class="sub">${escapa(t('rep.noIgc'))}</p>
+      <p class="mini mt">${escapa(t('rep.noIgcHelp'))}</p></div>
   </section>`}
 
   <section class="bloque">
-    <div class="cab"><h2>What happened</h2></div>
+    <div class="cab"><h2>${escapa(t('rep.whatHappened'))}</h2></div>
     <div class="card">
-      <p>${escapa(rep.factores || 'No description was added to this report.')}</p>
-      ${rep.lecciones ? `<h4 class="mt2">Lessons learned</h4><p class="sub">${escapa(rep.lecciones)}</p>` : ''}
+      <p>${escapa(rep.factores || t('rep.noDescription'))}</p>
+      ${rep.lecciones ? `<h4 class="mt2">${escapa(t('rep.lessons'))}</h4><p class="sub">${escapa(rep.lecciones)}</p>` : ''}
     </div>
   </section>
 
   <section class="bloque">
-    <div class="cab"><h2>Conditions observed</h2></div>
+    <div class="cab"><h2>${escapa(t('rep.conditionsObserved'))}</h2></div>
     <div class="card"><dl class="dl">
-      <dt>Wind</dt><dd>${rep.windDir ? escapa(rep.windDir) + ' ' + rep.windKmh + ' km/h' +
-        (rep.gustKmh ? ' · gusts ' + rep.gustKmh : '') : '—'}</dd>
-      <dt>Thermal activity</dt><dd>${escapa(rep.thermal || '—')}</dd>
-      <dt>Turbulence felt</dt><dd>${escapa(rep.turb || '—')}</dd>
-      <dt>Cloud</dt><dd>${escapa(rep.cloud || '—')}</dd>
+      <dt>${escapa(t('snapshot.wind'))}</dt><dd>${rep.windDir ? escapa(rep.windDir) + ' ' + rep.windKmh + ' km/h' +
+        (rep.gustKmh ? ' · ' + escapa(t('common.gusts')) + ' ' + rep.gustKmh : '') : '—'}</dd>
+      <dt>${escapa(t('common.thermal'))}</dt><dd>${escapa(rep.thermal ? t('cond.' + rep.thermal) : '—')}</dd>
+      <dt>${escapa(t('common.turbulence'))}</dt><dd>${escapa(rep.turb ? t('cond.' + rep.turb) : '—')}</dd>
+      <dt>${escapa(t('common.cloud'))}</dt><dd>${escapa(rep.cloud ? t('cond.' + rep.cloud) : '—')}</dd>
     </dl></div>
   </section>
 
   <section class="bloque">
-    <div class="cab"><h2>Equipment</h2></div>
+    <div class="cab"><h2>${escapa(t('rep.equipmentUsed'))}</h2></div>
     <div class="card"><dl class="dl">
-      <dt>Wing</dt><dd>${escapa([rep.ala, rep.modelo].filter(Boolean).join(' ') || '—')}</dd>
-      <dt>Class</dt><dd>${escapa(rep.clase || '—')}</dd>
-      <dt>Harness</dt><dd>${escapa(rep.harness || '—')}</dd>
-      <dt>Reserve</dt><dd>${escapa(rep.reserva || '—')}</dd>
-      <dt>Experience</dt><dd>${escapa(rep.exp || '—')}</dd>
-    </dl><p class="mini mt">Experience is collected as a range, on purpose. SkyReport does not
-    identify pilots and does not rate them.</p></div>
+      <dt>${escapa(t('common.wing'))}</dt><dd>${escapa([rep.ala, rep.modelo].filter(Boolean).join(' ') || '—')}</dd>
+      <dt>${escapa(t('common.class'))}</dt><dd>${escapa(rep.clase || '—')}</dd>
+      <dt>${escapa(t('common.harness'))}</dt><dd>${escapa(rep.harness || '—')}</dd>
+      <dt>${escapa(t('common.reserve'))}</dt><dd>${escapa(rep.reserva || '—')}</dd>
+      <dt>${escapa(t('common.experience'))}</dt><dd>${escapa(rep.exp ? t('exp.' + rep.exp) : '—')}</dd>
+    </dl><p class="mini mt">${escapa(t('report.experienceNote'))}</p></div>
   </section>
 
   <section class="bloque">
-    <div class="cab"><h2>Location</h2></div>
+    <div class="cab"><h2>${escapa(t('rep.locations'))}</h2></div>
     <div class="card"><dl class="dl">
-      <dt>Site</dt><dd>${escapa(s.n || '—')}</dd>
-      <dt>Zone</dt><dd>${escapa(z ? z.n : '—')}</dd>
-      <dt>Coordinates</dt><dd class="mono">${rep.lat.toFixed(4)}, ${rep.lon.toFixed(4)}</dd>
-    </dl><p class="mini mt">Coordinates are rounded to about 100 m. Exact tracks are not published.</p></div>
+      <dt>${escapa(t('snapshot.site'))}</dt><dd>${escapa(s.n || '—')}</dd>
+      <dt>${escapa(t('sig.zone'))}</dt><dd>${escapa(z ? z.n : '—')}</dd>
+      <dt>${escapa(t('rep.coords'))}</dt><dd class="mono">${rep.lat.toFixed(4)}, ${rep.lon.toFixed(4)}</dd>
+    </dl><p class="mini mt">${escapa(t('detail.coordNote'))}</p></div>
   </section>
 
   <section class="bloque">
-    <div class="cab"><h2>Data completeness</h2></div>
+    <div class="cab"><h2>${escapa(t('common.dataCompleteness'))}</h2></div>
     <div class="card">${DataCompleteness({ rep })}</div>
   </section>
 
   <section class="bloque">
-    <div class="cab"><h2>Similar reports nearby</h2><span class="mini mono">${sims.length}</span></div>
+    <div class="cab"><h2>${escapa(t('rep.similar'))}</h2><span class="mini mono">${sims.length}</span></div>
     ${sims.length ? `<div class="grid g2">${sims.map(x => ReportCard({ rep: x.r, chico: true })).join('')}</div>`
-      : `<p class="sub">No similar reports found nearby.</p>`}
+      : `<p class="sub">${escapa(t('rep.noSimilar'))}</p>`}
   </section>`;
 }
 
@@ -688,66 +685,54 @@ function vistaReporte(id) {
 function vistaMetodo() {
   return `
   <div class="hero" style="padding-top:20px">
-    <h1>How SkyReport works</h1>
-    <p class="lema">What the data can and cannot tell you.</p>
+    <h1>${escapa(t('method.title'))}</h1>
+    <p class="lema">${escapa(t('method.lede'))}</p>
   </div>
 
   <section class="bloque">
-    <div class="card">
-      <h3>Report vs Signal</h3>
-      <p class="sub mt"><b>Report</b> — one event, sent by one person. It is testimony.</p>
-      <p class="sub"><b>Signal</b> — a pattern found across several reports. It is an
-      observation, and it can be wrong. Every signal shows the rule that produced it, so you
-      can judge it yourself.</p>
+    <div class="card centro" style="padding:18px">
+      <span class="mono" style="font-size:13px;color:var(--blue);letter-spacing:.04em">
+        ${escapa(t('method.dataFlow'))}</span>
     </div>
   </section>
 
   <section class="bloque">
-    <div class="cab"><h2>How signals are built</h2></div>
+    <div class="card">
+      <h3>${escapa(t('method.reportVsSignal'))}</h3>
+      <p class="sub mt">${escapa(t('method.reportDef'))}</p>
+      <p class="sub">${escapa(t('method.signalDef'))}</p>
+    </div>
+  </section>
+
+  <section class="bloque">
+    <div class="cab"><h2>${escapa(t('method.howBuilt'))}</h2></div>
     <div class="grid g2">
-      <div class="card"><h4>R1 · Cluster</h4><p class="sub">Three or more reports of the same
-      event within 2 km and 30 days.</p></div>
-      <div class="card"><h4>R2 · Same wind</h4><p class="sub">Three or more reports of the same
-      event logged with the same wind direction.</p></div>
-      <div class="card"><h4>R3 · Same zone</h4><p class="sub">Three or more reports inside the
-      same zone of a site — a ridge, a venturi, a lee side.</p></div>
-      <div class="card"><h4>R4 · Time of day</h4><p class="sub">40% or more of a site's reports
-      falling in the same four-hour window.</p></div>
-      <div class="card"><h4>R5 · Reserve deployments</h4><p class="sub">Two or more reserve
-      deployments reported at the same site.</p></div>
-      <div class="card"><h4>R6 · Strong wind</h4><p class="sub">Three or more reports logged
-      with wind at or above 20 km/h.</p></div>
+      ${[1,2,3,4,5,6].map(n => `<div class="card">
+        <div class="entre"><h4>${escapa(t('method.rule' + n))}</h4>
+          <span class="mini mono">R${n}</span></div>
+        <p class="sub mt">${escapa(t('method.rule' + n + 'd'))}</p>
+      </div>`).join('')}
     </div>
-    <p class="mini mt">The rules are deliberately simple and written out. With few reports, a
-    more complicated model would be less honest, not more.</p>
+    <p class="mini mt">${escapa(t('method.rulesNote'))}</p>
   </section>
 
   <section class="bloque">
-    <div class="cab"><h2>Limits of this data</h2></div>
+    <div class="cab"><h2>${escapa(t('method.limits'))}</h2></div>
     <div class="card">
-      <h4>Reporting bias</h4>
-      <p class="sub">People report what they think is worth reporting. Busy sites, competition
-      sites and sites with an active local community are over-represented. A quiet site with no
-      reports is not necessarily a safe site.</p>
-      <h4 class="mt2">The denominator problem</h4>
-      <p class="sub">"100 incidents" means nothing on its own. 100 out of 500 flights is not the
-      same as 100 out of 50,000. That is why SkyReport also records flights where nothing
-      happened.</p>
-      <h4 class="mt2">Correlation is not causation</h4>
-      <p class="sub">If most reports at a site mention NW wind, that may mean NW days are
-      riskier — or simply that most people fly on NW days. Patterns here describe reports, not
-      causes.</p>
-      <h4 class="mt2">What SkyReport will not do</h4>
-      <p class="sub">It does not rank pilots, score risk, or tell you whether to fly. It gives you
-      information. You make the decision.</p>
+      <h4>${escapa(t('method.bias'))}</h4>
+      <p class="sub">${escapa(t('method.biasText'))}</p>
+      <h4 class="mt2">${escapa(t('method.denominator'))}</h4>
+      <p class="sub">${escapa(t('method.denominatorText'))}</p>
+      <h4 class="mt2">${escapa(t('method.correlation'))}</h4>
+      <p class="sub">${escapa(t('method.correlationText'))}</p>
+      <h4 class="mt2">${escapa(t('method.wontDo'))}</h4>
+      <p class="sub">${escapa(t('method.wontDoText'))}</p>
     </div>
   </section>
 
   <section class="bloque">
-    <div class="cab"><h2>Privacy</h2></div>
-    <div class="card"><p class="sub">Reports can be submitted anonymously. Names, emails and
-    phone numbers are never published. Coordinates are rounded to about 100 m and the original
-    IGC file is not published.</p></div>
+    <div class="cab"><h2>${escapa(t('common.privacy'))}</h2></div>
+    <div class="card"><p class="sub">${escapa(t('method.privacyText'))}</p></div>
   </section>`;
 }
 

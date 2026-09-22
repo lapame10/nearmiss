@@ -178,9 +178,9 @@ export function pintaVueloRapido() {
 
         <div class="campo"><label>${escapa(t('safeFlight.type'))}</label>
           <div class="opciones">
-            ${[['local','Local'],['soaring','Soaring'],['XC','XC'],
-               ['training','Training'],['competition','Competition'],['ground','Ground handling']]
-              .map(([v, n]) => `<button class="op${F.vTipo === v ? ' on' : ''}" data-vtipo="${v}">${n}</button>`).join('')}
+            ${['local','soaring','XC','training','competition','ground']
+              .map(v => `<button class="op${F.vTipo === v ? ' on' : ''}" data-vtipo="${v}">${
+                escapa(t('flight.' + v))}</button>`).join('')}
           </div></div>
 
         <button class="btn pri grande bloque mt2" id="vEnviar">✓ ${escapa(t('safeFlight.log'))}</button>
@@ -244,7 +244,7 @@ export function pintaReportar(arg) {
     if (x.id !== 'app') x.classList.remove('on');
   });
   cont.innerHTML = `<div class="cont" style="padding-top:10px;padding-bottom:40px">
-    <button class="btn gh mb" id="rVolver">← Back</button>
+    <button class="btn gh mb" id="rVolver">← ${escapa(t('common.back'))}</button>
     <div id="rCuerpo"></div>
   </div>`;
   document.getElementById('rVolver').onclick = () => ir('inicio');
@@ -259,10 +259,10 @@ function pintaPaso() {
   if (paso > listaPasos.length) paso = listaPasos.length;
 
   let html = `<div class="hero" style="padding:6px 0 0">
-    <h1>Report</h1>
+    <h1>${escapa(t('report.title'))}</h1>
     <p class="lema">${rapido
-      ? 'A flight where nothing happened. Three fields and you are done.'
-      : 'The form changes with the event. You only answer what is relevant.'}</p>
+      ? escapa(t('safeFlight.lede'))
+      : escapa(t('report.lede'))}</p>
   </div>`;
 
   html += `<div class="pasos mt2">${listaPasos.map((n, i) =>
@@ -275,19 +275,19 @@ function pintaPaso() {
   /* navegacion */
   if (rapido) {
     html += `<div class="row mt2"><button class="btn pri grande" id="rEnviar" style="flex:1">
-      Log this flight</button></div>`;
+      ${escapa(t('safeFlight.log'))}</button></div>`;
   } else {
     html += `<div class="row mt2">
-      ${paso > 1 ? '<button class="btn sec" id="rAtras">← Back</button>' : ''}
+      ${paso > 1 ? `<button class="btn sec" id="rAtras">← ${escapa(t('common.back'))}</button>` : ''}
       ${paso < listaPasos.length
-        ? '<button class="btn pri" id="rSig" style="flex:1">Continue →</button>'
-        : '<button class="btn pri grande" id="rEnviar" style="flex:1">Submit report</button>'}
+        ? `<button class="btn pri" id="rSig" style="flex:1">${escapa(t('common.continue'))} →</button>`
+        : '<button class="btn pri grande" id="rEnviar" style="flex:1">${escapa(t('report.submit'))}</button>'}
     </div>`;
   }
 
   /* el snapshot en vivo, segun vas escribiendo */
   if (!rapido && (F.evento || F.fase)) {
-    html += `<section class="bloque"><div class="cab"><h2>Event snapshot</h2>
+    html += `<section class="bloque"><div class="cab"><h2>${escapa(t('snapshot.title'))}</h2>
       <span class="mini">updates as you type</span></div><div id="snapVivo"></div></section>`;
   }
 
@@ -298,7 +298,7 @@ function pintaPaso() {
 
 /* ---------- PASO 1: TIPO ---------- */
 function pasoTipo() {
-  return `<section class="bloque"><div class="cab"><h2>What are you reporting?</h2></div>
+  return `<section class="bloque"><div class="cab"><h2>${escapa(t('report.what'))}</h2></div>
     <div class="opciones col">
       ${TIPOS_REPORTE.map(t => `<button class="op${F.tipo === t.id ? ' on' : ''}"
         data-tipo="${t.id}"><b>${escapa(t.n)}</b><small>${escapa(t.d)}</small></button>`).join('')}
@@ -307,22 +307,21 @@ function pasoTipo() {
 
 /* ---------- SAFE FLIGHT LOG ---------- */
 function pasoVuelo() {
-  return `<section class="bloque"><div class="cab"><h2>Safe flight log</h2></div>
+  return `<section class="bloque"><div class="cab"><h2>${escapa(t('safeFlight.title'))}</h2></div>
     <div class="card">
-      <div class="campo"><label>Site</label>
-        <select id="fSite"><option value="">Choose a site…</option>
+      <div class="campo"><label>${escapa(t('report.site'))}</label>
+        <select id="fSite"><option value="">${escapa(t('safeFlight.chooseSite'))}</option>
           ${SITES.map(s => `<option value="${s.id}"${F.site === s.id ? ' selected' : ''}>${escapa(s.n)}</option>`).join('')}
         </select></div>
-      <div class="campo"><label>Date</label>
+      <div class="campo"><label>${escapa(t('report.date'))}</label>
         <input type="date" id="fFecha" value="${escapa(F.fecha)}"></div>
-      <div class="campo"><label>Type of flight</label>
+      <div class="campo"><label>${escapa(t('safeFlight.type'))}</label>
         <div class="opciones">
-          ${[['local','Local'],['soaring','Soaring'],['XC','Cross country'],
-             ['training','Training'],['competition','Competition'],['ground','Ground handling']]
-            .map(([v, n]) => `<button class="op${F.tipoVuelo === v ? ' on' : ''}" data-vuelo="${v}">${n}</button>`).join('')}
+          ${['local','soaring','XC','training','competition','ground']
+            .map(v => `<button class="op${F.tipoVuelo === v ? ' on' : ''}" data-vuelo="${v}">${
+              escapa(t('flight.' + v))}</button>`).join('')}
         </div></div>
-      <p class="mini">That is all. Logging flights where nothing happened is what lets
-      SkyReport put incident numbers in context.</p>
+      <p class="mini">${escapa(t('safeFlight.why'))}</p>
     </div>
     <div class="card mt" style="background:var(--bg-2);border-style:dashed">
       <p class="sub"><b>${est.vuelos.length} flights logged</b> across ${SITES.length} sites so far.</p>
@@ -334,67 +333,66 @@ function pasoVuelo() {
 /* ---------- PASO 2: BÁSICO ---------- */
 function pasoBasico() {
   const sz = (SITES.find(s => s.id === F.site) || {}).zonas || [];
-  return `<section class="bloque"><div class="cab"><h2>Where and when</h2></div>
+  return `<section class="bloque"><div class="cab"><h2>${escapa(t('igc.whereTitle'))}</h2></div>
   <div class="card">
-    <div class="campo"><label>Site</label>
-      <select id="fSite"><option value="">Choose a site…</option>
+    <div class="campo"><label>${escapa(t('report.site'))}</label>
+      <select id="fSite"><option value="">${escapa(t('safeFlight.chooseSite'))}</option>
         ${SITES.map(s => `<option value="${s.id}"${F.site === s.id ? ' selected' : ''}>${escapa(s.n)} — ${escapa(s.pais)}</option>`).join('')}
       </select></div>
 
-    ${sz.length ? `<div class="campo"><label>Zone within the site <span class="mini">(optional)</span></label>
+    ${sz.length ? `<div class="campo"><label>${escapa(t('report.zone'))} <span class="mini">(${escapa(t('common.optional'))})</span></label>
       <div class="opciones">
-        <button class="op${!F.zona ? ' on' : ''}" data-zona="">Not sure</button>
+        <button class="op${!F.zona ? ' on' : ''}" data-zona="">${escapa(t('report.notSure'))}</button>
         ${sz.map(z => {
           const t = (TIPOS_ZONA.find(x => x.id === z.t) || {}).n || z.t;
           return `<button class="op${F.zona === z.id ? ' on' : ''}" data-zona="${z.id}">
             ${escapa(z.n)}<small>${escapa(t)}</small></button>`;
         }).join('')}
       </div>
-      <p class="pista">Zones are what let SkyReport say "behind this ridge" instead of
-      just naming the site.</p></div>` : ''}
+      <p class="pista">${escapa(t('report.zoneHelp'))}</p></div>` : ''}
 
     <div class="row wrap" style="gap:12px">
-      <div class="campo" style="flex:1;min-width:150px"><label>Date</label>
+      <div class="campo" style="flex:1;min-width:150px"><label>${escapa(t('report.date'))}</label>
         <input type="date" id="fFecha" value="${escapa(F.fecha)}"></div>
-      <div class="campo" style="flex:1;min-width:120px"><label>Time</label>
+      <div class="campo" style="flex:1;min-width:120px"><label>${escapa(t('report.time'))}</label>
         <input type="text" id="fHora" placeholder="14:30" value="${escapa(F.hora)}"></div>
     </div>
 
-    <div class="campo"><label>Location on the map</label>
+    <div class="campo"><label>${escapa(t('report.location'))}</label>
       <div id="mapaElegir" style="height:230px;border-radius:8px;overflow:hidden;border:1px solid var(--line-2)"></div>
-      <p class="pista" id="pistaCoord">Tap the map to place the event.
-        ${F.lat ? `Chosen: ${F.lat.toFixed(4)}, ${F.lon.toFixed(4)}` : 'You can also leave it and set the site only.'}</p>
+      <p class="pista" id="pistaCoord">${escapa(t('report.tapMap'))} ${
+        F.lat ? `${F.lat.toFixed(4)}, ${F.lon.toFixed(4)}` : escapa(t('igc.setSiteOnly'))}</p>
     </div>
   </div>
 
   <div class="card mt">
-    <div class="campo"><label>Flight phase</label>
+    <div class="campo"><label>${escapa(t('report.phase'))}</label>
       <div class="opciones">${FASES.map(f =>
         `<button class="op${F.fase === f.id ? ' on' : ''}" data-fase="${f.id}">${escapa(f.n)}</button>`).join('')}</div></div>
 
-    <div class="campo"><label>Event type</label>
+    <div class="campo"><label>${escapa(t('report.event'))}</label>
       <div class="opciones">${EVENTOS.map(e =>
         `<button class="op${F.evento === e.id ? ' on' : ''}" data-ev="${e.id}">${escapa(e.n)}</button>`).join('')}</div></div>
 
-    <div class="campo"><label>Outcome</label>
+    <div class="campo"><label>${escapa(t('common.outcome'))}</label>
       <div class="opciones">${RESULTADOS.map(r =>
         `<button class="op${F.resultado === r.id ? ' on' : ''}" data-res="${r.id}">${escapa(r.n)}</button>`).join('')}</div></div>
 
-    <div class="campo"><label>Injury</label>
+    <div class="campo"><label>${escapa(t('common.injury'))}</label>
       <div class="opciones">${SEVERIDAD.map(s =>
         `<button class="op${F.injury === s.id ? ' on' : ''}" data-inj="${s.id}">${escapa(s.n)}</button>`).join('')}</div>
-      <p class="pista">Injuries are recorded, never ranked.</p></div>
+      <p class="pista">${escapa(t('report.injuryNote'))}</p></div>
   </div>
 
   ${F.evento && EXTRA[F.evento] ? `
   <div class="card mt" style="border-color:var(--blue-2)">
-    <h3>About this event</h3>
-    <p class="mini mb">Only the questions that matter for this type.</p>
+    <h3>${escapa(t('report.aboutEvent'))}</h3>
+    <p class="mini mb">${escapa(t('report.aboutEventHelp'))}</p>
     ${EXTRA[F.evento].map(q => campoExtra(q)).join('')}
   </div>` : ''}
   <div class="card mt">
-    <div class="campo"><label>Estimated altitude at the event (m AGL)
-      <span class="mini">(optional)</span></label>
+    <div class="campo"><label>${escapa(t('report.altitude'))}
+      <span class="mini">(${escapa(t('common.optional'))})</span></label>
       <input type="number" id="fAlt" placeholder="120" value="${escapa(F.altAgl)}"></div>
   </div></section>`;
 }
@@ -413,63 +411,64 @@ function campoExtra(q) {
 
 /* ---------- PASO 3: CONDICIONES ---------- */
 function pasoCondiciones() {
-  return `<section class="bloque"><div class="cab"><h2>Conditions you observed</h2>
+  return `<section class="bloque"><div class="cab"><h2>${escapa(t('report.conditionsTitle'))}</h2>
     <span class="mini">as you felt them, not from a model</span></div>
   <div class="card">
-    <div class="campo"><label>Wind direction</label>
+    <div class="campo"><label>${escapa(t('report.windDir'))}</label>
       <div class="opciones">${DIRECCIONES.map(d =>
         `<button class="op${F.windDir === d ? ' on' : ''}" data-dir="${d}">${d}</button>`).join('')}</div></div>
     <div class="row wrap" style="gap:12px">
-      <div class="campo" style="flex:1;min-width:130px"><label>Wind speed (km/h)</label>
+      <div class="campo" style="flex:1;min-width:130px"><label>${escapa(t('common.windSpeed'))}</label>
         <input type="number" id="fKmh" placeholder="18" value="${escapa(F.windKmh)}"></div>
-      <div class="campo" style="flex:1;min-width:130px"><label>Gusts (km/h)</label>
+      <div class="campo" style="flex:1;min-width:130px"><label>${escapa(t('common.gusts'))}</label>
         <input type="number" id="fGust" placeholder="27" value="${escapa(F.gustKmh)}"></div>
     </div>
-    <div class="campo"><label>Thermal activity</label>
-      <div class="opciones">${[['weak','Weak'],['moderate','Moderate'],['strong','Strong'],['none','None']]
-        .map(([v, n]) => `<button class="op${F.thermal === v ? ' on' : ''}" data-th="${v}">${n}</button>`).join('')}</div></div>
-    <div class="campo"><label>Turbulence felt</label>
-      <div class="opciones">${[['light','Light'],['moderate','Moderate'],['strong','Strong'],['violent','Violent']]
-        .map(([v, n]) => `<button class="op${F.turb === v ? ' on' : ''}" data-tb="${v}">${n}</button>`).join('')}</div></div>
-    <div class="campo"><label>Cloud</label>
-      <div class="opciones">${[['clear','Clear'],['few','Few'],['scattered','Scattered'],['overcast','Overcast']]
-        .map(([v, n]) => `<button class="op${F.cloud === v ? ' on' : ''}" data-cl="${v}">${n}</button>`).join('')}</div></div>
-    <div class="campo"><label>Anything else about the weather
-      <span class="mini">(optional)</span></label>
+    <div class="campo"><label>${escapa(t('common.thermal'))}</label>
+      <div class="opciones">${['weak','moderate','strong','none']
+        .map(v => `<button class="op${F.thermal === v ? ' on' : ''}" data-th="${v}">${
+          escapa(t('cond.' + v))}</button>`).join('')}</div></div>
+    <div class="campo"><label>${escapa(t('common.turbulence'))}</label>
+      <div class="opciones">${['light','moderate','strong','violent']
+        .map(v => `<button class="op${F.turb === v ? ' on' : ''}" data-tb="${v}">${
+          escapa(t('cond.' + v))}</button>`).join('')}</div></div>
+    <div class="campo"><label>${escapa(t('common.cloud'))}</label>
+      <div class="opciones">${['clear','few','scattered','overcast']
+        .map(v => `<button class="op${F.cloud === v ? ' on' : ''}" data-cl="${v}">${
+          escapa(t('cond.' + v))}</button>`).join('')}</div></div>
+    <div class="campo"><label>${escapa(t('report.weatherNotes'))}
+      <span class="mini">(${escapa(t('common.optional'))})</span></label>
       <textarea id="fMeteo" placeholder="Dust devils at the field after 16:00…">${escapa(F.meteo)}</textarea></div>
-    <p class="mini">If SkyReport can pull weather data for this location and time later, it will
-    be shown next to what you reported — never instead of it.</p>
+    <p class="mini">${escapa(t('report.weatherFuture'))}</p>
   </div></section>`;
 }
 
 /* ---------- PASO 4: EQUIPO ---------- */
 function pasoEquipo() {
   return `<section class="bloque"><div class="cab"><h2>Equipment</h2>
-    <span class="mini">all optional</span></div>
+    <span class="mini">${escapa(t('report.equipmentHelp'))}</span></div>
   <div class="card">
     <div class="row wrap" style="gap:12px">
-      <div class="campo" style="flex:1;min-width:140px"><label>Wing brand</label>
+      <div class="campo" style="flex:1;min-width:140px"><label>${escapa(t('report.wingBrand'))}</label>
         <input type="text" id="fAla" placeholder="Ozone" value="${escapa(F.ala)}"></div>
-      <div class="campo" style="flex:1;min-width:140px"><label>Model</label>
+      <div class="campo" style="flex:1;min-width:140px"><label>${escapa(t('report.wingModel'))}</label>
         <input type="text" id="fModelo" placeholder="Delta 4" value="${escapa(F.modelo)}"></div>
     </div>
-    <div class="campo"><label>Class</label>
+    <div class="campo"><label>${escapa(t('common.class'))}</label>
       <div class="opciones">${['A','B','C','D','CCC','Competition'].map(c =>
         `<button class="op${F.clase === c ? ' on' : ''}" data-cls="${c}">${c}</button>`).join('')}</div></div>
     <div class="row wrap" style="gap:12px">
-      <div class="campo" style="flex:1;min-width:120px"><label>Size</label>
+      <div class="campo" style="flex:1;min-width:120px"><label>${escapa(t('report.wingSize'))}</label>
         <input type="text" id="fTalla" placeholder="MS" value="${escapa(F.talla)}"></div>
-      <div class="campo" style="flex:1;min-width:140px"><label>Harness</label>
+      <div class="campo" style="flex:1;min-width:140px"><label>${escapa(t('common.harness'))}</label>
         <input type="text" id="fHarness" placeholder="Pod" value="${escapa(F.harness)}"></div>
     </div>
-    <div class="campo"><label>Reserve</label>
+    <div class="campo"><label>${escapa(t('common.reserve'))}</label>
       <input type="text" id="fReserva" placeholder="Brand / model" value="${escapa(F.reserva)}"></div>
-    <div class="campo"><label>Approximate experience</label>
-      <div class="opciones">${[['<1','<1 year'],['1-3','1–3 years'],['3-5','3–5 years'],
-        ['5-10','5–10 years'],['10+','10+ years']]
-        .map(([v, n]) => `<button class="op${F.exp === v ? ' on' : ''}" data-exp="${v}">${n}</button>`).join('')}</div>
-      <p class="pista">A wide range, on purpose. SkyReport does not identify pilots and does not
-      rate their level.</p></div>
+    <div class="campo"><label>${escapa(t('report.experience'))}</label>
+      <div class="opciones">${['less1','1-3','3-5','5-10','10+']
+        .map(v => `<button class="op${F.exp === v ? ' on' : ''}" data-exp="${v}">${
+          escapa(t('exp.' + v))}</button>`).join('')}</div>
+      <p class="pista">${escapa(t('report.experienceNote'))}</p></div>
   </div></section>`;
 }
 
@@ -560,22 +559,22 @@ function pasoIGC() {
 
 /* ---------- PASO 6: NARRATIVA ---------- */
 function pasoNarrativa() {
-  return `<section class="bloque"><div class="cab"><h2>In your words</h2>
-    <span class="mini">plain description, no blame</span></div>
+  return `<section class="bloque"><div class="cab"><h2>${escapa(t('report.narrativeTitle'))}</h2>
+    <span class="mini">${escapa(t('report.narrativeHelp'))}</span></div>
   <div class="card">
-    <div class="campo"><label>What happened</label>
+    <div class="campo"><label>${escapa(t('report.whatHappened'))}</label>
       <textarea id="fFactores" placeholder="On the lee side of the ridge, on a NW day…">${escapa(F.factores)}</textarea></div>
-    <div class="campo"><label>Anything that may have contributed
-      <span class="mini">(optional)</span></label>
+    <div class="campo"><label>${escapa(t('report.contributing'))}
+      <span class="mini">(${escapa(t('common.optional'))})</span></label>
       <textarea id="fContrib" placeholder="The wind was stronger than forecast…">${escapa(F.contrib || '')}</textarea></div>
-    <div class="campo"><label>What you took from it
-      <span class="mini">(optional)</span></label>
+    <div class="campo"><label>${escapa(t('report.lessons'))}
+      <span class="mini">(${escapa(t('common.optional'))})</span></label>
       <textarea id="fLecciones" placeholder="If the drift is faster than the climb, move out…">${escapa(F.lecciones)}</textarea></div>
-    <div class="campo"><label>What you would tell another pilot
-      <span class="mini">(optional)</span></label>
+    <div class="campo"><label>${escapa(t('report.advice'))}
+      <span class="mini">(${escapa(t('common.optional'))})</span></label>
       <textarea id="fRecomendar" placeholder="Ask locally which side of the ridge is working…">${escapa(F.recomendar)}</textarea></div>
   </div>
-  <div class="card mt"><div class="cab"><h3>Data completeness</h3></div>
+  <div class="card mt"><div class="cab"><h3>${escapa(t('common.dataCompleteness'))}</h3></div>
     <div id="completitud"></div></div>
   </section>`;
 }
@@ -755,7 +754,7 @@ async function cargaIGC(f) {
 
   let texto = '';
   try { texto = await f.text(); }
-  catch (e) { fallo('The file could not be read.'); return; }
+  catch (e) { fallo(t('igc.readError')); return; }
 
   const r = parseIGC(texto);
   if (!r.ok) { fallo(r.motivo || t('igc.cantParse')); return; }
@@ -785,7 +784,7 @@ async function envia() {
 
   /* --- registro de vuelo sin incidentes: rapidisimo --- */
   if (F.tipo === 'safe_flight') {
-    if (!F.site || !F.tipoVuelo) { aviso('Pick a site and a type of flight'); return; }
+    if (!F.site || !F.tipoVuelo) { aviso(t('safeFlight.needSite')); return; }
     const v = { id: null, site: F.site, fecha: F.fecha, tipo: F.tipoVuelo };
     const r = await enviaVuelo(v);
     est.vuelos = [{ ...v, id: r.id || 'local', anon: true, demo: enModoDemo() }, ...est.vuelos];
