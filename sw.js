@@ -27,7 +27,7 @@
    Al cambiar VERSION se borran todas las cachés viejas solas.
    ============================================================ */
 
-const VERSION = 'skyreport-cache-v5';
+const VERSION = 'skyreport-cache-v6';
 
 /* Qué se guarda al instalar, para que la app abra sin conexión */
 const BASE = [
